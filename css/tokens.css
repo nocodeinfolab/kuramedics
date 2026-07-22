@@ -1,0 +1,71 @@
+/*
+  Design tokens — the single source of truth for KuraMedics' look.
+  Palette: white / near-white surfaces, one deep purple brand color,
+  a muted ink for text. Kept deliberately small.
+*/
+:root {
+  /* Color */
+  --color-bg: #ffffff;
+  --color-bg-soft: #faf8fc;
+  --color-bg-deep: #2a1b47;
+
+  --color-ink: #1e1730;
+  --color-ink-soft: #5c5468;
+  --color-ink-faint: #8b849b;
+
+  --color-primary: #4b2e83;
+  --color-primary-dark: #331f5c;
+  --color-primary-soft: #efe9f8;
+  --color-primary-line: #ddd0f0;
+
+  --color-accent: #a6f0d1;
+  --color-accent-ink: #14523a;
+
+  --color-line: #ece7f4;
+  --color-line-strong: #d9d0ea;
+
+  --color-white: #ffffff;
+
+  /* Type */
+  --font-display: "Fraunces", "Iowan Old Style", "Georgia", serif;
+  --font-body: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    Helvetica, Arial, sans-serif;
+  --font-mono: "IBM Plex Mono", "SFMono-Regular", Consolas, monospace;
+
+  --step-eyebrow: 0.72rem;
+  --step-small: 0.875rem;
+  --step-body: 1rem;
+  --step-lead: 1.125rem;
+  --step-h3: 1.375rem;
+  --step-h2: clamp(1.75rem, 4.5vw, 2.5rem);
+  --step-h1: clamp(2.25rem, 7vw, 3.75rem);
+
+  /* Spacing (4px base) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 2.75rem;
+  --space-8: 3.5rem;
+  --space-9: 5rem;
+  --space-10: 7rem;
+
+  /* Shape */
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 22px;
+  --radius-pill: 999px;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 160ms;
+  --duration-medium: 420ms;
+
+  /* Shadow */
+  --shadow-card: 0 1px 2px rgba(30, 23, 48, 0.04), 0 12px 28px -12px rgba(75, 46, 131, 0.18);
+  --shadow-raised: 0 20px 45px -20px rgba(51, 31, 92, 0.35);
+
+  --content-max: 1120px;
+}
