@@ -55,12 +55,12 @@ export class LandingPage extends Component {
             { class: "hero__actions" },
             h(
               "a",
-              { class: "btn btn-primary", href: "#get-started" },
+              { class: "btn btn-primary", href: "#/patient/login" },
               "Start AI triage"
             ),
             h(
               "a",
-              { class: "btn btn-ghost", href: "#get-started" },
+              { class: "btn btn-ghost", href: "#/doctor/login" },
               "I'm a doctor"
             )
           )
@@ -121,7 +121,7 @@ export class LandingPage extends Component {
             ),
             h(
               "a",
-              { class: "btn btn-primary btn-block", href: "#get-started" },
+              { class: "btn btn-primary btn-block", href: "#/patient/login" },
               "Start AI triage"
             )
           ),
@@ -148,7 +148,7 @@ export class LandingPage extends Component {
             ),
             h(
               "a",
-              { class: "btn btn-primary btn-block", href: "#get-started" },
+              { class: "btn btn-primary btn-block", href: "#/doctor/login" },
               "Set up your clinic"
             )
           )
@@ -272,7 +272,7 @@ export class LandingPage extends Component {
           ),
           h(
             "a",
-            { class: "btn btn-primary", href: "#get-started" },
+            { class: "btn btn-primary", href: "#/doctor/login" },
             "Set up your clinic"
           )
         ),
@@ -310,12 +310,12 @@ export class LandingPage extends Component {
           { class: "final-cta__actions" },
           h(
             "a",
-            { class: "btn btn-primary", href: "#get-started" },
+            { class: "btn btn-primary", href: "#/patient/login" },
             "Start AI triage"
           ),
           h(
             "a",
-            { class: "btn btn-ghost btn-ghost--on-dark", href: "#get-started" },
+            { class: "btn btn-ghost btn-ghost--on-dark", href: "#/doctor/login" },
             "I'm a doctor"
           )
         )
