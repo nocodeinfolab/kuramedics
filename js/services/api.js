@@ -308,6 +308,28 @@ class ApiService {
         return result;
 
     }
+    async patch(endpoint, body) {
+        const response = await this.request(
+            endpoint,
+            {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(body)
+            }
+        );
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                result.message || "Request failed."
+            );
+        }
+
+        return result;
+    }
 
     async delete(endpoint) {
 
