@@ -10,7 +10,8 @@ import MessagingPage from "./messaging/MessagingPage.js";
 import FinancialSummary from "./finance/FinancialSummary.js";
 import SettingsPage from "./settings/SettingsPage.js";
 import DoctorProfilePage from "./settings/DoctorProfilePage.js";
-import DoctorConsultationServicesPage from "./settings/DoctorConsultationServicesPage.js"; // <--- 1. IMPORT YOUR NEW COMPONENT
+import DoctorConsultationServicesPage from "./settings/DoctorConsultationServicesPage.js";
+import DoctorSubscriptionPage from "./settings/DoctorSubscriptionPage.js";
 import api from "../../services/api.js";
 
 export default class DoctorDashboardPage extends Component {
@@ -267,6 +268,12 @@ export default class DoctorDashboardPage extends Component {
                 } else if (this.settingsView === "consultation-services") {
     
                     new DoctorConsultationServicesPage(
+                        this.doctor,
+                        () => this.navigateSettings("menu")
+                    ).mount(container);
+                } else if (this.settingsView === "subscription") {
+
+                    new DoctorSubscriptionPage(
                         this.doctor,
                         () => this.navigateSettings("menu")
                     ).mount(container);
