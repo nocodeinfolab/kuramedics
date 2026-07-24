@@ -2,9 +2,8 @@
 
 import { Component } from "../../../core/component.js";
 import { h } from "../../../utils/dom.js";
-import api from "../../../services/api.js";
+import doctorConsultationService from "../../../services/doctorConsultationService.js"; // <--- 1. IMPORT SERVICE WRAPPER
 
-// Valid Service Types defined by backend
 const SERVICE_TYPE_OPTIONS = [
     { value: "video_consultation", label: "Video Consultation" },
     { value: "chat_consultation", label: "Chat Consultation" },
@@ -54,8 +53,8 @@ export default class DoctorConsultationServicesPage extends Component {
         this.render();
 
         try {
-            const response = await api.get("/doctor-consultation-services");
-            this.services = response.data || response;
+            // 2. USE SERVICE WRAPPER (Hits /api/v1/doctor/services)
+            this.services = await doctorConsultationService.getServices();
         } catch (err) {
             console.error("Failed to load consultation services:", err);
             this.error = err.message || "Failed to load services.";
@@ -105,7 +104,6 @@ export default class DoctorConsultationServicesPage extends Component {
         this.render();
 
         try {
-            // Price Sync & Type coercion
             const firstTimePrice = Number(this.formData.first_time_price_amount || this.formData.price_naira);
             const payload = {
                 ...this.formData,
@@ -115,11 +113,12 @@ export default class DoctorConsultationServicesPage extends Component {
                 duration_minutes: Number(this.formData.duration_minutes)
             };
 
+            // 3. USE SERVICE WRAPPER FOR CREATE & UPDATE
             if (this.editingServiceId) {
-                await api.patch(`/doctor-consultation-services/${this.editingServiceId}`, payload);
+                await doctorConsultationService.updateService(this.editingServiceId, payload);
                 this.successMsg = "Service updated successfully.";
             } else {
-                await api.post("/doctor-consultation-services", payload);
+                await doctorConsultationService.createService(payload);
                 this.successMsg = "Service created successfully.";
             }
 
@@ -137,7 +136,8 @@ export default class DoctorConsultationServicesPage extends Component {
         if (!confirm("Are you sure you want to disable this consultation service?")) return;
 
         try {
-            await api.delete(`/doctor-consultation-services/${serviceId}`);
+            // 4. USE SERVICE WRAPPER FOR DELETE
+            await doctorConsultationService.deleteService(serviceId);
             this.successMsg = "Service disabled successfully.";
             await this.fetchServices();
         } catch (err) {
@@ -299,7 +299,6 @@ export default class DoctorConsultationServicesPage extends Component {
                     "form",
                     { onsubmit: e => this.handleSubmit(e) },
 
-                    // Service Type Dropdown & Display Name
                     h(
                         "div",
                         { class: "grid grid-2-col gap-2 mb-3" },
@@ -311,7 +310,7 @@ export default class DoctorConsultationServicesPage extends Component {
                                 "select",
                                 {
                                     class: "form-control",
-                                    disabled: !!this.editingServiceId, // Immutable type on edits
+                                    disabled: !!this.editingServiceId,
                                     onchange: e => {
                                         const selected = SERVICE_TYPE_OPTIONS.find(opt => opt.value === e.target.value);
                                         this.formData.service_type = e.target.value;
@@ -346,7 +345,6 @@ export default class DoctorConsultationServicesPage extends Component {
                         )
                     ),
 
-                    // Pricing & Duration
                     h(
                         "div",
                         { class: "grid grid-3-col gap-2 mb-3" },
@@ -392,7 +390,6 @@ export default class DoctorConsultationServicesPage extends Component {
                         )
                     ),
 
-                    // Description
                     h(
                         "div",
                         { class: "form-group mb-3" },
@@ -405,7 +402,6 @@ export default class DoctorConsultationServicesPage extends Component {
                         })
                     ),
 
-                    // Availability Note
                     h(
                         "div",
                         { class: "form-group mb-3" },
@@ -419,7 +415,6 @@ export default class DoctorConsultationServicesPage extends Component {
                         })
                     ),
 
-                    // Toggles
                     h(
                         "div",
                         { class: "d-flex gap-4 mb-4" },
@@ -445,7 +440,6 @@ export default class DoctorConsultationServicesPage extends Component {
                         )
                     ),
 
-                    // Actions
                     h(
                         "div",
                         { class: "d-flex justify-content-end gap-2" },
