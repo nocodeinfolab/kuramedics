@@ -10,6 +10,7 @@ import MessagingPage from "./messaging/MessagingPage.js";
 import FinancialSummary from "./finance/FinancialSummary.js";
 import SettingsPage from "./settings/SettingsPage.js";
 import api from "../../services/api.js";
+import DoctorProfilePage from "./settings/DoctorProfilePage.js";
 
 export default class DoctorDashboardPage extends Component {
 
@@ -20,6 +21,7 @@ export default class DoctorDashboardPage extends Component {
         console.log("DoctorDashboardPage: constructor");
 
         this.activeTab = "home";
+        this.settingsView = "menu";
         this.loading = true;
         this.doctor = null;
 
@@ -236,13 +238,27 @@ export default class DoctorDashboardPage extends Component {
                 return new FinancialSummary().render();
 
             case "settings":
-                return new SettingsPage(this.doctor).render();
+                return this.settingsView === "profile"
+                    ? new DoctorProfilePage(
+                        this.doctor,
+                        () => this.navigateSettings("menu")
+                    ).render()
+                    : new SettingsPage(
+                        this.doctor,
+                        view => this.navigateSettings(view)
+                    ).render();
 
             default:
                 return new DashboardHome(this.doctor).render();
 
         }
 
+    }
+    navigateSettings(view) {
+
+        this.settingsView = view;
+        this.updatePage();
+    
     }
 
     renderBottomNavigation() {
@@ -265,16 +281,10 @@ export default class DoctorDashboardPage extends Component {
                         }`,
 
                         onclick: () => {
-
-                            console.log(
-                                "Switching to tab:",
-                                tab.id
-                            );
-
+                            console.log("Switching to tab:", tab.id);
                             this.activeTab = tab.id;
-
+                            this.settingsView = "menu";
                             this.updatePage();
-
                         }
                     },
 
