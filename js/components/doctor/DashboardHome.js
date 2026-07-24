@@ -5,9 +5,9 @@ import { h } from "../../utils/dom.js";
 
 export default class DashboardHome extends Component {
 
-    constructor(doctor = {}) {
+    constructor(doctor) {
         super();
-        this.doctor = doctor;
+        this.doctor = doctor ?? {};
     }
 
     render() {
@@ -34,7 +34,7 @@ export default class DashboardHome extends Component {
     renderHero() {
 
         const firstName =
-            this.doctor.full_name?.split(" ")[0] || "Doctor";
+            this.doctor?.full_name?.split(" ")[0] || "Doctor";
 
         return h(
             "section",
