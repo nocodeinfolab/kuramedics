@@ -83,7 +83,9 @@ export default class SettingsPage extends Component {
                         "span",
                         {
                             class: "dashboard-badge",
-                            style: verified ? "background: #10b981;" : "background: var(--color-ink-faint);"
+                            style: `font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; display: inline-block; ${
+                                verified ? "background: #10b981;" : "background: var(--color-ink-faint);"
+                            }`
                         },
                         verified ? "Verified" : "Profile Incomplete"
                     )
