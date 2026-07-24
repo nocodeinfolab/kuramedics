@@ -40,6 +40,7 @@ class GoogleAuth {
                         `${API_BASE_URL}/auth/google`,
                         {
                             method: "POST",
+                            credentials: "include",
                             headers: {
                                 "Content-Type": "application/json"
                             },
