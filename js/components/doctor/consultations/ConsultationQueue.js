@@ -5,14 +5,21 @@ export default class ConsultationQueue extends Component {
     render() {
         return h(
             "div",
-            { class: "page-placeholder" },
+            { class: "dashboard-page" },
 
-            h("h2", {}, "Consultation Queue"),
+            h("h1", { class: "dashboard-page__title" }, "Consultation Queue"),
 
             h(
-                "p",
-                {},
-                "This page is under construction."
+                "div",
+                { class: "dashboard-card" },
+
+                h("h2", {}, "No consultations yet"),
+
+                h(
+                    "p",
+                    { class: "dashboard-muted" },
+                    "Booked consultations will appear here. You'll be able to accept appointments, review patient information and start consultations."
+                )
             )
         );
     }
