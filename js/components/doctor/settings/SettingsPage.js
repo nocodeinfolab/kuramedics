@@ -5,6 +5,14 @@ import { h } from "../../../utils/dom.js";
 
 export default class SettingsPage extends Component {
 
+    constructor(profile = {}) {
+
+        super();
+
+        this.profile = profile;
+
+    }
+
     render() {
 
         return h(
@@ -15,7 +23,11 @@ export default class SettingsPage extends Component {
 
             this.renderHero(),
 
-            this.renderMenu()
+            this.renderProfileCard(),
+
+            this.renderAccountCard(),
+
+            this.renderSecurityCard()
 
         );
 
@@ -50,7 +62,71 @@ export default class SettingsPage extends Component {
                 {
                     class: "dashboard-subtitle"
                 },
-                "Manage your professional profile, subscription, security and account preferences."
+                "Manage your professional profile, subscription and account security."
+            )
+
+        );
+
+    }
+
+    renderProfileCard() {
+
+        const profile = this.profile;
+
+        const name =
+            profile.full_name || "Complete your profile";
+
+        const specialization =
+            profile.specialization || "No specialization";
+
+        const avatar =
+            profile.avatar_url;
+
+        const verified =
+            profile.verification_status === "verified";
+
+        return h(
+            "div",
+            {
+                class: "dashboard-card settings-profile-card",
+                onclick: () => {
+                    window.location.hash = "/doctor/settings/profile";
+                }
+            },
+
+            avatar ?
+
+                h(
+                    "img",
+                    {
+                        class: "settings-profile-avatar",
+                        src: avatar,
+                        alt: name
+                    }
+                )
+
+                :
+
+                h(
+                    "div",
+                    {
+                        class: "settings-profile-avatar settings-profile-avatar--placeholder"
+                    },
+                    name.charAt(0).toUpperCase()
+                ),
+
+            h(
+                "h2",
+                {},
+                name
+            ),
+
+            h(
+                "p",
+                {
+                    class: "dashboard-muted"
+                },
+                specialization
             ),
 
             h(
@@ -64,127 +140,79 @@ export default class SettingsPage extends Component {
                     {
                         class: "dashboard-badge"
                     },
-                    "Profile"
-                ),
-
-                h(
-                    "span",
-                    {
-                        class: "dashboard-badge"
-                    },
-                    "Subscription"
-                ),
-
-                h(
-                    "span",
-                    {
-                        class: "dashboard-badge"
-                    },
-                    "Security"
+                    verified
+                        ? "Verified"
+                        : "Profile Incomplete"
                 )
 
+            ),
+
+            h(
+                "button",
+                {
+                    class: "btn btn-primary"
+                },
+                profile.profile_id
+                    ? "Edit Profile"
+                    : "Complete Profile"
             )
 
         );
 
     }
 
-    renderMenu() {
+    renderAccountCard() {
 
         return h(
             "div",
-
-            this.renderMenuCard(
-                "Profile",
-                "Manage your personal and professional information.",
-                "person",
-                () => {
-                    window.location.hash = "/doctor/settings/profile";
-                }
-            ),
-
-            this.renderMenuCard(
-                "Subscription",
-                "View your plan, billing and subscription status.",
-                "wallet",
-                () => {
+            {
+                class: "dashboard-card settings-menu-card",
+                onclick: () => {
                     window.location.hash = "/doctor/settings/subscription";
                 }
+            },
+
+            h(
+                "h3",
+                {},
+                "Subscription"
             ),
 
-            this.renderMenuCard(
-                "Security",
-                "Password, login sessions and account protection.",
-                "gear",
-                () => {
-                    window.location.hash = "/doctor/settings/security";
-                }
+            h(
+                "p",
+                {
+                    class: "dashboard-muted"
+                },
+                "Manage your subscription and billing."
             )
 
         );
 
     }
 
-    renderMenuCard(title, description, icon, onclick) {
+    renderSecurityCard() {
 
         return h(
-            "button",
+            "div",
             {
                 class: "dashboard-card settings-menu-card",
-                onclick
+                onclick: () => {
+                    window.location.hash = "/doctor/settings/security";
+                }
             },
 
             h(
-                "div",
+                "h3",
+                {},
+                "Security"
+            ),
+
+            h(
+                "p",
                 {
-                    class: "settings-menu-card__content"
+                    class: "dashboard-muted"
                 },
-
-                h(
-                    "div",
-                    {
-                        class: "settings-menu-card__icon"
-                    },
-
-                    h(
-                        "span",
-                        {
-                            class: `icon-${icon}`
-                        }
-                    )
-
-                ),
-
-                h(
-                    "div",
-                    {
-                        class: "settings-menu-card__text"
-                    },
-
-                    h(
-                        "h3",
-                        {},
-                        title
-                    ),
-
-                    h(
-                        "p",
-                        {
-                            class: "dashboard-muted"
-                        },
-                        description
-                    )
-
-                ),
-
-                h(
-                    "span",
-                    {
-                        class: "settings-menu-card__arrow"
-                    },
-                    "›"
-                )
-
+                "Password, login sessions and account protection."
             )
 
         );
