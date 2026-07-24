@@ -1,151 +1,158 @@
 /* ==========================================================
    Authentication Pages
+   Built entirely from tokens.css — see that file to retheme.
    ========================================================== */
 
 .auth-page {
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: 3rem 1.5rem;
-    background:
-        radial-gradient(circle at top right, rgba(75, 46, 131, 0.08), transparent 35%),
-        radial-gradient(circle at bottom left, rgba(40, 167, 69, 0.06), transparent 35%),
-        #f7f8fc;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-6) var(--space-5);
+  background:
+    radial-gradient(circle at top right, var(--color-primary-soft), transparent 40%),
+    radial-gradient(circle at bottom left, color-mix(in srgb, var(--color-accent) 35%, transparent), transparent 35%),
+    var(--color-bg-soft);
 }
 
 .auth-card {
-    width: 100%;
-    max-width: 460px;
-    background: #fff;
-    border: 1px solid rgba(75, 46, 131, 0.08);
-    border-radius: 24px;
-    padding: 3rem;
-    box-shadow:
-        0 16px 40px rgba(20, 20, 43, 0.08),
-        0 2px 8px rgba(20, 20, 43, 0.04);
+  width: 100%;
+  max-width: 26rem;
+  background: var(--color-white);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  padding: var(--space-7) var(--space-5);
+  box-shadow: var(--shadow-card);
+}
+
+@media (min-width: 480px) {
+  .auth-card {
+    padding: var(--space-8) var(--space-7);
+  }
 }
 
 .auth-header {
-    text-align: center;
-    margin-bottom: 2rem;
+  text-align: center;
+  margin-bottom: var(--space-6);
 }
 
 .auth-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    padding: .45rem 1rem;
-    border-radius: 999px;
-    background: rgba(75, 46, 131, .08);
-    color: #4b2e83;
-    font-size: .8rem;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .08em;
-    margin-bottom: 1.25rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.45rem 1rem;
+  border-radius: var(--radius-pill);
+  background: var(--color-primary-soft);
+  color: var(--color-primary-dark);
+  border: 1px solid var(--color-primary-line);
+  font-family: var(--font-mono);
+  font-size: var(--step-eyebrow);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: var(--space-5);
 }
 
+/* Doctors get the accent identity color instead of a one-off blue, so the
+   whole palette still traces back to tokens.css. */
 .auth-badge--doctor {
-    background: rgba(30, 136, 229, .08);
-    color: #1e88e5;
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+  border-color: transparent;
 }
 
 .auth-title {
-    font-family: "Fraunces", serif;
-    font-size: clamp(1.6rem, 3.5vw, 2rem);
-    font-weight: 600;
-    line-height: 1.1;
-    color: #1f2937;
-    margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.5rem, 5vw, 1.85rem);
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+  color: var(--color-ink);
+  margin: 0;
 }
 
 .auth-subtitle {
-    margin: 1rem auto 0;
-    max-width: 360px;
-    color: #6b7280;
-    font-size: .98rem;
-    line-height: 1.7;
+  margin: var(--space-4) auto 0;
+  max-width: 23rem;
+  color: var(--color-ink-soft);
+  font-size: var(--step-small);
+  line-height: 1.7;
 }
 
-.google-btn {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    margin: 2rem 0;
+/* Google Identity button --------------------------------------------- */
+.google-btn-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin: var(--space-6) 0;
 }
 
-.google-btn > div {
-    width: 100%;
+.google-btn-container > div {
+  width: 100% !important;
 }
 
 .doctor-info {
-    margin: 2rem 0;
-    padding: 1.25rem;
-    border-radius: 16px;
-    background: rgba(75, 46, 131, .04);
-    border: 1px solid rgba(75, 46, 131, .08);
+  margin: var(--space-6) 0;
+  padding: var(--space-5);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-soft);
+  border: 1px solid var(--color-line);
 }
 
 .doctor-info h3 {
-    margin: 0 0 .75rem;
-    font-size: 1rem;
-    color: #222;
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-body);
+  font-size: var(--step-body);
+  font-weight: 600;
+  color: var(--color-ink);
 }
 
 .doctor-info p {
-    margin: 0;
-    color: #666;
-    font-size: .94rem;
-    line-height: 1.7;
+  margin: 0;
+  color: var(--color-ink-soft);
+  font-size: var(--step-small);
+  line-height: 1.7;
 }
 
 .auth-note {
-    margin-top: 2rem;
-    font-size: .82rem;
-    text-align: center;
-    color: #7a7a7a;
-    line-height: 1.6;
+  margin-top: var(--space-6);
+  font-size: 0.8rem;
+  text-align: center;
+  color: var(--color-ink-faint);
+  line-height: 1.6;
 }
 
 .auth-footer {
-    margin-top: 2rem;
-    text-align: center;
+  margin-top: var(--space-6);
+  text-align: center;
 }
 
 .auth-back {
-    display: inline-flex;
-    align-items: center;
-    gap: .4rem;
-    color: #4b2e83;
-    text-decoration: none;
-    font-weight: 600;
-    transition: color .2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 600;
+  font-size: var(--step-small);
+  transition: color var(--duration-fast) var(--ease-out);
 }
 
 .auth-back:hover {
-    color: #36205f;
+  color: var(--color-primary-dark);
 }
 
 .auth-back::before {
-    content: "←";
+  content: "←";
 }
 
 @media (max-width: 600px) {
-    .auth-page {
-        padding: 1.25rem;
-    }
+  .auth-page {
+    padding: var(--space-4);
+  }
 
-    .auth-card {
-        padding: 2rem 1.5rem;
-        border-radius: 20px;
-    }
-
-    .auth-title {
-        font-size: 2rem;
-    }
-
-    .auth-subtitle {
-        font-size: .92rem;
-    }
+  .auth-card {
+    padding: var(--space-6) var(--space-5);
+    border-radius: var(--radius-md);
+  }
 }
