@@ -17,6 +17,7 @@ export default class SettingsPage extends Component {
             this.renderHero(),
             this.renderProfileCard(),
             this.renderAccountCard(),
+            this.renderConsultationServicesCard(), // <--- ADDED HERE
             this.renderSecurityCard()
         );
     }
@@ -30,7 +31,7 @@ export default class SettingsPage extends Component {
             h(
                 "p",
                 { class: "dashboard-subtitle" },
-                "Manage your professional profile, subscription and account security."
+                "Manage your professional profile, consultation services, subscription and account security."
             )
         );
     }
@@ -73,7 +74,7 @@ export default class SettingsPage extends Component {
             ),
             h(
                 "span",
-                { class: "btn btn-primary" }, // Changed from button to span to prevent nested interactive controls
+                { class: "btn btn-primary" },
                 profile.profile_id ? "Edit Profile" : "Complete Profile"
             )
         );
@@ -91,6 +92,23 @@ export default class SettingsPage extends Component {
                 "p",
                 { class: "dashboard-muted" },
                 "Manage your subscription and billing."
+            )
+        );
+    }
+
+    // NEW METHOD
+    renderConsultationServicesCard() {
+        return h(
+            "div",
+            {
+                class: "dashboard-card settings-menu-card settings-card--clickable",
+                onclick: () => this.onNavigate("consultation-services")
+            },
+            h("h3", {}, "Consultation Services"),
+            h(
+                "p",
+                { class: "dashboard-muted" },
+                "Configure rates, service types, durations, and payment rules."
             )
         );
     }
