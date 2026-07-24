@@ -1,5 +1,3 @@
-// js/components/doctor/settings/DoctorConsultationServicesPage.js
-
 import { Component } from "../../../core/component.js";
 import { h } from "../../../utils/dom.js";
 import doctorConsultationService from "../../../services/doctorConsultationService.js";
@@ -101,7 +99,7 @@ export default class DoctorConsultationServicesPage extends Component {
         this.saving = true;
         this.error = null;
         this.successMsg = null;
-        this.update();                 // was: this.render();
+        this.update();
     
         try {
             const firstTimePrice = Number(this.formData.first_time_price_amount || this.formData.price_naira);
@@ -127,14 +125,14 @@ export default class DoctorConsultationServicesPage extends Component {
             console.error("Failed to save consultation service:", err);
             this.error = err.message || "Failed to save service.";
             this.saving = false;
-            this.update();              // was: this.render();
+            this.update();
         }
     }
+
     async handleDelete(serviceId) {
         if (!confirm("Are you sure you want to disable this consultation service?")) return;
 
         try {
-            // 4. USE SERVICE WRAPPER FOR DELETE
             await doctorConsultationService.deleteService(serviceId);
             this.successMsg = "Service disabled successfully.";
             await this.fetchServices();
@@ -152,7 +150,9 @@ export default class DoctorConsultationServicesPage extends Component {
             this.renderHeader(),
             this.renderAlerts(),
             this.loading
-                ? h("div", { class: "dashboard-loading" }, "Loading consultation services...")
+                ? h("div", { class: "dashboard-card text-center py-4" }, 
+                    h("p", { class: "dashboard-muted" }, "Loading consultation services...")
+                  )
                 : this.renderServiceList(),
             this.isModalOpen ? this.renderModal() : null
         );
@@ -165,7 +165,8 @@ export default class DoctorConsultationServicesPage extends Component {
             h(
                 "button",
                 {
-                    class: "btn btn-secondary btn-sm mb-2",
+                    class: "btn btn-outline",
+                    style: "margin-bottom: var(--space-3); color: var(--color-white); border-color: rgba(255,255,255,0.4);",
                     onclick: () => this.onBack()
                 },
                 "← Back to Settings"
@@ -178,11 +179,12 @@ export default class DoctorConsultationServicesPage extends Component {
             ),
             h(
                 "div",
-                { class: "mt-3" },
+                { class: "dashboard-hero-meta" },
                 h(
                     "button",
                     {
                         class: "btn btn-primary",
+                        style: "background: var(--color-white); color: var(--color-primary);",
                         onclick: () => this.handleOpenModal()
                     },
                     "+ Add New Service"
@@ -194,10 +196,18 @@ export default class DoctorConsultationServicesPage extends Component {
     renderAlerts() {
         const alerts = [];
         if (this.error) {
-            alerts.push(h("div", { class: "alert alert-danger mb-3" }, this.error));
+            alerts.push(
+                h("div", { class: "dashboard-card", style: "border-left: 4px solid #ef4444;" }, 
+                    h("p", { style: "color: #ef4444; margin: 0;" }, this.error)
+                )
+            );
         }
         if (this.successMsg) {
-            alerts.push(h("div", { class: "alert alert-success mb-3" }, this.successMsg));
+            alerts.push(
+                h("div", { class: "dashboard-card", style: "border-left: 4px solid #10b981;" }, 
+                    h("p", { style: "color: #10b981; margin: 0;" }, this.successMsg)
+                )
+            );
         }
         return alerts;
     }
@@ -206,12 +216,13 @@ export default class DoctorConsultationServicesPage extends Component {
         if (!this.services || this.services.length === 0) {
             return h(
                 "div",
-                { class: "dashboard-card text-center py-4" },
+                { class: "dashboard-card", style: "text-align: center;" },
                 h("p", { class: "dashboard-muted" }, "No consultation services configured yet."),
                 h(
                     "button",
                     {
-                        class: "btn btn-outline-primary btn-sm mt-2",
+                        class: "btn btn-outline",
+                        style: "margin-top: var(--space-3);",
                         onclick: () => this.handleOpenModal()
                     },
                     "Create your first service"
@@ -221,7 +232,7 @@ export default class DoctorConsultationServicesPage extends Component {
 
         return h(
             "div",
-            { class: "services-grid grid gap-3" },
+            { class: "services-list" },
             this.services.map(service => this.renderServiceCard(service))
         );
     }
@@ -234,24 +245,28 @@ export default class DoctorConsultationServicesPage extends Component {
             { class: "dashboard-card service-item-card" },
             h(
                 "div",
-                { class: "d-flex justify-content-between align-items-start" },
+                { style: "display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-3);" },
                 h(
                     "div",
                     {},
-                    h("h3", { class: "service-card-title mb-1" }, service.display_name),
+                    h("h3", { style: "margin: 0 0 var(--space-2);" }, service.display_name),
                     h(
                         "span",
-                        { class: `dashboard-badge ${service.is_enabled ? "badge-success" : "badge-secondary"}` },
+                        { 
+                            class: "dashboard-badge",
+                            style: service.is_enabled ? "background: #10b981;" : "background: var(--color-ink-faint);"
+                        },
                         service.is_enabled ? "Active" : "Disabled"
                     )
                 ),
                 h(
                     "div",
-                    { class: "service-actions" },
+                    { style: "display: flex; gap: var(--space-2);" },
                     h(
                         "button",
                         {
-                            class: "btn btn-sm btn-outline-secondary mr-1",
+                            class: "btn btn-outline",
+                            style: "padding: 0.4rem 0.8rem; font-size: var(--step-small);",
                             onclick: () => this.handleOpenModal(service)
                         },
                         "Edit"
@@ -259,23 +274,27 @@ export default class DoctorConsultationServicesPage extends Component {
                     h(
                         "button",
                         {
-                            class: "btn btn-sm btn-outline-danger",
+                            class: "btn btn-outline",
+                            style: "padding: 0.4rem 0.8rem; font-size: var(--step-small); color: #ef4444; border-color: rgba(239, 68, 68, 0.3);",
                             onclick: () => this.handleDelete(serviceId)
                         },
                         "Disable"
                     )
                 )
             ),
-            h("p", { class: "dashboard-muted mt-2 mb-2" }, service.description || "No description provided."),
+            h("p", { class: "dashboard-muted", style: "margin-top: var(--space-3);" }, service.description || "No description provided."),
             h(
                 "div",
-                { class: "service-details-meta grid grid-2-col gap-2 mt-3 pt-2 border-top" },
+                { 
+                    class: "input-group", 
+                    style: "margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--color-line);" 
+                },
                 h("div", {}, h("strong", {}, "Duration: "), service.duration_minutes ? `${service.duration_minutes} mins` : "N/A"),
                 h("div", {}, h("strong", {}, "First-Time Rate: "), `₦${(service.first_time_price_amount || 0).toLocaleString()}`),
                 h("div", {}, h("strong", {}, "Follow-Up Rate: "), service.follow_up_price_amount !== null ? `₦${Number(service.follow_up_price_amount).toLocaleString()}` : "N/A")
             ),
             service.availability_note
-                ? h("p", { class: "dashboard-muted text-sm mt-2" }, h("em", {}, `Note: ${service.availability_note}`))
+                ? h("p", { class: "dashboard-muted", style: "margin-top: var(--space-2); font-size: var(--step-small);" }, h("em", {}, `Note: ${service.availability_note}`))
                 : null
         );
     }
@@ -283,15 +302,25 @@ export default class DoctorConsultationServicesPage extends Component {
     renderModal() {
         return h(
             "div",
-            { class: "modal-backdrop" },
+            { 
+                style: "position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 100; padding: var(--space-4);" 
+            },
             h(
                 "div",
-                { class: "modal-content dashboard-card" },
+                { class: "settings-card", style: "max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto;" },
                 h(
                     "div",
-                    { class: "modal-header d-flex justify-content-between align-items-center mb-3" },
-                    h("h2", {}, this.editingServiceId ? "Edit Consultation Service" : "Add Consultation Service"),
-                    h("button", { class: "btn-close", onclick: () => this.handleCloseModal() }, "×")
+                    { style: "display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);" },
+                    h("h2", { style: "margin: 0;" }, this.editingServiceId ? "Edit Consultation Service" : "Add Consultation Service"),
+                    h(
+                        "button", 
+                        { 
+                            class: "btn btn-outline", 
+                            style: "padding: 0.2rem 0.6rem; font-size: 1.2rem; border: none;",
+                            onclick: () => this.handleCloseModal() 
+                        }, 
+                        "×"
+                    )
                 ),
                 h(
                     "form",
@@ -299,7 +328,7 @@ export default class DoctorConsultationServicesPage extends Component {
 
                     h(
                         "div",
-                        { class: "grid grid-2-col gap-2 mb-3" },
+                        { class: "input-group" },
                         h(
                             "div",
                             { class: "form-group" },
@@ -307,7 +336,7 @@ export default class DoctorConsultationServicesPage extends Component {
                             h(
                                 "select",
                                 {
-                                    class: "form-control",
+                                    class: "form-input",
                                     disabled: !!this.editingServiceId,
                                     onchange: e => {
                                         const selected = SERVICE_TYPE_OPTIONS.find(opt => opt.value === e.target.value);
@@ -335,7 +364,7 @@ export default class DoctorConsultationServicesPage extends Component {
                             h("label", { class: "form-label" }, "Display Name"),
                             h("input", {
                                 type: "text",
-                                class: "form-control",
+                                class: "form-input",
                                 required: true,
                                 value: this.formData.display_name,
                                 oninput: e => (this.formData.display_name = e.target.value)
@@ -345,14 +374,14 @@ export default class DoctorConsultationServicesPage extends Component {
 
                     h(
                         "div",
-                        { class: "grid grid-3-col gap-2 mb-3" },
+                        { class: "input-group" },
                         h(
                             "div",
                             { class: "form-group" },
                             h("label", { class: "form-label" }, "First-Time Price (₦)"),
                             h("input", {
                                 type: "number",
-                                class: "form-control",
+                                class: "form-input",
                                 required: this.formData.is_enabled,
                                 min: this.formData.is_enabled ? 1 : 0,
                                 value: this.formData.first_time_price_amount,
@@ -368,33 +397,34 @@ export default class DoctorConsultationServicesPage extends Component {
                             h("label", { class: "form-label" }, "Follow-Up Price (₦)"),
                             h("input", {
                                 type: "number",
-                                class: "form-control",
+                                class: "form-input",
                                 min: 0,
                                 value: this.formData.follow_up_price_amount,
                                 oninput: e => (this.formData.follow_up_price_amount = e.target.value)
-                            })
-                        ),
-                        h(
-                            "div",
-                            { class: "form-group" },
-                            h("label", { class: "form-label" }, "Duration (Mins)"),
-                            h("input", {
-                                type: "number",
-                                class: "form-control",
-                                min: 5,
-                                value: this.formData.duration_minutes,
-                                oninput: e => (this.formData.duration_minutes = e.target.value)
                             })
                         )
                     ),
 
                     h(
                         "div",
-                        { class: "form-group mb-3" },
+                        { class: "form-group" },
+                        h("label", { class: "form-label" }, "Duration (Mins)"),
+                        h("input", {
+                            type: "number",
+                            class: "form-input",
+                            min: 5,
+                            value: this.formData.duration_minutes,
+                            oninput: e => (this.formData.duration_minutes = e.target.value)
+                        })
+                    ),
+
+                    h(
+                        "div",
+                        { class: "form-group" },
                         h("label", { class: "form-label" }, "Description"),
                         h("textarea", {
-                            class: "form-control",
-                            rows: 2,
+                            class: "form-textarea",
+                            rows: 3,
                             value: this.formData.description,
                             oninput: e => (this.formData.description = e.target.value)
                         })
@@ -402,11 +432,11 @@ export default class DoctorConsultationServicesPage extends Component {
 
                     h(
                         "div",
-                        { class: "form-group mb-3" },
+                        { class: "form-group" },
                         h("label", { class: "form-label" }, "Availability Note"),
                         h("input", {
                             type: "text",
-                            class: "form-control",
+                            class: "form-input",
                             placeholder: "e.g., Weekdays between 9 AM - 4 PM",
                             value: this.formData.availability_note,
                             oninput: e => (this.formData.availability_note = e.target.value)
@@ -415,37 +445,39 @@ export default class DoctorConsultationServicesPage extends Component {
 
                     h(
                         "div",
-                        { class: "d-flex gap-4 mb-4" },
+                        { class: "input-group", style: "margin-bottom: var(--space-5);" },
                         h(
-                            "label",
-                            { class: "checkbox-label d-flex align-items-center gap-2" },
+                            "div",
+                            { class: "form-checkbox" },
                             h("input", {
                                 type: "checkbox",
+                                id: "chk_service_enabled",
                                 checked: this.formData.is_enabled,
                                 onchange: e => (this.formData.is_enabled = e.target.checked)
                             }),
-                            "Service Enabled"
+                            h("label", { htmlFor: "chk_service_enabled" }, "Service Enabled")
                         ),
                         h(
-                            "label",
-                            { class: "checkbox-label d-flex align-items-center gap-2" },
+                            "div",
+                            { class: "form-checkbox" },
                             h("input", {
                                 type: "checkbox",
+                                id: "chk_requires_payment",
                                 checked: this.formData.requires_payment,
                                 onchange: e => (this.formData.requires_payment = e.target.checked)
                             }),
-                            "Requires Payment"
+                            h("label", { htmlFor: "chk_requires_payment" }, "Requires Payment")
                         )
                     ),
 
                     h(
                         "div",
-                        { class: "d-flex justify-content-end gap-2" },
+                        { style: "display: flex; justify-content: flex-end; gap: var(--space-3);" },
                         h(
                             "button",
                             {
                                 type: "button",
-                                class: "btn btn-secondary",
+                                class: "btn btn-outline",
                                 onclick: () => this.handleCloseModal()
                             },
                             "Cancel"
@@ -457,6 +489,7 @@ export default class DoctorConsultationServicesPage extends Component {
                                 class: "btn btn-primary",
                                 disabled: this.saving
                             },
+                            this.saving ? h("span", { class: "btn-spinner" }) : null,
                             this.saving ? "Saving..." : "Save Service"
                         )
                     )
