@@ -51,10 +51,11 @@ export default class DoctorConsultationServicesPage extends Component {
         this.loading = true;
         this.error = null;
         this.render();
-
+    
         try {
-            // 2. USE SERVICE WRAPPER (Hits /api/v1/doctor/services)
-            this.services = await doctorConsultationService.getServices();
+            const res = await doctorConsultationService.getServices();
+            
+            this.services = Array.isArray(res) ? res : [];
         } catch (err) {
             console.error("Failed to load consultation services:", err);
             this.error = err.message || "Failed to load services.";
