@@ -5,20 +5,19 @@ import { h } from "../../utils/dom.js";
 
 export default class DashboardHome extends Component {
 
-    constructor(doctor = null) {
+    constructor(doctor = {}) {
         super();
-        this.doctor = doctor || {};
+        this.doctor = doctor;
     }
 
     render() {
-
         return h(
             "div",
             {
                 class: "doctor-home"
             },
 
-            this.renderHeader(),
+            this.renderHero(),
 
             this.renderStatistics(),
 
@@ -29,51 +28,60 @@ export default class DashboardHome extends Component {
             this.renderQuickActions(),
 
             this.renderRecentActivity()
-
         );
-
     }
 
-    renderHeader() {
+    renderHero() {
+
+        const firstName =
+            this.doctor.full_name?.split(" ")[0] || "Doctor";
 
         return h(
             "section",
             {
-                class: "dashboard-section"
+                class: "dashboard-header"
             },
+
+            h(
+                "p",
+                {
+                    class: "dashboard-greeting"
+                },
+                "Welcome back"
+            ),
+
+            h(
+                "h1",
+                {
+                    class: "dashboard-title"
+                },
+                `Dr. ${firstName}`
+            ),
+
+            h(
+                "p",
+                {
+                    class: "dashboard-subtitle"
+                },
+                this.doctor.specialization ||
+                "Complete your professional profile to start receiving bookings."
+            ),
 
             h(
                 "div",
                 {
-                    class: "dashboard-header"
+                    class: "dashboard-hero-meta"
                 },
 
-                h(
-                    "div",
-                    {},
+                this.badge(
+                    this.doctor.verification_status || "Verification Pending"
+                ),
 
-                    h(
-                        "p",
-                        {
-                            class: "dashboard-greeting"
-                        },
-                        "Welcome back"
-                    ),
-
-                    h(
-                        "h1",
-                        {
-                            class: "dashboard-title"
-                        },
-                        this.doctor.full_name || "Doctor"
-                    )
-
+                this.badge(
+                    this.doctor.subscription_plan_name || "Starter Plan"
                 )
-
             )
-
         );
-
     }
 
     renderStatistics() {
@@ -103,9 +111,7 @@ export default class DashboardHome extends Component {
                 "Earnings",
                 "₦0"
             )
-
         );
-
     }
 
     renderSubscription() {
@@ -124,7 +130,9 @@ export default class DashboardHome extends Component {
 
             h(
                 "p",
-                {},
+                {
+                    class: "dashboard-value"
+                },
                 this.doctor.subscription_plan_name || "Starter"
             ),
 
@@ -133,11 +141,9 @@ export default class DashboardHome extends Component {
                 {
                     class: "dashboard-muted"
                 },
-                this.doctor.subscription_status || "Active"
+                `Status: ${this.doctor.subscription_status || "Active"}`
             )
-
         );
-
     }
 
     renderVerification() {
@@ -156,12 +162,20 @@ export default class DashboardHome extends Component {
 
             h(
                 "p",
-                {},
+                {
+                    class: "dashboard-value"
+                },
                 this.doctor.verification_status || "Pending"
+            ),
+
+            h(
+                "p",
+                {
+                    class: "dashboard-muted"
+                },
+                "Verified doctors appear higher in patient search results."
             )
-
         );
-
     }
 
     renderQuickActions() {
@@ -184,26 +198,15 @@ export default class DashboardHome extends Component {
                     class: "quick-actions"
                 },
 
-                this.actionButton(
-                    "Edit Profile"
-                ),
+                this.actionButton("Edit Profile"),
 
-                this.actionButton(
-                    "Consultation Fees"
-                ),
+                this.actionButton("Consultation Fees"),
 
-                this.actionButton(
-                    "Availability"
-                ),
+                this.actionButton("Availability"),
 
-                this.actionButton(
-                    "Booking Link"
-                )
-
+                this.actionButton("Booking Link")
             )
-
         );
-
     }
 
     renderRecentActivity() {
@@ -225,11 +228,9 @@ export default class DashboardHome extends Component {
                 {
                     class: "dashboard-muted"
                 },
-                "No recent activity."
+                "No recent activity yet."
             )
-
         );
-
     }
 
     statCard(title, value) {
@@ -255,9 +256,7 @@ export default class DashboardHome extends Component {
                 },
                 title
             )
-
         );
-
     }
 
     actionButton(label) {
@@ -269,7 +268,17 @@ export default class DashboardHome extends Component {
             },
             label
         );
+    }
 
+    badge(text) {
+
+        return h(
+            "span",
+            {
+                class: "dashboard-badge"
+            },
+            text
+        );
     }
 
 }
