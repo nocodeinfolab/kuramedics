@@ -2,54 +2,43 @@
 
 import api from "./api.js";
 
-class DoctorSubscriptionApiService {
+class DoctorSubscriptionService {
     /**
-     * Fetch all subscription plans for the authenticated doctor
-     * @returns {Promise<Array>} List of subscription plans
+     * Get the logged-in doctor's subscription details
      */
-    async getSubscriptionPlans() {
-        const res = await api.get("/doctor/subscriptions");
-        // Check if response is { success: true, data: [...] } or direct array
-        if (Array.isArray(res)) return res;
-        if (Array.isArray(res?.data)) return res.data;
-        return [];
+    async getMySubscription() {
+        return api.get("/subscription/me");
     }
 
     /**
-     * Get public subscription plans for a specific doctor
-     * @param {string} doctorId 
-     * @returns {Promise<Array>} List of enabled subscription plans
+     * Update billing preferences
+     * Example:
+     * {
+     *   auto_renew_enabled: true
+     * }
      */
-    async getPublicSubscriptionPlans(doctorId) {
-        const res = await api.get(`/doctor/subscriptions/public/${doctorId}`);
-        if (Array.isArray(res)) return res;
-        if (Array.isArray(res?.data)) return res.data;
-        return [];
+    async updateBillingPreferences(data) {
+        return api.patch("/subscription/preferences", data);
     }
 
     /**
-     * Create or upsert a new subscription plan
+     * Initialize subscription renewal
+     * Example:
+     * {
+     *   plan_code: "professional",
+     *   plan_interval: "monthly"
+     * }
      */
-    async createSubscriptionPlan(planData) {
-        const res = await api.post("/doctor/subscriptions", planData);
-        return res?.data || res;
+    async initializeRenewal(data) {
+        return api.post("/subscription/renew", data);
     }
 
     /**
-     * Update an existing subscription plan by ID
+     * Verify payment after Paystack redirect
      */
-    async updateSubscriptionPlan(planId, planData) {
-        const res = await api.patch(`/doctor/subscriptions/${planId}`, planData);
-        return res?.data || res;
-    }
-
-    /**
-     * Soft-delete / disable a subscription plan
-     */
-    async deleteSubscriptionPlan(planId) {
-        const res = await api.delete(`/doctor/subscriptions/${planId}`);
-        return res?.data || res;
+    async verifyRenewal(reference) {
+        return api.get(`/subscription/verify/${reference}`);
     }
 }
 
-export default new DoctorSubscriptionApiService();
+export default new DoctorSubscriptionService();
