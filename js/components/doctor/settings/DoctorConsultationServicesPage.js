@@ -50,17 +50,17 @@ export default class DoctorConsultationServicesPage extends Component {
     async fetchServices() {
         this.loading = true;
         this.error = null;
-        this.render();
-
+        this.update();             
+    
         try {
-            // 2. USE SERVICE WRAPPER (Hits /api/v1/doctor/services)
-            this.services = await doctorConsultationService.getServices();
+            const res = await doctorConsultationService.getServices();
+            this.services = Array.isArray(res) ? res : [];
         } catch (err) {
             console.error("Failed to load consultation services:", err);
             this.error = err.message || "Failed to load services.";
         } finally {
             this.loading = false;
-            this.render();
+            this.update();          
         }
     }
 
@@ -86,14 +86,14 @@ export default class DoctorConsultationServicesPage extends Component {
         this.isModalOpen = true;
         this.error = null;
         this.successMsg = null;
-        this.render();
+        this.update();                 
     }
 
     handleCloseModal() {
         this.isModalOpen = false;
         this.editingServiceId = null;
         this.formData = this.getInitialFormData();
-        this.render();
+        this.update();
     }
 
     async handleSubmit(e) {
@@ -101,8 +101,8 @@ export default class DoctorConsultationServicesPage extends Component {
         this.saving = true;
         this.error = null;
         this.successMsg = null;
-        this.render();
-
+        this.update();                 // was: this.render();
+    
         try {
             const firstTimePrice = Number(this.formData.first_time_price_amount || this.formData.price_naira);
             const payload = {
@@ -112,8 +112,7 @@ export default class DoctorConsultationServicesPage extends Component {
                 follow_up_price_amount: Number(this.formData.follow_up_price_amount),
                 duration_minutes: Number(this.formData.duration_minutes)
             };
-
-            // 3. USE SERVICE WRAPPER FOR CREATE & UPDATE
+    
             if (this.editingServiceId) {
                 await doctorConsultationService.updateService(this.editingServiceId, payload);
                 this.successMsg = "Service updated successfully.";
@@ -121,17 +120,16 @@ export default class DoctorConsultationServicesPage extends Component {
                 await doctorConsultationService.createService(payload);
                 this.successMsg = "Service created successfully.";
             }
-
+    
             this.handleCloseModal();
             await this.fetchServices();
         } catch (err) {
             console.error("Failed to save consultation service:", err);
             this.error = err.message || "Failed to save service.";
             this.saving = false;
-            this.render();
+            this.update();              // was: this.render();
         }
     }
-
     async handleDelete(serviceId) {
         if (!confirm("Are you sure you want to disable this consultation service?")) return;
 
@@ -143,7 +141,7 @@ export default class DoctorConsultationServicesPage extends Component {
         } catch (err) {
             console.error("Failed to delete service:", err);
             this.error = err.message || "Failed to delete service.";
-            this.render();
+            this.update(); 
         }
     }
 
