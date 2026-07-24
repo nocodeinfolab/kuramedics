@@ -372,3 +372,58 @@
     font-weight: 700;
     margin: .4rem 0;
 }
+.settings-menu-card {
+    width: 100%;
+    border: none;
+    cursor: pointer;
+    text-align: left;
+    transition: transform var(--duration-fast), box-shadow var(--duration-fast);
+}
+
+.settings-menu-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.settings-menu-card__content {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+}
+
+.settings-menu-card__icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--color-primary-soft);
+    color: var(--color-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.settings-menu-card__icon span {
+    width: 22px;
+    height: 22px;
+    background: currentColor;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    -webkit-mask-size: contain;
+}
+
+.settings-menu-card__text {
+    flex: 1;
+}
+
+.settings-menu-card__text h3 {
+    margin: 0 0 var(--space-1);
+}
+
+.settings-menu-card__arrow {
+    font-size: 1.6rem;
+    color: var(--color-ink-faint);
+}
