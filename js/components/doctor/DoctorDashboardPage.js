@@ -9,13 +9,13 @@ import PatientRecords from "./patients/PatientRecords.js";
 import MessagingPage from "./messaging/MessagingPage.js";
 import FinancialSummary from "./finance/FinancialSummary.js";
 import SettingsPage from "./settings/SettingsPage.js";
-import api from "../../services/api.js";
 import DoctorProfilePage from "./settings/DoctorProfilePage.js";
+import DoctorConsultationServicesPage from "./settings/DoctorConsultationServicesPage.js"; // <--- 1. IMPORT YOUR NEW COMPONENT
+import api from "../../services/api.js";
 
 export default class DoctorDashboardPage extends Component {
 
     constructor() {
-
         super();
 
         console.log("DoctorDashboardPage: constructor");
@@ -77,9 +77,6 @@ export default class DoctorDashboardPage extends Component {
                     class: "doctor-dashboard__content"
                 },
 
-                // Initial paint only — this.loading is always true here since
-                // loadDoctor() hasn't run yet. Once it resolves, updatePage()
-                // takes over and properly mounts whichever tab is active.
                 this.loading
                     ? h(
                         "div",
@@ -223,6 +220,8 @@ export default class DoctorDashboardPage extends Component {
         console.log(
             "Mounting tab:",
             this.activeTab,
+            "| Settings View:",
+            this.settingsView,
             "| Loading:",
             this.loading
         );
@@ -250,9 +249,17 @@ export default class DoctorDashboardPage extends Component {
                 break;
 
             case "settings":
+                // 2. SWITCH BASED ON settingsView
                 if (this.settingsView === "profile") {
 
                     new DoctorProfilePage(
+                        this.doctor,
+                        () => this.navigateSettings("menu")
+                    ).mount(container);
+
+                } else if (this.settingsView === "consultation-services") {
+
+                    new DoctorConsultationServicesPage(
                         this.doctor,
                         () => this.navigateSettings("menu")
                     ).mount(container);
