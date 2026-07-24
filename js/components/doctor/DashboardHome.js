@@ -5,9 +5,13 @@ import { h } from "../../utils/dom.js";
 
 export default class DashboardHome extends Component {
 
-    constructor(doctor) {
+    constructor(doctor, options = {}) {
         super();
         this.doctor = doctor ?? {};
+        // Callback to navigate to the profile page/form
+        this.onNavigateProfile = options.onNavigateProfile || (() => {
+            window.location.hash = "#profile";
+        });
     }
 
     render() {
@@ -18,6 +22,8 @@ export default class DashboardHome extends Component {
             },
 
             this.renderHero(),
+
+            this.renderStatusBanner(),
 
             this.renderStatistics(),
 
@@ -80,6 +86,67 @@ export default class DashboardHome extends Component {
                 this.badge(
                     this.doctor.subscription_plan_name || "Starter Plan"
                 )
+            )
+        );
+    }
+
+    renderStatusBanner() {
+        // Normalize status check (handles 'unsubmitted', 'UNSUBMITTED', etc.)
+        const status = (
+            this.doctor?.verification_status || 
+            this.doctor?.status || 
+            ""
+        ).toLowerCase();
+
+        if (status !== "unsubmitted") {
+            return null;
+        }
+
+        return h(
+            "div",
+            {
+                class: "dashboard-card alert-banner",
+                style: `
+                    margin-top: var(--space-4);
+                    background: rgba(234, 179, 8, 0.1);
+                    border: 1px solid rgba(234, 179, 8, 0.4);
+                    border-left: 4px solid #eab308;
+                    cursor: pointer;
+                    transition: transform 0.2s ease, box-shadow 0.2s ease;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: var(--space-3);
+                `,
+                onclick: () => this.onNavigateProfile()
+            },
+
+            h(
+                "div",
+                { style: "display: flex; align-items: center; gap: var(--space-3);" },
+                h("span", { style: "font-size: 1.5rem;" }, "⚠️"),
+                h(
+                    "div",
+                    {},
+                    h(
+                        "h4",
+                        { style: "margin: 0 0 var(--space-1); color: var(--color-ink); font-weight: 600;" },
+                        "Complete your profile and submit for verification"
+                    ),
+                    h(
+                        "p",
+                        { class: "dashboard-muted", style: "margin: 0; font-size: var(--step-small);" },
+                        "Only verified doctor profiles are published and visible to prospective patients."
+                    )
+                )
+            ),
+
+            h(
+                "span",
+                { 
+                    style: "font-weight: 600; color: var(--color-primary); font-size: 0.9rem; white-space: nowrap;" 
+                },
+                "Complete Now →"
             )
         );
     }
@@ -198,7 +265,7 @@ export default class DashboardHome extends Component {
                     class: "quick-actions"
                 },
 
-                this.actionButton("Edit Profile"),
+                this.actionButton("Edit Profile", () => this.onNavigateProfile()),
 
                 this.actionButton("Consultation Fees"),
 
@@ -259,12 +326,13 @@ export default class DashboardHome extends Component {
         );
     }
 
-    actionButton(label) {
+    actionButton(label, onClick) {
 
         return h(
             "button",
             {
-                class: "btn btn-outline"
+                class: "btn btn-outline",
+                onclick: onClick
             },
             label
         );
