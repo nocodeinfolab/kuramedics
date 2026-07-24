@@ -35,13 +35,9 @@ export class DoctorLoginPage extends Component {
           )
         ),
 
-        h(
-          "button",
-          {
-            id: "google-login-btn",
-            class: "google-btn",
-            type: "button"
-          },
+        h("div", {
+            id: "google-login-btn"
+        })
 
           h(
             "svg",
