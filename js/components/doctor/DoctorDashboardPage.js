@@ -16,10 +16,12 @@ const API_BASE_URL =
 export default class DoctorDashboardPage extends Component {
 
     constructor() {
+
         super();
 
-        this.activeTab = "home";
+        console.log("DoctorDashboardPage: constructor");
 
+        this.activeTab = "home";
         this.loading = true;
         this.doctor = null;
 
@@ -55,9 +57,12 @@ export default class DoctorDashboardPage extends Component {
                 icon: "gear"
             }
         ];
+
     }
 
     render() {
+
+        console.log("DoctorDashboardPage: render()");
 
         return h(
             "div",
@@ -75,53 +80,138 @@ export default class DoctorDashboardPage extends Component {
             ),
 
             this.renderBottomNavigation()
+
         );
 
     }
 
     afterMount() {
+
+        console.log("DoctorDashboardPage: afterMount()");
         this.loadDoctor();
+
     }
 
     async loadDoctor() {
+
+        console.log("----------------------------------------");
+        console.log("loadDoctor() called");
+        console.log("Time:", new Date().toISOString());
 
         try {
 
             const token = localStorage.getItem("accessToken");
 
+            console.log("Access Token Exists:", !!token);
+
             if (!token) {
+
+                console.warn("No access token found.");
+
                 window.location.hash = "/doctor/login";
                 return;
+
             }
+
+            console.log("Token (first 40 chars):");
+            console.log(token.substring(0, 40) + "...");
+
+            try {
+
+                const payload = JSON.parse(
+                    atob(token.split(".")[1])
+                );
+
+                console.log("Decoded JWT Payload:");
+                console.table(payload);
+
+                console.log(
+                    "Issued At:",
+                    new Date(payload.iat * 1000).toLocaleString()
+                );
+
+                console.log(
+                    "Expires At:",
+                    new Date(payload.exp * 1000).toLocaleString()
+                );
+
+                console.log(
+                    "Current Time:",
+                    new Date().toLocaleString()
+                );
+
+                console.log(
+                    "Seconds Until Expiry:",
+                    payload.exp - Math.floor(Date.now() / 1000)
+                );
+
+            } catch (err) {
+
+                console.error("Could not decode JWT:", err);
+
+            }
+
+            console.log("Sending request to:");
+            console.log(`${API_BASE_URL}/doctor-profile/me`);
 
             const response = await fetch(
                 `${API_BASE_URL}/doctor-profile/me`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
-                    }
+                    },
+                    credentials: "include"
                 }
             );
 
+            console.log("HTTP Status:", response.status);
+            console.log("HTTP OK:", response.ok);
+
             const result = await response.json();
 
+            console.log("Backend Response:");
+            console.log(result);
+
             if (!response.ok) {
-                throw new Error(result.message || "Unable to load doctor profile.");
+
+                throw new Error(
+                    result.message ||
+                    "Unable to load doctor profile."
+                );
+
             }
+
+            console.log("Doctor profile loaded successfully.");
 
             this.doctor = result.data;
 
+            console.log("Doctor:");
+            console.table(this.doctor);
+
         } catch (error) {
 
-            console.error("Failed to load doctor profile:", error);
+            console.error("----------------------------------------");
+            console.error("Doctor profile request failed.");
+            console.error(error);
 
             const cachedUser = localStorage.getItem("user");
 
+            console.log("Cached User Exists:", !!cachedUser);
+
             if (cachedUser) {
+
+                console.log("Using cached user.");
+
                 this.doctor = JSON.parse(cachedUser);
+
+                console.table(this.doctor);
+
             }
 
         } finally {
+
+            console.log("Loading complete.");
+            console.log("----------------------------------------");
 
             this.loading = false;
 
@@ -132,6 +222,13 @@ export default class DoctorDashboardPage extends Component {
     }
 
     renderCurrentPage() {
+
+        console.log(
+            "Rendering tab:",
+            this.activeTab,
+            "| Loading:",
+            this.loading
+        );
 
         if (this.loading) {
 
@@ -193,6 +290,11 @@ export default class DoctorDashboardPage extends Component {
 
                         onclick: () => {
 
+                            console.log(
+                                "Switching to tab:",
+                                tab.id
+                            );
+
                             this.activeTab = tab.id;
 
                             this.updatePage();
@@ -225,8 +327,13 @@ export default class DoctorDashboardPage extends Component {
 
     updatePage() {
 
+        console.log("updatePage()");
+
         if (!this.el) {
+
+            console.warn("this.el is null");
             return;
+
         }
 
         const container = this.el.querySelector(
@@ -234,7 +341,10 @@ export default class DoctorDashboardPage extends Component {
         );
 
         if (!container) {
+
+            console.warn("Dashboard container not found.");
             return;
+
         }
 
         container.replaceChildren(
