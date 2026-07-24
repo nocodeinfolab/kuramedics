@@ -348,3 +348,27 @@
 .dashboard-page .dashboard-card {
   text-align: left;
 }
+.dashboard-hero-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin-top: var(--space-5);
+}
+
+.dashboard-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.4rem 0.75rem;
+    border-radius: 999px;
+    background: rgba(255,255,255,.18);
+    color: #fff;
+    font-size: .8rem;
+    font-weight: 600;
+    backdrop-filter: blur(10px);
+}
+
+.dashboard-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin: .4rem 0;
+}
