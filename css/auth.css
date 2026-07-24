@@ -1,0 +1,150 @@
+/* ==========================================================
+   Authentication Pages
+   ========================================================== */
+
+.auth-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1.5rem;
+    background:
+        radial-gradient(circle at top right, rgba(75, 46, 131, 0.08), transparent 35%),
+        radial-gradient(circle at bottom left, rgba(40, 167, 69, 0.06), transparent 35%),
+        #f7f8fc;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 460px;
+    background: #fff;
+    border: 1px solid rgba(75, 46, 131, 0.08);
+    border-radius: 24px;
+    padding: 3rem;
+    box-shadow:
+        0 16px 40px rgba(20, 20, 43, 0.08),
+        0 2px 8px rgba(20, 20, 43, 0.04);
+}
+
+.auth-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.auth-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: .45rem 1rem;
+    border-radius: 999px;
+    background: rgba(75, 46, 131, .08);
+    color: #4b2e83;
+    font-size: .8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    margin-bottom: 1.25rem;
+}
+
+.auth-badge--doctor {
+    background: rgba(30, 136, 229, .08);
+    color: #1e88e5;
+}
+
+.auth-title {
+    margin: 0;
+    font-size: clamp(2rem, 5vw, 2.5rem);
+    line-height: 1.1;
+    font-weight: 700;
+    color: #1f2937;
+}
+
+.auth-subtitle {
+    margin: 1rem auto 0;
+    max-width: 360px;
+    color: #6b7280;
+    font-size: .98rem;
+    line-height: 1.7;
+}
+
+.google-btn {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin: 2rem 0;
+}
+
+.google-btn > div {
+    width: 100%;
+}
+
+.doctor-info {
+    margin: 2rem 0;
+    padding: 1.25rem;
+    border-radius: 16px;
+    background: rgba(75, 46, 131, .04);
+    border: 1px solid rgba(75, 46, 131, .08);
+}
+
+.doctor-info h3 {
+    margin: 0 0 .75rem;
+    font-size: 1rem;
+    color: #222;
+}
+
+.doctor-info p {
+    margin: 0;
+    color: #666;
+    font-size: .94rem;
+    line-height: 1.7;
+}
+
+.auth-note {
+    margin-top: 2rem;
+    font-size: .82rem;
+    text-align: center;
+    color: #7a7a7a;
+    line-height: 1.6;
+}
+
+.auth-footer {
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.auth-back {
+    display: inline-flex;
+    align-items: center;
+    gap: .4rem;
+    color: #4b2e83;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color .2s ease;
+}
+
+.auth-back:hover {
+    color: #36205f;
+}
+
+.auth-back::before {
+    content: "←";
+}
+
+@media (max-width: 600px) {
+    .auth-page {
+        padding: 1.25rem;
+    }
+
+    .auth-card {
+        padding: 2rem 1.5rem;
+        border-radius: 20px;
+    }
+
+    .auth-title {
+        font-size: 2rem;
+    }
+
+    .auth-subtitle {
+        font-size: .92rem;
+    }
+}
