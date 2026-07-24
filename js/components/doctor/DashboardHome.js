@@ -17,6 +17,33 @@ export default class DashboardHome extends Component {
             };
     }
 
+    /**
+     * Maps raw backend status values to user-friendly UI labels.
+     */
+    getFormattedVerificationStatus() {
+        const rawStatus = (
+            this.doctor?.verification_status || 
+            this.doctor?.status || 
+            ""
+        ).toLowerCase();
+
+        switch (rawStatus) {
+            case "unsubmitted":
+            case "draft":
+                return "Incomplete Profile";
+            case "pending_review":
+            case "pending":
+                return "Verification Pending";
+            case "verified":
+            case "approved":
+                return "Verified";
+            case "rejected":
+                return "Action Required";
+            default:
+                return "Incomplete Profile";
+        }
+    }
+
     render() {
         return h(
             "div",
@@ -47,7 +74,7 @@ export default class DashboardHome extends Component {
             h(
                 "div",
                 { class: "dashboard-hero-meta" },
-                this.badge(this.doctor.verification_status || "Verification Pending"),
+                this.badge(this.getFormattedVerificationStatus()),
                 this.badge(this.doctor.subscription_plan_name || "Starter Plan")
             )
         );
@@ -60,7 +87,8 @@ export default class DashboardHome extends Component {
             ""
         ).toLowerCase();
 
-        if (status !== "unsubmitted") {
+        // Only show banner if status is unsubmitted or draft
+        if (status !== "unsubmitted" && status !== "draft") {
             return null;
         }
 
@@ -135,7 +163,7 @@ export default class DashboardHome extends Component {
             "section",
             { class: "dashboard-card" },
             h("h3", {}, "Verification"),
-            h("p", { class: "dashboard-value" }, this.doctor.verification_status || "Pending"),
+            h("p", { class: "dashboard-value" }, this.getFormattedVerificationStatus()),
             h("p", { class: "dashboard-muted" }, "Verified doctors appear higher in patient search results.")
         );
     }
