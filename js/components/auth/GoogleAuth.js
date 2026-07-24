@@ -8,144 +8,101 @@ class GoogleAuth {
             "249309356521-ajkp64pp89gru2pb1qqti3gahbe2ffcc.apps.googleusercontent.com";
     }
 
-    async signIn(role) {
+    renderButton(elementId, role, onSuccess, onError) {
 
-        console.log("1. signIn() called");
-        console.log("Role:", role);
+        console.log("1. Rendering Google Sign-In button...");
 
         if (!window.google?.accounts?.id) {
-            console.error("2. Google SDK NOT loaded.");
-            throw new Error(
-                "Google Sign-In is not available. Please refresh the page and try again."
+            console.error("Google Identity Services SDK not loaded.");
+
+            onError?.(
+                new Error(
+                    "Google Sign-In is unavailable. Please refresh the page."
+                )
             );
+
+            return;
         }
 
-        console.log("2. Google SDK loaded.");
+        google.accounts.id.initialize({
+            client_id: this.clientId,
 
-        return new Promise((resolve, reject) => {
+            callback: async ({ credential }) => {
 
-            console.log("3. Initializing Google Identity Services...");
+                console.log("2. Google returned an ID token.");
 
-            google.accounts.id.initialize({
-                client_id: this.clientId,
-                auto_select: false,
-                cancel_on_tap_outside: true,
+                try {
 
-                callback: async ({ credential }) => {
+                    console.log("3. Sending ID token to backend...");
 
-                    console.log("4. Google callback received.");
-                    console.log("Credential:", credential);
-
-                    try {
-
-                        console.log("5. Sending credential to backend...");
-
-                        const response = await fetch(
-                            `${API_BASE_URL}/auth/google`,
-                            {
-                                method: "POST",
-                                headers: {
-                                    "Content-Type": "application/json"
-                                },
-                                body: JSON.stringify({
-                                    credential,
-                                    role
-                                })
-                            }
-                        );
-
-                        console.log("6. Backend responded.");
-                        console.log("Status:", response.status);
-
-                        const result = await response.json();
-
-                        console.log("7. Backend JSON:");
-                        console.log(result);
-
-                        if (!response.ok) {
-                            throw new Error(
-                                result.message || "Google sign-in failed."
-                            );
+                    const response = await fetch(
+                        `${API_BASE_URL}/auth/google`,
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json"
+                            },
+                            body: JSON.stringify({
+                                credential,
+                                role
+                            })
                         }
+                    );
 
-                        console.log("8. Saving tokens...");
+                    const result = await response.json();
 
-                        localStorage.setItem(
-                            "accessToken",
-                            result.data.accessToken
+                    console.log("4. Backend response:", result);
+
+                    if (!response.ok) {
+                        throw new Error(
+                            result.message || "Google sign-in failed."
                         );
-
-                        localStorage.setItem(
-                            "refreshToken",
-                            result.data.refreshToken
-                        );
-
-                        localStorage.setItem(
-                            "user",
-                            JSON.stringify(result.data.user)
-                        );
-
-                        console.log("9. Login successful.");
-
-                        resolve(result.data);
-
-                    } catch (error) {
-
-                        console.error("Backend request failed:");
-                        console.error(error);
-
-                        reject(error);
                     }
-                }
-            });
 
-            console.log("10. Calling google.accounts.id.prompt()...");
-
-            google.accounts.id.prompt((notification) => {
-
-                console.log("11. Prompt notification:");
-                console.log(notification);
-
-                if (notification.isNotDisplayed()) {
-                    console.warn("Prompt was NOT displayed.");
-                    reject(
-                        new Error(
-                            "Google Sign-In could not be displayed."
-                        )
+                    localStorage.setItem(
+                        "accessToken",
+                        result.data.accessToken
                     );
-                    return;
-                }
 
-                if (notification.isSkippedMoment()) {
-                    console.warn("Prompt was skipped.");
-                    reject(
-                        new Error(
-                            "Google Sign-In was skipped."
-                        )
+                    localStorage.setItem(
+                        "refreshToken",
+                        result.data.refreshToken
                     );
-                    return;
-                }
 
-                if (notification.isDismissedMoment()) {
-                    console.warn("Prompt was dismissed.");
-                    reject(
-                        new Error(
-                            "Google Sign-In was cancelled."
-                        )
+                    localStorage.setItem(
+                        "user",
+                        JSON.stringify(result.data.user)
                     );
-                    return;
+
+                    console.log("5. Login successful.");
+
+                    onSuccess?.(result.data);
+
+                } catch (error) {
+
+                    console.error("Google authentication failed:", error);
+
+                    onError?.(error);
                 }
-
-                console.log("12. Prompt displayed successfully.");
-            });
-
-            console.log("13. prompt() returned.");
+            }
         });
+
+        google.accounts.id.renderButton(
+            document.getElementById(elementId),
+            {
+                theme: "outline",
+                size: "large",
+                shape: "pill",
+                width: 320,
+                text: "continue_with",
+                logo_alignment: "left"
+            }
+        );
+
+        console.log("6. Google Sign-In button rendered.");
     }
 
     logout() {
-
-        console.log("Logging out...");
 
         localStorage.removeItem("accessToken");
         localStorage.removeItem("refreshToken");
@@ -153,10 +110,7 @@ class GoogleAuth {
 
         if (window.google?.accounts?.id) {
             google.accounts.id.disableAutoSelect();
-            google.accounts.id.cancel();
         }
-
-        console.log("Logout complete.");
     }
 
     getUser() {
