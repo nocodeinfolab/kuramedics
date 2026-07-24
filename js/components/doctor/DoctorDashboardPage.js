@@ -236,7 +236,7 @@ export default class DoctorDashboardPage extends Component {
                 return new FinancialSummary().render();
 
             case "settings":
-                return new SettingsPage().render();
+                return new SettingsPage(this.doctor).render();
 
             default:
                 return new DashboardHome(this.doctor).render();
