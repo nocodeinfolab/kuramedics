@@ -76,7 +76,20 @@ export default class DoctorDashboardPage extends Component {
                     id: "doctor-dashboard-content",
                     class: "doctor-dashboard__content"
                 },
-                this.renderCurrentPage()
+
+                // Initial paint only — this.loading is always true here since
+                // loadDoctor() hasn't run yet. Once it resolves, updatePage()
+                // takes over and properly mounts whichever tab is active.
+                this.loading
+                    ? h(
+                        "div",
+                        {
+                            class: "dashboard-loading"
+                        },
+                        "Loading dashboard..."
+                    )
+                    : null
+
             ),
 
             this.renderBottomNavigation()
@@ -199,66 +212,73 @@ export default class DoctorDashboardPage extends Component {
 
     }
 
-    renderCurrentPage() {
+    /**
+     * Mounts the component for whichever tab/settings-view is currently
+     * active into `container`. Uses `.mount()` (not `.render()`) so that
+     * lifecycle hooks like `afterMount()` — which is what triggers data
+     * fetching in pages like DoctorProfilePage — actually run.
+     */
+    mountCurrentPage(container) {
 
         console.log(
-            "Rendering tab:",
+            "Mounting tab:",
             this.activeTab,
             "| Loading:",
             this.loading
         );
 
-        if (this.loading) {
-
-            return h(
-                "div",
-                {
-                    class: "dashboard-loading"
-                },
-                "Loading dashboard..."
-            );
-
-        }
-
         switch (this.activeTab) {
 
             case "home":
-                return new DashboardHome(this.doctor).render();
+                new DashboardHome(this.doctor).mount(container);
+                break;
 
             case "consultations":
-                return new ConsultationQueue().render();
+                new ConsultationQueue().mount(container);
+                break;
 
             case "patients":
-                return new PatientRecords().render();
+                new PatientRecords().mount(container);
+                break;
 
             case "messages":
-                return new MessagingPage().render();
+                new MessagingPage().mount(container);
+                break;
 
             case "finance":
-                return new FinancialSummary().render();
+                new FinancialSummary().mount(container);
+                break;
 
             case "settings":
-                return this.settingsView === "profile"
-                    ? new DoctorProfilePage(
+                if (this.settingsView === "profile") {
+
+                    new DoctorProfilePage(
                         this.doctor,
                         () => this.navigateSettings("menu")
-                    ).render()
-                    : new SettingsPage(
+                    ).mount(container);
+
+                } else {
+
+                    new SettingsPage(
                         this.doctor,
                         view => this.navigateSettings(view)
-                    ).render();
+                    ).mount(container);
+
+                }
+                break;
 
             default:
-                return new DashboardHome(this.doctor).render();
+                new DashboardHome(this.doctor).mount(container);
 
         }
 
     }
+
     navigateSettings(view) {
 
         this.settingsView = view;
         this.updatePage();
-    
+
     }
 
     renderBottomNavigation() {
@@ -333,9 +353,23 @@ export default class DoctorDashboardPage extends Component {
 
         }
 
-        container.replaceChildren(
-            this.renderCurrentPage()
-        );
+        if (this.loading) {
+
+            container.replaceChildren(
+                h(
+                    "div",
+                    {
+                        class: "dashboard-loading"
+                    },
+                    "Loading dashboard..."
+                )
+            );
+
+        } else {
+
+            this.mountCurrentPage(container);
+
+        }
 
         const buttons = this.el.querySelectorAll(
             ".doctor-bottom-nav__item"
