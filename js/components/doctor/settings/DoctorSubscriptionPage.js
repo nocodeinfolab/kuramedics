@@ -26,7 +26,7 @@ export default class DoctorSubscriptionPage extends Component {
     async loadSubscriptionSummary() {
         this.loading = true;
         this.errorMessage = "";
-        this.updatePage();
+        this.update();
 
         try {
             const res = await api.get("/subscription/me");
@@ -36,7 +36,7 @@ export default class DoctorSubscriptionPage extends Component {
             this.errorMessage = error.message || "Failed to load subscription details.";
         } finally {
             this.loading = false;
-            this.updatePage();
+            this.update();
         }
     }
 
@@ -44,7 +44,7 @@ export default class DoctorSubscriptionPage extends Component {
         this.saving = true;
         this.errorMessage = "";
         this.successMessage = "";
-        this.updatePage();
+        this.update();
 
         try {
             const res = await api.patch("/subscription/preferences", {
@@ -57,7 +57,7 @@ export default class DoctorSubscriptionPage extends Component {
             this.errorMessage = error.message || "Failed to update preferences.";
         } finally {
             this.saving = false;
-            this.updatePage();
+            this.update();
         }
     }
 
@@ -65,7 +65,7 @@ export default class DoctorSubscriptionPage extends Component {
         this.renewingPlanCode = planCode;
         this.errorMessage = "";
         this.successMessage = "";
-        this.updatePage();
+        this.update();
 
         try {
             const res = await api.post("/subscription/renew", {
@@ -87,7 +87,7 @@ export default class DoctorSubscriptionPage extends Component {
             this.errorMessage = error.message || "Failed to initialize subscription renewal.";
         } finally {
             this.renewingPlanCode = null;
-            this.updatePage();
+            this.update();
         }
     }
 
@@ -111,58 +111,65 @@ export default class DoctorSubscriptionPage extends Component {
     render() {
         return h(
             "div",
-            { class: "doctor-settings-subpage" },
-            
-            // Header
-            h(
-                "div",
-                { style: "display: flex; align-items: center; gap: var(--space-3); margin-bottom: var(--space-4);" },
-                h(
-                    "button",
-                    {
-                        class: "btn btn-outline",
-                        style: "padding: var(--space-1) var(--space-3);",
-                        onclick: () => this.onBack()
-                    },
-                    "← Back"
-                ),
-                h("h2", { style: "margin: 0;" }, "Subscription & Billing")
-            ),
+            { class: "dashboard-page subscription-page" },
+            this.renderHeader(),
+            this.renderAlerts(),
+            this.loading
+                ? h("div", { class: "dashboard-card text-center py-4" },
+                    h("p", { class: "dashboard-muted" }, "Loading subscription details...")
+                  )
+                : this.renderContent()
+        );
+    }
 
-            // Main Content Area
+    renderHeader() {
+        return h(
+            "section",
+            { class: "dashboard-header" },
             h(
-                "div",
-                { id: "subscription-container" },
-                this.loading
-                    ? h("p", { class: "dashboard-muted" }, "Loading subscription details...")
-                    : this.renderContent()
+                "button",
+                {
+                    class: "btn btn-outline",
+                    style: "margin-bottom: var(--space-3); color: var(--color-white); border-color: rgba(255,255,255,0.4);",
+                    onclick: () => this.onBack()
+                },
+                "← Back to Settings"
+            ),
+            h("h1", { class: "dashboard-title" }, "Subscription & Billing"),
+            h(
+                "p",
+                { class: "dashboard-subtitle" },
+                "Manage your plan, billing preferences, and payment history."
             )
         );
+    }
+
+    renderAlerts() {
+        const alerts = [];
+        if (this.errorMessage) {
+            alerts.push(
+                h("div", { class: "dashboard-card", style: "border-left: 4px solid #ef4444;" },
+                    h("p", { style: "color: #ef4444; margin: 0;" }, this.errorMessage)
+                )
+            );
+        }
+        if (this.successMessage) {
+            alerts.push(
+                h("div", { class: "dashboard-card", style: "border-left: 4px solid #10b981;" },
+                    h("p", { style: "color: #10b981; margin: 0;" }, this.successMessage)
+                )
+            );
+        }
+        return alerts;
     }
 
     renderContent() {
         return h(
             "div",
-            { style: "display: flex; flex-direction: column; gap: var(--space-4);" },
-
-            // Banners for Feedback
-            this.errorMessage
-                ? h("div", { class: "alert alert-error", style: "color: red; padding: 8px 12px; background: #fee2e2; border-radius: 6px;" }, this.errorMessage)
-                : null,
-            this.successMessage
-                ? h("div", { class: "alert alert-success", style: "color: green; padding: 8px 12px; background: #dcfce7; border-radius: 6px;" }, this.successMessage)
-                : null,
-
-            // Active Plan Status Overview
+            { class: "services-list" },
             this.renderCurrentPlanCard(),
-
-            // Preferences Card (Auto-Renew Toggle)
             this.renderPreferencesCard(),
-
-            // Plan Selector & Comparison
             this.renderAvailablePlansCard(),
-
-            // Billing / Renewal History Table
             this.renderRenewalHistoryCard()
         );
     }
@@ -174,11 +181,11 @@ export default class DoctorSubscriptionPage extends Component {
 
         return h(
             "div",
-            { class: "dashboard-card", style: "border-left: 4px solid var(--color-primary, #0284c7);" },
-            h("h3", { style: "margin-top: 0;" }, "Current Subscription"),
+            { class: "dashboard-card service-item-card", style: "border-left: 4px solid var(--color-primary, #0284c7);" },
+            h("h3", { style: "margin: 0 0 var(--space-3);" }, "Current Subscription"),
             h(
                 "div",
-                { style: "display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-3);" },
+                { class: "input-group" },
                 h(
                     "div",
                     {},
@@ -190,12 +197,27 @@ export default class DoctorSubscriptionPage extends Component {
                     {},
                     h("span", { class: "dashboard-muted" }, "Price & Commission"),
                     h("p", { style: "font-weight: 600; font-size: 1.2rem; margin: 4px 0 0;" }, `${this.formatCurrency(sub.monthly_fee)} / mo (${sub.commission_label || "5%"} fee)`)
-                ),
+                )
+            ),
+            h(
+                "div",
+                { class: "input-group", style: "margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--color-line);" },
                 h(
                     "div",
                     {},
                     h("span", { class: "dashboard-muted" }, "Status"),
-                    h("p", { style: "font-weight: 600; margin: 4px 0 0;" }, isTrial ? "Free Trial" : statusLabel)
+                    h(
+                        "p",
+                        { style: "margin: 6px 0 0;" },
+                        h(
+                            "span",
+                            {
+                                class: "dashboard-badge",
+                                style: isTrial ? "background: #f59e0b;" : "background: #10b981;"
+                            },
+                            isTrial ? "Free Trial" : statusLabel
+                        )
+                    )
                 ),
                 h(
                     "div",
@@ -205,7 +227,7 @@ export default class DoctorSubscriptionPage extends Component {
                 )
             ),
             sub.restriction_message
-                ? h("p", { class: "dashboard-muted", style: "margin-top: 12px; font-size: 0.9rem; color: #d97706;" }, sub.restriction_message)
+                ? h("p", { class: "dashboard-muted", style: "margin-top: var(--space-3); font-size: var(--step-small); color: #d97706;" }, sub.restriction_message)
                 : null
         );
     }
@@ -215,18 +237,18 @@ export default class DoctorSubscriptionPage extends Component {
 
         return h(
             "div",
-            { class: "dashboard-card" },
-            h("h3", { style: "margin-top: 0;" }, "Billing Preferences"),
+            { class: "dashboard-card service-item-card" },
+            h("h3", { style: "margin: 0 0 var(--space-3);" }, "Billing Preferences"),
             h(
                 "div",
-                { style: "display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);" },
+                { style: "display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-3);" },
                 h(
                     "div",
                     {},
                     h("h4", { style: "margin: 0 0 4px;" }, "Automatic Plan Renewal"),
                     h(
                         "p",
-                        { class: "dashboard-muted", style: "margin: 0; font-size: 0.875rem;" },
+                        { class: "dashboard-muted", style: "margin: 0; font-size: var(--step-small);" },
                         "Automatically renew your subscription using your saved authorization code when due."
                     )
                 ),
@@ -234,6 +256,7 @@ export default class DoctorSubscriptionPage extends Component {
                     "button",
                     {
                         class: `btn ${autoRenew ? "btn-outline" : "btn-primary"}`,
+                        style: "padding: 0.4rem 0.8rem; font-size: var(--step-small);",
                         disabled: this.saving,
                         onclick: () => this.toggleAutoRenew(!autoRenew)
                     },
@@ -250,47 +273,59 @@ export default class DoctorSubscriptionPage extends Component {
         return h(
             "div",
             { class: "dashboard-card" },
-            h("h3", { style: "margin-top: 0;" }, "Available Plans & Upgrades"),
-            h(
-                "div",
-                { style: "display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-3); margin-top: 16px;" },
-                plans.map(plan => {
-                    const isCurrent = plan.code === currentPlanCode;
-                    const isProcessing = this.renewingPlanCode === plan.code;
+            h("h3", { style: "margin: 0 0 var(--space-3);" }, "Available Plans & Upgrades"),
+            plans.length === 0
+                ? h("p", { class: "dashboard-muted" }, "No plans available at this time.")
+                : h(
+                      "div",
+                      { class: "services-list" },
+                      plans.map(plan => {
+                          const isCurrent = plan.code === currentPlanCode;
+                          const isProcessing = this.renewingPlanCode === plan.code;
 
-                    return h(
-                        "div",
-                        {
-                            style: `
-                                border: 1px solid ${isCurrent ? "var(--color-primary, #0284c7)" : "#e2e8f0"};
-                                border-radius: 8px;
-                                padding: 16px;
-                                background: ${isCurrent ? "rgba(2, 132, 199, 0.03)" : "#ffffff"};
-                                display: flex;
-                                flex-direction: column;
-                                justify-content: space-between;
-                            `
-                        },
-                        h(
-                            "div",
-                            {},
-                            h("h4", { style: "margin: 0 0 8px; font-size: 1.1rem;" }, plan.label),
-                            h("p", { style: "font-size: 1.25rem; font-weight: 700; margin: 0 0 4px;" }, `${this.formatCurrency(plan.monthlyFee)}/mo`),
-                            h("p", { class: "dashboard-muted", style: "margin: 0 0 12px; font-size: 0.85rem;" }, `Platform Commission: ${plan.commissionLabel}`),
-                            h("p", { style: "font-size: 0.9rem; color: #475569; margin-bottom: 16px;" }, plan.description)
-                        ),
-                        h(
-                            "button",
-                            {
-                                class: `btn ${isCurrent ? "btn-outline" : "btn-primary"}`,
-                                disabled: isProcessing,
-                                onclick: () => this.handleRenew(plan.code)
-                            },
-                            isProcessing ? "Initializing..." : isCurrent ? "Renew Current Plan" : `Upgrade to ${plan.label}`
-                        )
-                    );
-                })
-            )
+                          return h(
+                              "div",
+                              {
+                                  class: "dashboard-card service-item-card",
+                                  style: isCurrent
+                                      ? "border-left: 4px solid var(--color-primary, #0284c7); background: rgba(2, 132, 199, 0.03);"
+                                      : ""
+                              },
+                              h(
+                                  "div",
+                                  { style: "display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-3);" },
+                                  h(
+                                      "div",
+                                      {},
+                                      h("h3", { style: "margin: 0 0 var(--space-2);" }, plan.label),
+                                      isCurrent
+                                          ? h("span", { class: "dashboard-badge", style: "background: var(--color-primary, #0284c7);" }, "Current Plan")
+                                          : null
+                                  ),
+                                  h(
+                                      "button",
+                                      {
+                                          class: `btn ${isCurrent ? "btn-outline" : "btn-primary"}`,
+                                          style: "padding: 0.4rem 0.8rem; font-size: var(--step-small);",
+                                          disabled: isProcessing,
+                                          onclick: () => this.handleRenew(plan.code)
+                                      },
+                                      isProcessing ? "Initializing..." : isCurrent ? "Renew Current Plan" : `Upgrade to ${plan.label}`
+                                  )
+                              ),
+                              h("p", { class: "dashboard-muted", style: "margin-top: var(--space-3);" }, plan.description || "No description provided."),
+                              h(
+                                  "div",
+                                  {
+                                      class: "input-group",
+                                      style: "margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--color-line);"
+                                  },
+                                  h("div", {}, h("strong", {}, "Monthly Fee: "), this.formatCurrency(plan.monthlyFee)),
+                                  h("div", {}, h("strong", {}, "Platform Commission: "), plan.commissionLabel)
+                              )
+                          );
+                      })
+                  )
         );
     }
 
@@ -300,18 +335,18 @@ export default class DoctorSubscriptionPage extends Component {
         return h(
             "div",
             { class: "dashboard-card" },
-            h("h3", { style: "margin-top: 0;" }, "Payment History"),
+            h("h3", { style: "margin: 0 0 var(--space-3);" }, "Payment History"),
             renewals.length === 0
                 ? h("p", { class: "dashboard-muted" }, "No subscription payment transactions found.")
                 : h(
                       "table",
-                      { style: "width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;" },
+                      { style: "width: 100%; border-collapse: collapse; text-align: left; font-size: var(--step-small);" },
                       h(
                           "thead",
                           {},
                           h(
                               "tr",
-                              { style: "border-bottom: 2px solid #e2e8f0; color: #64748b;" },
+                              { style: "border-bottom: 2px solid var(--color-line); color: var(--color-ink-faint);" },
                               h("th", { style: "padding: 8px;" }, "Reference"),
                               h("th", { style: "padding: 8px;" }, "Plan"),
                               h("th", { style: "padding: 8px;" }, "Amount"),
@@ -325,11 +360,26 @@ export default class DoctorSubscriptionPage extends Component {
                           renewals.map(item =>
                               h(
                                   "tr",
-                                  { style: "border-bottom: 1px solid #f1f5f9;" },
+                                  { style: "border-bottom: 1px solid var(--color-line);" },
                                   h("td", { style: "padding: 8px; font-family: monospace;" }, item.reference),
                                   h("td", { style: "padding: 8px;" }, (item.plan_code || "starter").toUpperCase()),
                                   h("td", { style: "padding: 8px;" }, `${this.formatCurrency(item.amount)}`),
-                                  h("td", { style: "padding: 8px; text-transform: capitalize;" }, item.status),
+                                  h(
+                                      "td",
+                                      { style: "padding: 8px;" },
+                                      h(
+                                          "span",
+                                          {
+                                              class: "dashboard-badge",
+                                              style: item.status === "success"
+                                                  ? "background: #10b981;"
+                                                  : item.status === "failed"
+                                                  ? "background: #ef4444;"
+                                                  : "background: var(--color-ink-faint);"
+                                          },
+                                          item.status
+                                      )
+                                  ),
                                   h("td", { style: "padding: 8px;" }, this.formatDate(item.created_at))
                               )
                           )
@@ -338,13 +388,21 @@ export default class DoctorSubscriptionPage extends Component {
         );
     }
 
-    updatePage() {
+    update() {
         if (!this.el) return;
-        const container = this.el.querySelector("#subscription-container");
-        if (!container) return;
 
-        container.replaceChildren(
-            this.loading ? h("p", { class: "dashboard-muted" }, "Loading subscription details...") : this.renderContent()
+        const newTree = h(
+            "div",
+            { class: "dashboard-page subscription-page" },
+            this.renderHeader(),
+            this.renderAlerts(),
+            this.loading
+                ? h("div", { class: "dashboard-card text-center py-4" },
+                    h("p", { class: "dashboard-muted" }, "Loading subscription details...")
+                  )
+                : this.renderContent()
         );
+
+        this.el.replaceChildren(...(Array.isArray(newTree) ? newTree : [newTree]).flat());
     }
 }
