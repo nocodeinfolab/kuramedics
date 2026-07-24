@@ -1,5 +1,3 @@
-// js/components/doctor/settings/SettingsPage.js
-
 import { Component } from "../../../core/component.js";
 import { h } from "../../../utils/dom.js";
 
@@ -16,9 +14,16 @@ export default class SettingsPage extends Component {
             { class: "dashboard-page settings-page" },
             this.renderHero(),
             this.renderProfileCard(),
-            this.renderAccountCard(),
-            this.renderConsultationServicesCard(), // <--- ADDED HERE
-            this.renderSecurityCard()
+            h(
+                "div",
+                { 
+                    class: "settings-grid",
+                    style: "display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: var(--space-4); margin-top: var(--space-4);" 
+                },
+                this.renderConsultationServicesCard(),
+                this.renderAccountCard(),
+                this.renderSecurityCard()
+            )
         );
     }
 
@@ -31,7 +36,7 @@ export default class SettingsPage extends Component {
             h(
                 "p",
                 { class: "dashboard-subtitle" },
-                "Manage your professional profile, consultation services, subscription and account security."
+                "Manage your professional profile, consultation services, subscription, and account security."
             )
         );
     }
@@ -39,7 +44,7 @@ export default class SettingsPage extends Component {
     renderProfileCard() {
         const profile = this.profile || {};
         const name = profile.full_name?.trim() || "Complete your profile";
-        const specialization = profile.specialization || "No specialization";
+        const specialization = profile.specialization || "No specialization set";
         const avatar = profile.avatar_url;
         const verified = profile.verification_status === "verified";
         const initial = name.charAt(0).toUpperCase() || "D";
@@ -48,34 +53,75 @@ export default class SettingsPage extends Component {
             "div",
             {
                 class: "dashboard-card settings-profile-card settings-card--clickable",
+                style: "display: flex; align-items: center; justify-content: space-between; gap: var(--space-4); cursor: pointer; transition: transform 0.2s ease, box-shadow 0.2s ease;",
                 onclick: () => this.onNavigate("profile")
             },
-            avatar
-                ? h("img", {
-                      class: "settings-profile-avatar",
-                      src: avatar,
-                      alt: name
-                  })
-                : h(
-                      "div",
-                      { class: "settings-profile-avatar settings-profile-avatar--placeholder" },
-                      initial
-                  ),
-            h("h2", {}, name),
-            h("p", { class: "dashboard-muted" }, specialization),
             h(
                 "div",
-                { class: "dashboard-hero-meta" },
+                { style: "display: flex; align-items: center; gap: var(--space-4);" },
+                avatar
+                    ? h("img", {
+                          class: "settings-profile-avatar",
+                          src: avatar,
+                          alt: name,
+                          style: "width: 70px; height: 70px; border-radius: 50%; object-fit: cover;"
+                      })
+                    : h(
+                          "div",
+                          {
+                              class: "settings-profile-avatar settings-profile-avatar--placeholder",
+                              style: "width: 70px; height: 70px; border-radius: 50%; background: var(--color-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.6rem; font-weight: bold;"
+                          },
+                          initial
+                      ),
                 h(
-                    "span",
-                    { class: "dashboard-badge" },
-                    verified ? "Verified" : "Profile Incomplete"
+                    "div",
+                    {},
+                    h("h2", { style: "margin: 0 0 var(--space-1); font-size: var(--step-2);" }, name),
+                    h("p", { class: "dashboard-muted", style: "margin: 0 0 var(--space-2);" }, specialization),
+                    h(
+                        "span",
+                        {
+                            class: "dashboard-badge",
+                            style: verified ? "background: #10b981;" : "background: var(--color-ink-faint);"
+                        },
+                        verified ? "Verified" : "Profile Incomplete"
+                    )
+                )
+            ),
+            h(
+                "button",
+                {
+                    type: "button",
+                    class: "btn btn-outline"
+                },
+                profile.profile_id ? "Edit Profile" : "Complete Profile"
+            )
+        );
+    }
+
+    renderConsultationServicesCard() {
+        return h(
+            "div",
+            {
+                class: "dashboard-card settings-menu-card settings-card--clickable",
+                style: "cursor: pointer; display: flex; flex-direction: column; justify-content: space-between;",
+                onclick: () => this.onNavigate("consultation-services")
+            },
+            h(
+                "div",
+                {},
+                h("h3", { style: "margin: 0 0 var(--space-2);" }, "Consultation Services"),
+                h(
+                    "p",
+                    { class: "dashboard-muted", style: "margin: 0;" },
+                    "Configure rates, service types, durations, and payment rules."
                 )
             ),
             h(
                 "span",
-                { class: "btn btn-primary" },
-                profile.profile_id ? "Edit Profile" : "Complete Profile"
+                { class: "btn-link", style: "margin-top: var(--space-4); color: var(--color-primary); font-weight: bold;" },
+                "Manage Services →"
             )
         );
     }
@@ -85,30 +131,23 @@ export default class SettingsPage extends Component {
             "div",
             {
                 class: "dashboard-card settings-menu-card settings-card--clickable",
+                style: "cursor: pointer; display: flex; flex-direction: column; justify-content: space-between;",
                 onclick: () => this.onNavigate("subscription")
             },
-            h("h3", {}, "Subscription"),
             h(
-                "p",
-                { class: "dashboard-muted" },
-                "Manage your subscription and billing."
-            )
-        );
-    }
-
-    // NEW METHOD
-    renderConsultationServicesCard() {
-        return h(
-            "div",
-            {
-                class: "dashboard-card settings-menu-card settings-card--clickable",
-                onclick: () => this.onNavigate("consultation-services")
-            },
-            h("h3", {}, "Consultation Services"),
+                "div",
+                {},
+                h("h3", { style: "margin: 0 0 var(--space-2);" }, "Subscription"),
+                h(
+                    "p",
+                    { class: "dashboard-muted", style: "margin: 0;" },
+                    "Manage your plan, subscription renewals, and billing history."
+                )
+            ),
             h(
-                "p",
-                { class: "dashboard-muted" },
-                "Configure rates, service types, durations, and payment rules."
+                "span",
+                { class: "btn-link", style: "margin-top: var(--space-4); color: var(--color-primary); font-weight: bold;" },
+                "View Plan →"
             )
         );
     }
@@ -118,13 +157,23 @@ export default class SettingsPage extends Component {
             "div",
             {
                 class: "dashboard-card settings-menu-card settings-card--clickable",
+                style: "cursor: pointer; display: flex; flex-direction: column; justify-content: space-between;",
                 onclick: () => this.onNavigate("security")
             },
-            h("h3", {}, "Security"),
             h(
-                "p",
-                { class: "dashboard-muted" },
-                "Password, login sessions and account protection."
+                "div",
+                {},
+                h("h3", { style: "margin: 0 0 var(--space-2);" }, "Security"),
+                h(
+                    "p",
+                    { class: "dashboard-muted", style: "margin: 0;" },
+                    "Update password, active login sessions, and account credentials."
+                )
+            ),
+            h(
+                "span",
+                { class: "btn-link", style: "margin-top: var(--space-4); color: var(--color-primary); font-weight: bold;" },
+                "Security Settings →"
             )
         );
     }
