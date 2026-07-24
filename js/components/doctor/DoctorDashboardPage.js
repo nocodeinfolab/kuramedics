@@ -9,9 +9,7 @@ import PatientRecords from "./patients/PatientRecords.js";
 import MessagingPage from "./messaging/MessagingPage.js";
 import FinancialSummary from "./finance/FinancialSummary.js";
 import SettingsPage from "./settings/SettingsPage.js";
-
-const API_BASE_URL =
-    "https://doctors-consultation-backend.onrender.com/api/v1";
+import apiFetch from "../../services/api.js";
 
 export default class DoctorDashboardPage extends Component {
 
@@ -152,38 +150,16 @@ export default class DoctorDashboardPage extends Component {
             }
 
             console.log("Sending request to:");
-            console.log(`${API_BASE_URL}/doctor-profile/me`);
+            console.log(`/doctor-profile/me`);
 
-            const response = await fetch(
-                `${API_BASE_URL}/doctor-profile/me`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    },
-                    credentials: "include"
-                }
-            );
+            const result = await apiFetch("/doctor-profile/me");
 
-            console.log("HTTP Status:", response.status);
-            console.log("HTTP OK:", response.ok);
-
-            const result = await response.json();
-
-            console.log("Backend Response:");
+            console.log("Doctor profile API response:");
             console.log(result);
-
-            if (!response.ok) {
-
-                throw new Error(
-                    result.message ||
-                    "Unable to load doctor profile."
-                );
-
-            }
 
             console.log("Doctor profile loaded successfully.");
 
-            this.doctor = result.data;
+            this.doctor = result.data.user || result.data;
 
             console.log("Doctor:");
             console.table(this.doctor);
