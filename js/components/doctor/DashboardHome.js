@@ -5,93 +5,55 @@ import { h } from "../../utils/dom.js";
 
 export default class DashboardHome extends Component {
 
-    constructor(doctor, options = {}) {
+    constructor(doctor, onNavigate) {
         super();
         this.doctor = doctor ?? {};
-        // Callback to navigate to the profile page/form
-        this.onNavigateProfile = options.onNavigateProfile || (() => {
-            window.location.hash = "#profile";
-        });
+        // Navigation function passed from the parent dashboard container
+        this.onNavigate = typeof onNavigate === "function" 
+            ? onNavigate 
+            : (tabName) => {
+                // Event fallback if no callback was provided directly
+                window.dispatchEvent(new CustomEvent("dashboard:navigate", { detail: { tab: tabName } }));
+            };
     }
 
     render() {
         return h(
             "div",
-            {
-                class: "doctor-home"
-            },
-
+            { class: "doctor-home" },
             this.renderHero(),
-
             this.renderStatusBanner(),
-
             this.renderStatistics(),
-
             this.renderSubscription(),
-
             this.renderVerification(),
-
             this.renderQuickActions(),
-
             this.renderRecentActivity()
         );
     }
 
     renderHero() {
-
-        const firstName =
-            this.doctor?.full_name?.split(" ")[0] || "Doctor";
+        const firstName = this.doctor?.full_name?.split(" ")[0] || "Doctor";
 
         return h(
             "section",
-            {
-                class: "dashboard-header"
-            },
-
+            { class: "dashboard-header" },
+            h("p", { class: "dashboard-greeting" }, "Welcome back"),
+            h("h1", { class: "dashboard-title" }, `Dr. ${firstName}`),
             h(
                 "p",
-                {
-                    class: "dashboard-greeting"
-                },
-                "Welcome back"
+                { class: "dashboard-subtitle" },
+                this.doctor.specialization || "Complete your professional profile to start receiving bookings."
             ),
-
-            h(
-                "h1",
-                {
-                    class: "dashboard-title"
-                },
-                `Dr. ${firstName}`
-            ),
-
-            h(
-                "p",
-                {
-                    class: "dashboard-subtitle"
-                },
-                this.doctor.specialization ||
-                "Complete your professional profile to start receiving bookings."
-            ),
-
             h(
                 "div",
-                {
-                    class: "dashboard-hero-meta"
-                },
-
-                this.badge(
-                    this.doctor.verification_status || "Verification Pending"
-                ),
-
-                this.badge(
-                    this.doctor.subscription_plan_name || "Starter Plan"
-                )
+                { class: "dashboard-hero-meta" },
+                this.badge(this.doctor.verification_status || "Verification Pending"),
+                this.badge(this.doctor.subscription_plan_name || "Starter Plan")
             )
         );
     }
 
     renderStatusBanner() {
-        // Normalize status check (handles 'unsubmitted', 'UNSUBMITTED', etc.)
         const status = (
             this.doctor?.verification_status || 
             this.doctor?.status || 
@@ -118,9 +80,8 @@ export default class DashboardHome extends Component {
                     justify-content: space-between;
                     gap: var(--space-3);
                 `,
-                onclick: () => this.onNavigateProfile()
+                onclick: () => this.onNavigate("settings") // Navigates directly to settings
             },
-
             h(
                 "div",
                 { style: "display: flex; align-items: center; gap: var(--space-3);" },
@@ -140,213 +101,88 @@ export default class DashboardHome extends Component {
                     )
                 )
             ),
-
             h(
                 "span",
-                { 
-                    style: "font-weight: 600; color: var(--color-primary); font-size: 0.9rem; white-space: nowrap;" 
-                },
-                "Complete Now →"
+                { style: "font-weight: 600; color: var(--color-primary); font-size: 0.9rem; white-space: nowrap;" },
+                "Open Settings →"
             )
         );
     }
 
     renderStatistics() {
-
         return h(
             "section",
-            {
-                class: "dashboard-section stats-grid"
-            },
-
-            this.statCard(
-                "Today's Queue",
-                "0"
-            ),
-
-            this.statCard(
-                "Patients",
-                "0"
-            ),
-
-            this.statCard(
-                "Unread",
-                "0"
-            ),
-
-            this.statCard(
-                "Earnings",
-                "₦0"
-            )
+            { class: "dashboard-section stats-grid" },
+            this.statCard("Today's Queue", "0"),
+            this.statCard("Patients", "0"),
+            this.statCard("Unread", "0"),
+            this.statCard("Earnings", "₦0")
         );
     }
 
     renderSubscription() {
-
         return h(
             "section",
-            {
-                class: "dashboard-card"
-            },
-
-            h(
-                "h3",
-                {},
-                "Subscription"
-            ),
-
-            h(
-                "p",
-                {
-                    class: "dashboard-value"
-                },
-                this.doctor.subscription_plan_name || "Starter"
-            ),
-
-            h(
-                "p",
-                {
-                    class: "dashboard-muted"
-                },
-                `Status: ${this.doctor.subscription_status || "Active"}`
-            )
+            { class: "dashboard-card" },
+            h("h3", {}, "Subscription"),
+            h("p", { class: "dashboard-value" }, this.doctor.subscription_plan_name || "Starter"),
+            h("p", { class: "dashboard-muted" }, `Status: ${this.doctor.subscription_status || "Active"}`)
         );
     }
 
     renderVerification() {
-
         return h(
             "section",
-            {
-                class: "dashboard-card"
-            },
-
-            h(
-                "h3",
-                {},
-                "Verification"
-            ),
-
-            h(
-                "p",
-                {
-                    class: "dashboard-value"
-                },
-                this.doctor.verification_status || "Pending"
-            ),
-
-            h(
-                "p",
-                {
-                    class: "dashboard-muted"
-                },
-                "Verified doctors appear higher in patient search results."
-            )
+            { class: "dashboard-card" },
+            h("h3", {}, "Verification"),
+            h("p", { class: "dashboard-value" }, this.doctor.verification_status || "Pending"),
+            h("p", { class: "dashboard-muted" }, "Verified doctors appear higher in patient search results.")
         );
     }
 
     renderQuickActions() {
-
         return h(
             "section",
-            {
-                class: "dashboard-card"
-            },
-
-            h(
-                "h3",
-                {},
-                "Quick Actions"
-            ),
-
+            { class: "dashboard-card" },
+            h("h3", {}, "Quick Actions"),
             h(
                 "div",
-                {
-                    class: "quick-actions"
-                },
-
-                this.actionButton("Edit Profile", () => this.onNavigateProfile()),
-
-                this.actionButton("Consultation Fees"),
-
-                this.actionButton("Availability"),
-
+                { class: "quick-actions" },
+                this.actionButton("Edit Profile", () => this.onNavigate("settings")),
+                this.actionButton("Consultation Fees", () => this.onNavigate("services")),
+                this.actionButton("Availability", () => this.onNavigate("availability")),
                 this.actionButton("Booking Link")
             )
         );
     }
 
     renderRecentActivity() {
-
         return h(
             "section",
-            {
-                class: "dashboard-card"
-            },
-
-            h(
-                "h3",
-                {},
-                "Recent Activity"
-            ),
-
-            h(
-                "p",
-                {
-                    class: "dashboard-muted"
-                },
-                "No recent activity yet."
-            )
+            { class: "dashboard-card" },
+            h("h3", {}, "Recent Activity"),
+            h("p", { class: "dashboard-muted" }, "No recent activity yet.")
         );
     }
 
     statCard(title, value) {
-
         return h(
             "div",
-            {
-                class: "stat-card"
-            },
-
-            h(
-                "div",
-                {
-                    class: "stat-value"
-                },
-                value
-            ),
-
-            h(
-                "div",
-                {
-                    class: "stat-label"
-                },
-                title
-            )
+            { class: "stat-card" },
+            h("div", { class: "stat-value" }, value),
+            h("div", { class: "stat-label" }, title)
         );
     }
 
     actionButton(label, onClick) {
-
         return h(
             "button",
-            {
-                class: "btn btn-outline",
-                onclick: onClick
-            },
+            { class: "btn btn-outline", onclick: onClick },
             label
         );
     }
 
     badge(text) {
-
-        return h(
-            "span",
-            {
-                class: "dashboard-badge"
-            },
-            text
-        );
+        return h("span", { class: "dashboard-badge" }, text);
     }
-
 }
