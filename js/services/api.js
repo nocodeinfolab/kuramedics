@@ -41,12 +41,7 @@ class ApiService {
     }
 
     async getCsrfToken() {
-
-        if (this.csrfToken) {
-    
-            return this.csrfToken;
-    
-        }
+        console.log("getCsrfToken() called at", Date.now());
     
         console.log("----------------------------------------");
         console.log("Fetching CSRF token...");
@@ -63,19 +58,16 @@ class ApiService {
         console.log("CSRF response:", result);
     
         if (!response.ok) {
-    
             throw new Error(
                 result.message || "Unable to obtain CSRF token."
             );
-    
         }
     
         this.csrfToken = result.csrfToken;
     
-        console.log("CSRF token obtained.");
+        console.log("CSRF token obtained:", this.csrfToken);
     
         return this.csrfToken;
-    
     }
     async refreshAccessToken() {
 
