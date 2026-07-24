@@ -46,8 +46,20 @@ export default class SettingsPage extends Component {
         const name = profile.full_name?.trim() || "Complete your profile";
         const specialization = profile.specialization || "No specialization set";
         const avatar = profile.avatar_url;
-        const verified = profile.verification_status === "verified";
+        const status = profile.verification_status;
         const initial = name.charAt(0).toUpperCase() || "D";
+
+        // Determine badge label and color dynamically
+        let badgeLabel = "Profile Incomplete";
+        let badgeStyle = "background: var(--color-ink-faint);";
+
+        if (status === "verified") {
+            badgeLabel = "Verified";
+            badgeStyle = "background: #10b981;"; // Green
+        } else if (status === "pending_review") {
+            badgeLabel = "Pending";
+            badgeStyle = "background: #f59e0b;"; // Amber/Yellow
+        }
 
         return h(
             "div",
@@ -83,11 +95,9 @@ export default class SettingsPage extends Component {
                         "span",
                         {
                             class: "dashboard-badge",
-                            style: `font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; display: inline-block; ${
-                                verified ? "background: #10b981;" : "background: var(--color-ink-faint);"
-                            }`
+                            style: `font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; display: inline-block; ${badgeStyle}`
                         },
-                        verified ? "Verified" : "Profile Incomplete"
+                        badgeLabel
                     )
                 )
             ),
@@ -101,7 +111,6 @@ export default class SettingsPage extends Component {
             )
         );
     }
-
     renderConsultationServicesCard() {
         return h(
             "div",
