@@ -1,84 +1,90 @@
 /**
  * Base class for every KuraMedics UI component.
  *
- * A component is just a plain class that knows how to build its own DOM
- * node (`render`) and, optionally, what to do right after it lands in the
- * document (`afterMount`) or right before it's removed (`beforeUnmount`).
- * There's no virtual DOM and no diffing — for a mostly form/nav/content
- * driven app that's more machinery than we need. Components that need to
- * react to state changes call `this.update()` to re-render themselves.
+ * Components are plain JavaScript classes that render DOM nodes and manage
+ * their own lifecycle. There is no virtual DOM or diffing. Components that
+ * need to reflect state changes should update their state and then call
+ * `this.update()`.
  */
 export class Component {
-  /**
-   * @param {object} props - Data passed in by whoever mounts this component.
-   */
-  constructor(props = {}) {
-    this.props = props;
-    this.el = null;
-    this._mountTarget = null;
-  }
-
-  /**
-   * Build and return the root DOM node for this component.
-   * Must be implemented by subclasses.
-   * @returns {HTMLElement}
-   */
-  render() {
-    throw new Error(`${this.constructor.name} must implement render()`);
-  }
-
-  /**
-   * Mount this component into a target element (or CSS selector).
-   * @param {HTMLElement|string} target
-   * @returns {Component} this, for chaining
-   */
-  mount(target) {
-    const targetEl =
-      typeof target === "string" ? document.querySelector(target) : target;
-
-    if (!targetEl) {
-      throw new Error(`Mount target not found: ${target}`);
+    /**
+     * @param {object} props
+     */
+    constructor(props = {}) {
+        this.props = props;
+        this.el = null;
+        this._mountTarget = null;
+        this._mounted = false;
     }
 
-    this._mountTarget = targetEl;
-    this.el = this.render();
-    targetEl.replaceChildren(this.el);
-
-    if (typeof this.afterMount === "function") {
-      this.afterMount();
+    /**
+     * Must return the root DOM element for the component.
+     * @returns {HTMLElement}
+     */
+    render() {
+        throw new Error(`${this.constructor.name} must implement render()`);
     }
 
-    return this;
-  }
+    /**
+     * Mount the component into a target element.
+     * @param {HTMLElement|string} target
+     * @returns {Component}
+     */
+    mount(target) {
+        const targetEl =
+            typeof target === "string"
+                ? document.querySelector(target)
+                : target;
 
-  /**
-   * Re-render this component in place, preserving its mount target.
-   */
-  update() {
-    if (!this._mountTarget) return;
+        if (!targetEl) {
+            throw new Error(`Mount target not found: ${target}`);
+        }
 
-    if (typeof this.beforeUnmount === "function") {
-      this.beforeUnmount();
+        this._mountTarget = targetEl;
+        this.el = this.render();
+        this._mountTarget.replaceChildren(this.el);
+
+        this._mounted = true;
+
+        if (typeof this.afterMount === "function") {
+            this.afterMount();
+        }
+
+        return this;
     }
 
-    this.el = this.render();
-    this._mountTarget.replaceChildren(this.el);
+    /**
+     * Re-render the component while preserving its mount target.
+     * Does NOT invoke lifecycle hooks.
+     */
+    update() {
+        if (!this._mounted || !this._mountTarget) {
+            return;
+        }
 
-    if (typeof this.afterMount === "function") {
-      this.afterMount();
-    }
-  }
+        const newEl = this.render();
 
-  /**
-   * Remove this component's node from the document and run any cleanup
-   * (timers, event listeners on window/document, etc).
-   */
-  unmount() {
-    if (typeof this.beforeUnmount === "function") {
-      this.beforeUnmount();
+        this._mountTarget.replaceChildren(newEl);
+
+        this.el = newEl;
     }
-    this.el?.remove();
-    this.el = null;
-    this._mountTarget = null;
-  }
+
+    /**
+     * Remove the component from the DOM and clean up resources.
+     */
+    unmount() {
+        if (!this._mounted) {
+            return;
+        }
+
+        if (typeof this.beforeUnmount === "function") {
+            this.beforeUnmount();
+        }
+
+        this.el?.remove();
+
+        this.el = null;
+        this._mountTarget = null;
+        this._mounted = false;
+    }
 }
