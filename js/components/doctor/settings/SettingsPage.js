@@ -5,12 +5,13 @@ import { h } from "../../../utils/dom.js";
 
 export default class SettingsPage extends Component {
 
-    constructor(profile = {}) {
+    constructor(profile = {}, onNavigate = () => {}) {
 
         super();
-
+    
         this.profile = profile;
-
+        this.onNavigate = onNavigate;
+    
     }
 
     render() {
@@ -90,7 +91,7 @@ export default class SettingsPage extends Component {
             {
                 class: "dashboard-card settings-profile-card",
                 onclick: () => {
-                    window.location.hash = "/doctor/settings/profile";
+                    this.onNavigate("profile");
                 }
             },
 
