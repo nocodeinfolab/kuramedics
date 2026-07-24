@@ -43,41 +43,40 @@ class ApiService {
     async getCsrfToken() {
 
         if (this.csrfToken) {
-
+    
             return this.csrfToken;
-
+    
         }
-
+    
         console.log("----------------------------------------");
         console.log("Fetching CSRF token...");
-
+    
         const response = await fetch(
             `${API_BASE_URL}/csrf-token`,
             {
                 credentials: "include"
             }
         );
-
+    
         const result = await response.json();
-
+    
         console.log("CSRF response:", result);
-
+    
         if (!response.ok) {
-
+    
             throw new Error(
                 result.message || "Unable to obtain CSRF token."
             );
-
+    
         }
-
+    
         this.csrfToken = result.csrfToken;
-
+    
         console.log("CSRF token obtained.");
-
+    
         return this.csrfToken;
-
+    
     }
-
     async refreshAccessToken() {
 
         if (this.refreshPromise) {
