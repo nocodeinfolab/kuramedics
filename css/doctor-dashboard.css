@@ -193,28 +193,44 @@
   margin-bottom: var(--space-6);
 }
 
+/* ===== Dashboard Hero ===================================== */
+
 .dashboard-header {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--space-4);
+  background: linear-gradient(
+    135deg,
+    var(--color-primary),
+    var(--color-primary-dark)
+  );
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
+  box-shadow: var(--shadow-card);
+  color: var(--color-white);
 }
 
 .dashboard-greeting {
-  font-family: var(--font-mono);
-  font-size: var(--step-eyebrow);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--color-primary);
   margin: 0 0 var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.8);
 }
 
 .dashboard-title {
-  font-family: var(--font-display);
-  font-size: var(--step-h2);
-  font-weight: 600;
-  color: var(--color-ink);
   margin: 0;
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 5vw, 2rem);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--color-white);
+}
+
+.dashboard-subtitle {
+  margin-top: var(--space-2);
+  font-size: var(--step-small);
+  color: rgba(255, 255, 255, 0.85);
 }
 
 .stats-grid {
