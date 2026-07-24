@@ -8,7 +8,7 @@ class DoctorConsultationApiService {
      * @returns {Promise<Array>} List of consultation services
      */
     async getServices() {
-        const response = await api.get("/doctor-consultation-services");
+        const response = await api.get("/doctor/services");
         return response.data || response;
     }
 
@@ -18,7 +18,7 @@ class DoctorConsultationApiService {
      * @returns {Promise<Array>} List of enabled consultation services
      */
     async getPublicServices(doctorId) {
-        const response = await api.get(`/doctor-consultation-services/public/${doctorId}`);
+        const response = await api.get(`/doctor/services/public/${doctorId}`);
         return response.data || response;
     }
 
@@ -28,7 +28,7 @@ class DoctorConsultationApiService {
      * @returns {Promise<Object>} Created service record
      */
     async createService(serviceData) {
-        const response = await api.post("/doctor-consultation-services", serviceData);
+        const response = await api.post("/doctor/services", serviceData);
         return response.data || response;
     }
 
@@ -39,7 +39,7 @@ class DoctorConsultationApiService {
      * @returns {Promise<Object>} Updated service record
      */
     async updateService(serviceId, serviceData) {
-        const response = await api.patch(`/doctor-consultation-services/${serviceId}`, serviceData);
+        const response = await api.patch(`/doctor/services/${serviceId}`, serviceData);
         return response.data || response;
     }
 
@@ -49,7 +49,7 @@ class DoctorConsultationApiService {
      * @returns {Promise<Object>} Disabled service record
      */
     async deleteService(serviceId) {
-        const response = await api.delete(`/doctor-consultation-services/${serviceId}`);
+        const response = await api.delete(`/doctor/services/${serviceId}`);
         return response.data || response;
     }
 }
