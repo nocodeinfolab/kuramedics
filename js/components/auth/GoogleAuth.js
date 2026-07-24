@@ -4,16 +4,21 @@ const API_BASE_URL =
     "https://doctors-consultation-backend.onrender.com/api/v1";
 
 class GoogleAuth {
+
     constructor() {
+
         this.clientId =
             "249309356521-ajkp64pp89gru2pb1qqti3gahbe2ffcc.apps.googleusercontent.com";
+
     }
 
     renderButton(elementId, role, onSuccess, onError) {
 
-        console.log("1. Rendering Google Sign-In button...");
+        console.log("----------------------------------------");
+        console.log("GoogleAuth: Initializing Google Sign-In");
 
         if (!window.google?.accounts?.id) {
+
             console.error("Google Identity Services SDK not loaded.");
 
             onError?.(
@@ -23,18 +28,21 @@ class GoogleAuth {
             );
 
             return;
+
         }
 
         google.accounts.id.initialize({
+
             client_id: this.clientId,
 
             callback: async ({ credential }) => {
 
-                console.log("2. Google returned an ID token.");
+                console.log("----------------------------------------");
+                console.log("Google returned ID token.");
 
                 try {
 
-                    console.log("3. Sending ID token to backend...");
+                    console.log("Sending Google credential to backend...");
 
                     const response = await fetch(
                         `${API_BASE_URL}/auth/google`,
@@ -51,42 +59,53 @@ class GoogleAuth {
                         }
                     );
 
+                    console.log("HTTP Status:", response.status);
+
                     const result = await response.json();
 
-                    console.log("4. Backend response:", result);
+                    console.log("Backend Response:", result);
 
                     if (!response.ok) {
+
                         throw new Error(
                             result.message || "Google sign-in failed."
                         );
+
                     }
+
+                    console.log("Saving access token...");
 
                     localStorage.setItem(
                         "accessToken",
                         result.data.accessToken
                     );
 
-                    localStorage.setItem(
-                        "refreshToken",
-                        result.data.refreshToken
-                    );
+                    console.log("Caching user profile...");
 
                     localStorage.setItem(
                         "user",
                         JSON.stringify(result.data.user)
                     );
 
-                    console.log("5. Login successful.");
+                    console.log("Google login successful.");
+                    console.log("Refresh token stored securely in HttpOnly cookie.");
+                    console.log("----------------------------------------");
 
                     onSuccess?.(result.data);
 
                 } catch (error) {
 
-                    console.error("Google authentication failed:", error);
+                    console.error("----------------------------------------");
+                    console.error("Google authentication failed.");
+                    console.error(error);
+                    console.error("----------------------------------------");
 
                     onError?.(error);
+
                 }
+
             }
+
         });
 
         google.accounts.id.renderButton(
@@ -101,32 +120,62 @@ class GoogleAuth {
             }
         );
 
-        console.log("6. Google Sign-In button rendered.");
+        console.log("Google Sign-In button rendered.");
+        console.log("----------------------------------------");
+
     }
 
     logout() {
 
+        console.log("Logging out...");
+
         localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
         localStorage.removeItem("user");
 
         if (window.google?.accounts?.id) {
             google.accounts.id.disableAutoSelect();
         }
+
+        console.log("Local session cleared.");
+
     }
 
     getUser() {
+
         const user = localStorage.getItem("user");
-        return user ? JSON.parse(user) : null;
+
+        return user
+            ? JSON.parse(user)
+            : null;
+
     }
 
     isAuthenticated() {
+
         return !!localStorage.getItem("accessToken");
+
     }
 
     getAccessToken() {
+
         return localStorage.getItem("accessToken");
+
     }
+
+    setAccessToken(token) {
+
+        if (token) {
+
+            localStorage.setItem("accessToken", token);
+
+        } else {
+
+            localStorage.removeItem("accessToken");
+
+        }
+
+    }
+
 }
 
 export default new GoogleAuth();
