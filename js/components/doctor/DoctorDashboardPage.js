@@ -9,7 +9,7 @@ import PatientRecords from "./patients/PatientRecords.js";
 import MessagingPage from "./messaging/MessagingPage.js";
 import FinancialSummary from "./finance/FinancialSummary.js";
 import SettingsPage from "./settings/SettingsPage.js";
-import apiFetch from "../../services/api.js";
+import api from "../../services/api.js";
 
 export default class DoctorDashboardPage extends Component {
 
@@ -152,7 +152,7 @@ export default class DoctorDashboardPage extends Component {
             console.log("Sending request to:");
             console.log(`/doctor-profile/me`);
 
-            const result = await apiFetch("/doctor-profile/me");
+            const result = await api("/doctor-profile/me");
 
             console.log("Doctor profile API response:");
             console.log(result);
