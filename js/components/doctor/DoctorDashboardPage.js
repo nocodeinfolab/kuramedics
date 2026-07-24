@@ -4,12 +4,14 @@ import { Component } from "../../core/component.js";
 import { h } from "../../utils/dom.js";
 
 import DashboardHome from "./DashboardHome.js";
-
 import ConsultationQueue from "./consultations/ConsultationQueue.js";
 import PatientRecords from "./patients/PatientRecords.js";
 import MessagingPage from "./messaging/MessagingPage.js";
 import FinancialSummary from "./finance/FinancialSummary.js";
 import SettingsPage from "./settings/SettingsPage.js";
+
+const API_BASE_URL =
+    "https://doctors-consultation-backend.onrender.com/api/v1";
 
 export default class DoctorDashboardPage extends Component {
 
@@ -18,6 +20,7 @@ export default class DoctorDashboardPage extends Component {
 
         this.activeTab = "home";
 
+        this.loading = true;
         this.doctor = null;
 
         this.tabs = [
@@ -86,8 +89,13 @@ export default class DoctorDashboardPage extends Component {
 
             const token = localStorage.getItem("accessToken");
 
+            if (!token) {
+                window.location.hash = "/doctor/login";
+                return;
+            }
+
             const response = await fetch(
-                "/api/v1/doctor-profile/me",
+                `${API_BASE_URL}/doctor-profile/me`,
                 {
                     headers: {
                         Authorization: `Bearer ${token}`
@@ -97,19 +105,45 @@ export default class DoctorDashboardPage extends Component {
 
             const result = await response.json();
 
-            if (response.ok) {
-                this.doctor = result.data;
+            if (!response.ok) {
+                throw new Error(result.message || "Unable to load doctor profile.");
             }
 
-        } catch (err) {
+            this.doctor = result.data;
 
-            console.error(err);
+        } catch (error) {
+
+            console.error("Failed to load doctor profile:", error);
+
+            const cachedUser = localStorage.getItem("user");
+
+            if (cachedUser) {
+                this.doctor = JSON.parse(cachedUser);
+            }
+
+        } finally {
+
+            this.loading = false;
+
+            this.updatePage();
 
         }
 
     }
 
     renderCurrentPage() {
+
+        if (this.loading) {
+
+            return h(
+                "div",
+                {
+                    class: "dashboard-loading"
+                },
+                "Loading dashboard..."
+            );
+
+        }
 
         switch (this.activeTab) {
 
@@ -191,9 +225,17 @@ export default class DoctorDashboardPage extends Component {
 
     updatePage() {
 
+        if (!this.el) {
+            return;
+        }
+
         const container = this.el.querySelector(
             "#doctor-dashboard-content"
         );
+
+        if (!container) {
+            return;
+        }
 
         container.replaceChildren(
             this.renderCurrentPage()
