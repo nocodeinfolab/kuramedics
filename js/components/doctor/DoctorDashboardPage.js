@@ -225,60 +225,67 @@ export default class DoctorDashboardPage extends Component {
             "| Loading:",
             this.loading
         );
-
+    
+        // Helper method to navigate tabs directly from home or other views
+        const navigateToTab = (tabId, settingsView = "menu") => {
+            this.activeTab = tabId;
+            this.settingsView = settingsView;
+            this.updatePage();
+        };
+    
         switch (this.activeTab) {
-
+    
             case "home":
-                new DashboardHome(this.doctor).mount(container);
+                // Pass navigateToTab so clicking the banner switches to settings
+                new DashboardHome(this.doctor, (tabId) => navigateToTab(tabId)).mount(container);
                 break;
-
+    
             case "consultations":
                 new ConsultationQueue().mount(container);
                 break;
-
+    
             case "patients":
                 new PatientRecords().mount(container);
                 break;
-
+    
             case "messages":
                 new MessagingPage().mount(container);
                 break;
-
+    
             case "finance":
                 new FinancialSummary().mount(container);
                 break;
-
+    
             case "settings":
-                // 2. SWITCH BASED ON settingsView
                 if (this.settingsView === "profile") {
-
+    
                     new DoctorProfilePage(
                         this.doctor,
                         () => this.navigateSettings("menu")
                     ).mount(container);
-
+    
                 } else if (this.settingsView === "consultation-services") {
-
+    
                     new DoctorConsultationServicesPage(
                         this.doctor,
                         () => this.navigateSettings("menu")
                     ).mount(container);
-
+    
                 } else {
-
+    
                     new SettingsPage(
                         this.doctor,
                         view => this.navigateSettings(view)
                     ).mount(container);
-
+    
                 }
                 break;
-
+    
             default:
-                new DashboardHome(this.doctor).mount(container);
-
+                new DashboardHome(this.doctor, (tabId) => navigateToTab(tabId)).mount(container);
+    
         }
-
+    
     }
 
     navigateSettings(view) {
