@@ -1,6 +1,7 @@
 // js/components/auth/GoogleAuth.js
 
-const API_BASE_URL = "/api/v1";
+const API_BASE_URL =
+    "https://doctors-consultation-backend.onrender.com/api/v1";
 
 class GoogleAuth {
     constructor() {
