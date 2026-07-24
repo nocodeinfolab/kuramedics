@@ -13,6 +13,8 @@ export default class DoctorProfilePage extends Component {
         this.onBack = onBack;
 
         this.loading = true;
+        this.profileLoaded = false;   // guards against re-fetching on every afterMount()
+        this.loadingProfile = false;  // guards against overlapping fetches
         this.saving = false;
         this.uploadingAvatar = false;
         this.saveError = null;
@@ -59,11 +61,22 @@ export default class DoctorProfilePage extends Component {
 
     afterMount() {
 
-        this.loadProfile();
+        // afterMount() runs after every mount() AND every update() (the
+        // framework re-runs it to reattach listeners on the fresh DOM,
+        // since there's no diffing). loadProfile() must therefore only be
+        // triggered once, or every re-render re-fetches and re-renders
+        // forever — which is what was happening before this guard existed.
+        if (!this.profileLoaded && !this.loadingProfile) {
+
+            this.loadProfile();
+
+        }
 
     }
 
     async loadProfile() {
+
+        this.loadingProfile = true;
 
         try {
 
@@ -87,6 +100,8 @@ export default class DoctorProfilePage extends Component {
         finally {
 
             this.loading = false;
+            this.profileLoaded = true;
+            this.loadingProfile = false;
             this.update();
 
         }
