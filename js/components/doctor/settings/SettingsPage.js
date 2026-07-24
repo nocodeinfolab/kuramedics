@@ -101,15 +101,17 @@ export default class SettingsPage extends Component {
         return h(
             "div",
             {
-                class: "dashboard-card settings-menu-card settings-card--clickable",
+                class: "settings-menu-card",
                 onclick: () => this.onNavigate("consultation-services")
             },
-            h("h3", {}, "Consultation Services"),
+            h("div", { class: "settings-menu-card__icon" }, "💼"),
             h(
-                "p",
-                { class: "dashboard-muted" },
-                "Configure rates, service types, durations, and payment rules."
-            )
+                "div",
+                { class: "settings-menu-card__content" },
+                h("h3", { class: "settings-menu-card__title" }, "Consultation Services"),
+                h("p", { class: "settings-menu-card__text" }, "Manage service rates, durations, and availability notes.")
+            ),
+            h("div", { class: "settings-menu-card__arrow" }, "→")
         );
     }
 
