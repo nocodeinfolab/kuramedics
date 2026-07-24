@@ -52,11 +52,12 @@
 }
 
 .auth-title {
-    margin: 0;
+    font-family: "Fraunces", serif;
     font-size: clamp(2rem, 5vw, 2.5rem);
+    font-weight: 600;
     line-height: 1.1;
-    font-weight: 700;
     color: #1f2937;
+    margin: 0;
 }
 
 .auth-subtitle {
