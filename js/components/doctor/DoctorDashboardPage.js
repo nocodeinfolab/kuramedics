@@ -152,7 +152,7 @@ export default class DoctorDashboardPage extends Component {
             console.log("Sending request to:");
             console.log(`/doctor-profile/me`);
 
-            const result = await api("/doctor-profile/me");
+            const result = await api.get("/doctor-profile/me");
 
             console.log("Doctor profile API response:");
             console.log(result);
