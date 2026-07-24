@@ -8,13 +8,10 @@ class DoctorConsultationApiService {
      * @returns {Promise<Array>} List of consultation services
      */
     async getServices() {
-        const response = await api.get("/doctor/services");
-        
-        // Handle nested payload: response.data.data OR response.data OR response
-        if (Array.isArray(response)) return response;
-        if (Array.isArray(response?.data)) return response.data;
-        if (Array.isArray(response?.data?.data)) return response.data.data;
-        
+        const res = await api.get("/doctor/services");
+        // Check if response is { success: true, data: [...] } or direct array
+        if (Array.isArray(res)) return res;
+        if (Array.isArray(res?.data)) return res.data;
         return [];
     }
 
@@ -24,12 +21,9 @@ class DoctorConsultationApiService {
      * @returns {Promise<Array>} List of enabled consultation services
      */
     async getPublicServices(doctorId) {
-        const response = await api.get(`/doctor/services/public/${doctorId}`);
-        
-        if (Array.isArray(response)) return response;
-        if (Array.isArray(response?.data)) return response.data;
-        if (Array.isArray(response?.data?.data)) return response.data.data;
-
+        const res = await api.get(`/doctor/services/public/${doctorId}`);
+        if (Array.isArray(res)) return res;
+        if (Array.isArray(res?.data)) return res.data;
         return [];
     }
 
@@ -37,24 +31,24 @@ class DoctorConsultationApiService {
      * Create or upsert a new consultation service
      */
     async createService(serviceData) {
-        const response = await api.post("/doctor/services", serviceData);
-        return response?.data || response;
+        const res = await api.post("/doctor/services", serviceData);
+        return res?.data || res;
     }
 
     /**
      * Update an existing consultation service by ID
      */
     async updateService(serviceId, serviceData) {
-        const response = await api.patch(`/doctor/services/${serviceId}`, serviceData);
-        return response?.data || response;
+        const res = await api.patch(`/doctor/services/${serviceId}`, serviceData);
+        return res?.data || res;
     }
 
     /**
      * Soft-delete / disable a consultation service
      */
     async deleteService(serviceId) {
-        const response = await api.delete(`/doctor/services/${serviceId}`);
-        return response?.data || response;
+        const res = await api.delete(`/doctor/services/${serviceId}`);
+        return res?.data || res;
     }
 }
 
