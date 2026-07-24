@@ -82,18 +82,20 @@ export default class DoctorConsultationServicesPage extends Component {
             this.formData = this.getInitialFormData();
         }
         this.isModalOpen = true;
+        this.saving = false; // Reset saving state on open
         this.error = null;
         this.successMsg = null;
         this.update();                 
     }
-
+    
     handleCloseModal() {
         this.isModalOpen = false;
         this.editingServiceId = null;
+        this.saving = false; // Reset saving state on close
         this.formData = this.getInitialFormData();
         this.update();
     }
-
+    
     async handleSubmit(e) {
         e.preventDefault();
         this.saving = true;
@@ -124,7 +126,8 @@ export default class DoctorConsultationServicesPage extends Component {
         } catch (err) {
             console.error("Failed to save consultation service:", err);
             this.error = err.message || "Failed to save service.";
-            this.saving = false;
+        } finally {
+            this.saving = false; 
             this.update();
         }
     }
