@@ -82,7 +82,7 @@ export default class DoctorConsultationServicesPage extends Component {
             this.formData = this.getInitialFormData();
         }
         this.isModalOpen = true;
-        this.saving = false; // Reset saving state on open
+        this.saving = false;
         this.error = null;
         this.successMsg = null;
         this.update();                 
@@ -91,7 +91,7 @@ export default class DoctorConsultationServicesPage extends Component {
     handleCloseModal() {
         this.isModalOpen = false;
         this.editingServiceId = null;
-        this.saving = false; // Reset saving state on close
+        this.saving = false;
         this.formData = this.getInitialFormData();
         this.update();
     }
@@ -132,16 +132,27 @@ export default class DoctorConsultationServicesPage extends Component {
         }
     }
 
-    async handleDelete(serviceId) {
-        if (!confirm("Are you sure you want to disable this consultation service?")) return;
+    async handleToggleStatus(service) {
+        const serviceId = service.id || service.service_id;
+        const newStatus = !service.is_enabled;
+        const actionText = newStatus ? "enable" : "disable";
+
+        if (!confirm(`Are you sure you want to ${actionText} this consultation service?`)) return;
 
         try {
-            await doctorConsultationService.deleteService(serviceId);
-            this.successMsg = "Service disabled successfully.";
+            if (newStatus) {
+                // Re-enable service via update endpoint
+                await doctorConsultationService.updateService(serviceId, { ...service, is_enabled: true });
+                this.successMsg = "Service enabled successfully.";
+            } else {
+                // Disable service
+                await doctorConsultationService.deleteService(serviceId);
+                this.successMsg = "Service disabled successfully.";
+            }
             await this.fetchServices();
         } catch (err) {
-            console.error("Failed to delete service:", err);
-            this.error = err.message || "Failed to delete service.";
+            console.error(`Failed to ${actionText} service:`, err);
+            this.error = err.message || `Failed to ${actionText} service.`;
             this.update(); 
         }
     }
@@ -241,7 +252,7 @@ export default class DoctorConsultationServicesPage extends Component {
     }
 
     renderServiceCard(service) {
-        const serviceId = service.id || service.service_id;
+        const isActive = service.is_enabled;
 
         return h(
             "div",
@@ -257,14 +268,14 @@ export default class DoctorConsultationServicesPage extends Component {
                         "span",
                         { 
                             class: "dashboard-badge",
-                            style: service.is_enabled ? "background: #10b981;" : "background: var(--color-ink-faint);"
+                            style: isActive ? "background: #10b981;" : "background: var(--color-ink-faint);"
                         },
-                        service.is_enabled ? "Active" : "Disabled"
+                        isActive ? "Active" : "Disabled"
                     )
                 ),
                 h(
                     "div",
-                    { style: "display: flex; gap: var(--space-2);" },
+                    { style: "display: flex; gap: var(--space-2); align-items: center;" },
                     h(
                         "button",
                         {
@@ -274,14 +285,21 @@ export default class DoctorConsultationServicesPage extends Component {
                         },
                         "Edit"
                     ),
+                    /* Status Icon Toggle Button */
                     h(
                         "button",
                         {
                             class: "btn btn-outline",
-                            style: "padding: 0.4rem 0.8rem; font-size: var(--step-small); color: #ef4444; border-color: rgba(239, 68, 68, 0.3);",
-                            onclick: () => this.handleDelete(serviceId)
+                            title: isActive ? "Click to Disable Service" : "Click to Enable Service",
+                            ariaLabel: isActive ? "Disable Service" : "Enable Service",
+                            style: `padding: 0.4rem 0.6rem; font-size: 1.1rem; display: inline-flex; align-items: center; justify-content: center; ${
+                                isActive 
+                                    ? "color: #10b981; border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.05);" 
+                                    : "color: #ef4444; border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05);"
+                            }`,
+                            onclick: () => this.handleToggleStatus(service)
                         },
-                        "Disable"
+                        isActive ? "🟢" : "🔴" // Replace with inline SVG / Icon font if preferred
                     )
                 )
             ),
