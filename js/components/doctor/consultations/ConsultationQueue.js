@@ -1,7 +1,6 @@
 // js/components/doctor/queue/DoctorQueuePage.js
 
 import { Component } from "../../../core/component.js";
-import { h } from "../../../utils/dom.js";
 import api from "../../../services/api.js";
 import { h, autoGrow } from "../../../utils/dom.js";
 
