@@ -430,13 +430,13 @@ export default class DoctorQueuePage extends Component {
             "div",
             {
                 class: "dashboard-card",
-                style: "display: flex; flex-direction: column; gap: 6px; padding: 0.6rem 0.75rem;",
+                style: "display: flex; flex-direction: column; gap: 10px; padding: 0.85rem 1rem; margin-bottom: var(--space-3);",
             },
             h("input", {
                 type: "text",
                 placeholder: "Search by patient name...",
                 value: this.searchTerm,
-                style: "width: 100%; padding: 0.4rem 0.6rem; border: 1px solid var(--color-line); border-radius: 6px; font-size: 0.8rem; box-sizing: border-box;",
+                style: "width: 100%; padding: 0.55rem 0.7rem; border: 1px solid var(--color-line); border-radius: 6px; font-size: 0.88rem; box-sizing: border-box;",
                 oninput: e => this.setSearchTerm(e.target.value),
             }),
             this.activeTab === "completed" && this.getTabCount("completed") > 0
@@ -444,7 +444,7 @@ export default class DoctorQueuePage extends Component {
                       "button",
                       {
                           class: "btn btn-outline",
-                          style: "padding: 0.3rem 0.6rem; font-size: 0.72rem; border-radius: 5px; align-self: flex-start;",
+                          style: "padding: 0.4rem 0.75rem; font-size: 0.8rem; border-radius: 6px; align-self: flex-start;",
                           disabled: this.archivingAll,
                           onclick: () => this.handleArchiveAllCompleted(),
                       },
@@ -465,14 +465,14 @@ export default class DoctorQueuePage extends Component {
             "div",
             {
                 class: "dashboard-card",
-                style: "display: flex; gap: 6px; padding: 0.5rem; overflow-x: auto;",
+                style: "display: flex; gap: 8px; padding: 0.65rem 0.75rem; overflow-x: auto; margin-bottom: var(--space-3);",
             },
             tabs.map(tab =>
                 h(
                     "button",
                     {
                         class: `btn ${this.activeTab === tab.key ? "btn-primary" : "btn-outline"}`,
-                        style: "padding: 0.32rem 0.65rem; font-size: 0.72rem; border-radius: 5px; white-space: nowrap; flex-shrink: 0;",
+                        style: "padding: 0.42rem 0.8rem; font-size: 0.8rem; border-radius: 6px; white-space: nowrap; flex-shrink: 0;",
                         onclick: () => this.setTab(tab.key),
                     },
                     `${tab.label} (${this.getTabCount(tab.key)})`
@@ -521,21 +521,21 @@ export default class DoctorQueuePage extends Component {
 
         return h(
             "div",
-            { class: "dashboard-card service-item-card", style: "padding: 0.7rem 0.85rem;" },
+            { class: "dashboard-card service-item-card", style: "padding: 1rem 1.1rem; margin-bottom: var(--space-3);" },
             h(
                 "div",
-                { style: "display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-2);" },
+                { style: "display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-3);" },
                 h(
                     "div",
                     { style: "min-width: 0;" },
                     h(
                         "h3",
-                        { style: "margin: 0 0 2px; font-size: 0.92rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" },
+                        { style: "margin: 0 0 4px; font-size: 1.02rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" },
                         booking.patient_name || "Unknown Patient"
                     ),
                     h(
                         "p",
-                        { class: "dashboard-muted", style: "margin: 0; font-size: 0.7rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" },
+                        { class: "dashboard-muted", style: "margin: 0; font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" },
                         booking.patient_email || ""
                     )
                 ),
@@ -543,7 +543,7 @@ export default class DoctorQueuePage extends Component {
                     "span",
                     {
                         class: "dashboard-badge",
-                        style: `background: ${badgeColor}; font-size: 0.72rem; padding: 3px 8px; border-radius: 4px; white-space: nowrap; flex-shrink: 0;`,
+                        style: `background: ${badgeColor}; font-size: 0.7rem; padding: 3px 9px; border-radius: 5px; white-space: nowrap; flex-shrink: 0;`,
                     },
                     statusLabel
                 )
@@ -551,18 +551,18 @@ export default class DoctorQueuePage extends Component {
             h(
                 "div",
                 {
-                    style: "margin-top: var(--space-2); padding-top: var(--space-2); border-top: 1px solid var(--color-line); display: flex; flex-direction: column; gap: 4px;",
+                    style: "margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--color-line); display: flex; flex-direction: column; gap: 7px;",
                 },
                 h(
                     "p",
-                    { style: "margin: 0; font-size: 0.76rem;" },
-                    h("span", { class: "dashboard-muted", style: "font-size: 0.7rem;" }, "Requested: "),
+                    { style: "margin: 0; font-size: 0.86rem;" },
+                    h("span", { class: "dashboard-muted", style: "font-size: 0.78rem;" }, "Requested: "),
                     h("span", { style: "font-weight: 600;" }, this.formatDateTime(booking.booking_date))
                 ),
                 h(
                     "p",
-                    { style: "margin: 0; font-size: 0.76rem;" },
-                    h("span", { class: "dashboard-muted", style: "font-size: 0.7rem;" }, "Consult: "),
+                    { style: "margin: 0; font-size: 0.86rem;" },
+                    h("span", { class: "dashboard-muted", style: "font-size: 0.78rem;" }, "Consult: "),
                     h(
                         "span",
                         { style: "font-weight: 600;" },
@@ -579,29 +579,29 @@ export default class DoctorQueuePage extends Component {
     renderReasonSection(booking) {
         const parsed = this.parseReason(booking.reason);
         if (!parsed) return null;
-    
+
         const { type, tags, notes } = parsed;
         if (!type && tags.length === 0 && !notes) return null;
-    
+
         return h(
             "div",
-            { style: "margin-top: var(--space-2);" },
+            { style: "margin-top: var(--space-3);" },
             type
                 ? h(
                       "span",
-                      { style: "font-size: 0.85rem; font-weight: 600; color: var(--color-primary, #0284c7);" },
+                      { style: "font-size: 0.82rem; font-weight: 600; color: var(--color-primary, #0284c7);" },
                       type
                   )
                 : null,
             tags.length > 0
                 ? h(
                       "div",
-                      { style: "display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px;" },
+                      { style: "display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;" },
                       tags.map(tag =>
                           h(
                               "span",
                               {
-                                  style: "font-size: 0.78rem; line-height: 1.35; padding: 3px 8px; border-radius: 10px; background: var(--color-bg-muted, #f1f5f9); color: var(--color-ink-faint, #64748b); white-space: nowrap;",
+                                  style: "font-size: 0.76rem; line-height: 1.4; padding: 3px 9px; border-radius: 10px; background: var(--color-bg-muted, #f1f5f9); color: var(--color-ink-faint, #64748b); white-space: nowrap;",
                               },
                               `${tag.label}: ${tag.value}`
                           )
@@ -613,7 +613,7 @@ export default class DoctorQueuePage extends Component {
                       "p",
                       {
                           class: "dashboard-muted",
-                          style: "margin: 4px 0 0; font-size: 0.82rem; line-height: 1.4;",
+                          style: "margin: 6px 0 0; font-size: 0.8rem; line-height: 1.45;",
                       },
                       notes
                   )
@@ -624,7 +624,7 @@ export default class DoctorQueuePage extends Component {
     renderCardActions(booking, isProcessing) {
         const buttons = [];
 
-        const btnStyle = "padding: 0.3rem 0.6rem; font-size: 0.72rem; border-radius: 5px; line-height: 1.4;";
+        const btnStyle = "padding: 0.4rem 0.75rem; font-size: 0.8rem; border-radius: 6px; line-height: 1.4;";
 
         if (PENDING_STATUSES.includes(booking.status)) {
             buttons.push(
@@ -695,7 +695,7 @@ export default class DoctorQueuePage extends Component {
 
         return h(
             "div",
-            { style: "display: flex; gap: 6px; margin-top: var(--space-2); flex-wrap: wrap;" },
+            { style: "display: flex; gap: 8px; margin-top: var(--space-3); flex-wrap: wrap;" },
             buttons
         );
     }
@@ -703,8 +703,8 @@ export default class DoctorQueuePage extends Component {
     renderActionForm(booking, isProcessing) {
         const action = this.expandedAction;
 
-        const fieldLabelStyle = "display: block; margin-bottom: 3px; font-size: 0.68rem;";
-        const fieldInputStyle = "padding: 0.35rem; border: 1px solid var(--color-line); border-radius: 5px; width: 100%; font-size: 0.8rem; box-sizing: border-box;";
+        const fieldLabelStyle = "display: block; margin-bottom: 5px; font-size: 0.76rem;";
+        const fieldInputStyle = "padding: 0.5rem; border: 1px solid var(--color-line); border-radius: 6px; width: 100%; font-size: 0.88rem; box-sizing: border-box;";
 
         const dateField =
             action === "confirm" || action === "suggest"
@@ -727,7 +727,7 @@ export default class DoctorQueuePage extends Component {
 
         const noteField = h(
             "div",
-            { style: "margin-top: 6px;" },
+            { style: "margin-top: 10px;" },
             h(
                 "label",
                 { class: "dashboard-muted", style: fieldLabelStyle },
@@ -753,18 +753,18 @@ export default class DoctorQueuePage extends Component {
         return h(
             "div",
             {
-                style: "margin-top: var(--space-2); padding: 0.6rem; background: rgba(2,132,199,0.04); border-radius: 6px;",
+                style: "margin-top: var(--space-3); padding: 0.85rem; background: rgba(2,132,199,0.04); border-radius: 8px;",
             },
             dateField,
             noteField,
             h(
                 "div",
-                { style: "display: flex; gap: 6px; margin-top: 8px;" },
+                { style: "display: flex; gap: 8px; margin-top: 12px;" },
                 h(
                     "button",
                     {
                         class: "btn btn-primary",
-                        style: "padding: 0.3rem 0.6rem; font-size: 0.72rem; border-radius: 5px;",
+                        style: "padding: 0.4rem 0.75rem; font-size: 0.8rem; border-radius: 6px;",
                         disabled: isProcessing,
                         onclick: submitHandler,
                     },
@@ -774,7 +774,7 @@ export default class DoctorQueuePage extends Component {
                     "button",
                     {
                         class: "btn btn-outline",
-                        style: "padding: 0.3rem 0.6rem; font-size: 0.72rem; border-radius: 5px;",
+                        style: "padding: 0.4rem 0.75rem; font-size: 0.8rem; border-radius: 6px;",
                         disabled: isProcessing,
                         onclick: () => this.closeActionForm(),
                     },
