@@ -44,8 +44,10 @@ export default class DoctorQueuePage extends Component {
         this.expandedAction = null; // 'confirm' | 'suggest' | 'decline' | 'clinical_notes'
         this.draft = { date: "", note: "" };
 
-        // Tracks clinical notes drafts for each booking ID
+        // Tracks structured draft notes for each booking
         this.clinicalNotesMap = {};
+        this.draftSaveTimers = {};
+        this.draftSaving = {};
     }
 
     async afterMount() {
@@ -179,36 +181,34 @@ export default class DoctorQueuePage extends Component {
     }
 
     async handleSaveClinicalNotes(booking) {
-        const notes = this.clinicalNotesMap[booking.id] || "";
-        if (!notes.trim()) {
-            this.errorMessage = "Please enter clinical notes before saving.";
-            this.update();
-            return;
-        }
-
+        await this.saveDraft(booking.id);
+    
         this.actionLoadingId = booking.id;
         this.errorMessage = "";
         this.successMessage = "";
         this.update();
-
+    
         try {
-            // Option A: POST to record final clinical consultation notes
             await api.post("/consultations", {
-                booking_id: booking.id,
-                doctor_notes: notes,
+                booking_id: booking.id
             });
-
-            this.successMessage = `Clinical notes saved for ${booking.patient_name}.`;
+    
+            this.successMessage =
+                `Consultation completed for ${booking.patient_name}.`;
+    
             this.closeActionForm();
+    
         } catch (error) {
-            console.error("Failed to save clinical notes:", error);
-            this.errorMessage = error.message || "Failed to save clinical notes.";
+            console.error(error);
+    
+            this.errorMessage =
+                error.message || "Failed to complete consultation.";
+    
         } finally {
             this.actionLoadingId = null;
             this.update();
         }
     }
-
     async handleMarkCompleted(booking) {
         this.actionLoadingId = booking.id;
         this.errorMessage = "";
@@ -291,9 +291,18 @@ export default class DoctorQueuePage extends Component {
 
             try {
                 // Try fetching draft consultation notes
-                const res = await api.get(`/consultations/booking/${bookingId}/draft`);
+                const res = await api.get(
+                    `/consultations/booking/${bookingId}/draft`
+                );
+                
                 const draftData = res.data || res;
-                this.clinicalNotesMap[bookingId] = draftData.raw_notes || draftData.doctor_notes || "";
+                
+                this.clinicalNotesMap[bookingId] = {
+                    raw_notes: draftData.raw_notes || "",
+                    outcome_notes: draftData.outcome_notes || "",
+                    plan_notes: draftData.plan_notes || "",
+                    follow_up_notes: draftData.follow_up_notes || ""
+                };
             } catch (err) {
                 // Ignore 404s if no draft exists yet
                 this.clinicalNotesMap[bookingId] = "";
@@ -316,8 +325,47 @@ export default class DoctorQueuePage extends Component {
         this.draft = { ...this.draft, [field]: value };
     }
 
-    setClinicalNotes(bookingId, text) {
-        this.clinicalNotesMap[bookingId] = text;
+    setClinicalField(bookingId, field, value) {
+        const draft = this.clinicalNotesMap[bookingId] || {
+            raw_notes: "",
+            outcome_notes: "",
+            plan_notes: "",
+            follow_up_notes: ""
+        };
+    
+        draft[field] = value;
+        this.clinicalNotesMap[bookingId] = draft;
+    
+        this.scheduleDraftSave(bookingId);
+    
+        this.update();
+    }
+    scheduleDraftSave(bookingId) {
+        clearTimeout(this.draftSaveTimers[bookingId]);
+    
+        this.draftSaveTimers[bookingId] = setTimeout(() => {
+            this.saveDraft(bookingId);
+        }, 3000);
+    }
+    async saveDraft(bookingId) {
+        const draft = this.clinicalNotesMap[bookingId];
+    
+        if (!draft) return;
+    
+        this.draftSaving[bookingId] = true;
+        this.update();
+    
+        try {
+            await api.patch(
+                `/consultations/booking/${bookingId}/draft`,
+                draft
+            );
+        } catch (err) {
+            console.error("Draft save failed", err);
+        } finally {
+            this.draftSaving[bookingId] = false;
+            this.update();
+        }
     }
 
     setTab(tab) {
@@ -771,7 +819,12 @@ export default class DoctorQueuePage extends Component {
 
         // Render Clinical Notes view
         if (action === "clinical_notes") {
-            const notesValue = this.clinicalNotesMap[booking.id] || "";
+            const draft = this.clinicalNotesMap[booking.id] || {
+                raw_notes: "",
+                outcome_notes: "",
+                plan_notes: "",
+                follow_up_notes: ""
+            };
 
             return h(
                 "div",
@@ -805,7 +858,7 @@ export default class DoctorQueuePage extends Component {
                             disabled: isProcessing,
                             onclick: () => this.handleSaveClinicalNotes(booking),
                         },
-                        isProcessing ? "Saving..." : "Save Notes"
+                        isProcessing ? "Saving..." : "Complete Consultation"
                     ),
                     h(
                         "button",
@@ -849,14 +902,71 @@ export default class DoctorQueuePage extends Component {
                 { class: "dashboard-muted", style: fieldLabelStyle },
                 action === "decline" ? "Reason (optional)" : "Note (optional)"
             ),
+            h("label", {}, "Raw Notes"),
             h("textarea", {
-                value: this.draft.note,
-                rows: 2,
-                style: `${fieldInputStyle} font-family: inherit; resize: vertical;`,
-                oninput: e => this.setDraftField("note", e.target.value),
-            })
+                rows: 4,
+                value: draft.raw_notes,
+                oninput: e =>
+                    this.setClinicalField(
+                        booking.id,
+                        "raw_notes",
+                        e.target.value
+                    )
+            }),
+            
+            h("label", { style: "margin-top:12px;" }, "Outcome"),
+            h("textarea", {
+                rows: 3,
+                value: draft.outcome_notes,
+                oninput: e =>
+                    this.setClinicalField(
+                        booking.id,
+                        "outcome_notes",
+                        e.target.value
+                    )
+            }),
+            
+            h("label", { style: "margin-top:12px;" }, "Plan"),
+            h("textarea", {
+                rows: 3,
+                value: draft.plan_notes,
+                oninput: e =>
+                    this.setClinicalField(
+                        booking.id,
+                        "plan_notes",
+                        e.target.value
+                    )
+            }),
+            
+            h("label", { style: "margin-top:12px;" }, "Follow-up"),
+            h("textarea", {
+                rows: 3,
+                value: draft.follow_up_notes,
+                oninput: e =>
+                    this.setClinicalField(
+                        booking.id,
+                        "follow_up_notes",
+                        e.target.value
+                    )
+            }),
         );
-
+        this.draftSaving[booking.id]
+            ? h(
+                  "p",
+                  {
+                      class: "dashboard-muted",
+                      style: "margin-top:10px;font-size:0.75rem;"
+                  },
+                  "Saving draft..."
+              )
+            : h(
+                  "p",
+                  {
+                      class: "dashboard-muted",
+                      style: "margin-top:10px;font-size:0.75rem;"
+                  },
+                  "Draft saved automatically"
+              ),
         const submitLabel =
             action === "confirm" ? "Confirm" : action === "suggest" ? "Send Time" : "Confirm Decline";
 
