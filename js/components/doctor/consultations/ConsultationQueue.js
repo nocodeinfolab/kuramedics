@@ -813,11 +813,11 @@ export default class DoctorQueuePage extends Component {
 
     renderActionForm(booking, isProcessing) {
         const action = this.expandedAction;
-
+    
         const fieldLabelStyle = "display: block; margin-bottom: 5px; font-size: 0.76rem;";
         const fieldInputStyle = "padding: 0.5rem; border: 1px solid var(--color-line); border-radius: 6px; width: 100%; font-size: 0.88rem; box-sizing: border-box;";
-
-        // Render Clinical Notes view
+    
+        // 1. Render Clinical Notes view
         if (action === "clinical_notes") {
             const draft = this.clinicalNotesMap[booking.id] || {
                 raw_notes: "",
@@ -825,28 +825,52 @@ export default class DoctorQueuePage extends Component {
                 plan_notes: "",
                 follow_up_notes: ""
             };
-
+    
+            const isSaving = !!this.draftSaving[booking.id];
+    
             return h(
                 "div",
                 {
                     style: "margin-top: var(--space-3); padding: 0.85rem; background: rgba(2,132,199,0.04); border-radius: 8px;",
                 },
+                h("label", { class: "dashboard-muted", style: fieldLabelStyle }, "Raw Notes"),
+                h("textarea", {
+                    rows: 3,
+                    value: draft.raw_notes,
+                    style: `${fieldInputStyle} font-family: inherit; resize: vertical;`,
+                    oninput: e => this.setClinicalField(booking.id, "raw_notes", e.target.value)
+                }),
+                
+                h("label", { class: "dashboard-muted", style: `${fieldLabelStyle} margin-top:10px;` }, "Outcome"),
+                h("textarea", {
+                    rows: 2,
+                    value: draft.outcome_notes,
+                    style: `${fieldInputStyle} font-family: inherit; resize: vertical;`,
+                    oninput: e => this.setClinicalField(booking.id, "outcome_notes", e.target.value)
+                }),
+                
+                h("label", { class: "dashboard-muted", style: `${fieldLabelStyle} margin-top:10px;` }, "Plan"),
+                h("textarea", {
+                    rows: 2,
+                    value: draft.plan_notes,
+                    style: `${fieldInputStyle} font-family: inherit; resize: vertical;`,
+                    oninput: e => this.setClinicalField(booking.id, "plan_notes", e.target.value)
+                }),
+                
+                h("label", { class: "dashboard-muted", style: `${fieldLabelStyle} margin-top:10px;` }, "Follow-up"),
+                h("textarea", {
+                    rows: 2,
+                    value: draft.follow_up_notes,
+                    style: `${fieldInputStyle} font-family: inherit; resize: vertical;`,
+                    oninput: e => this.setClinicalField(booking.id, "follow_up_notes", e.target.value)
+                }),
+    
                 h(
-                    "div",
-                    {},
-                    h(
-                        "label",
-                        { class: "dashboard-muted", style: fieldLabelStyle },
-                        "Clinical Consultation Notes"
-                    ),
-                    h("textarea", {
-                        value: notesValue,
-                        rows: 4,
-                        placeholder: "Type examination, diagnosis, prescriptions, or follow-up notes here...",
-                        style: `${fieldInputStyle} font-family: inherit; resize: vertical;`,
-                        oninput: e => this.setClinicalNotes(booking.id, e.target.value),
-                    })
+                    "p",
+                    { class: "dashboard-muted", style: "margin-top:8px; font-size:0.75rem;" },
+                    isSaving ? "Saving draft..." : "Draft saved automatically"
                 ),
+    
                 h(
                     "div",
                     { style: "display: flex; gap: 8px; margin-top: 12px;" },
@@ -873,8 +897,8 @@ export default class DoctorQueuePage extends Component {
                 )
             );
         }
-
-        // Render Standard confirmation / suggest / decline forms
+    
+        // 2. Render Standard confirmation / suggest / decline forms
         const dateField =
             action === "confirm" || action === "suggest"
                 ? h(
@@ -893,7 +917,7 @@ export default class DoctorQueuePage extends Component {
                       })
                   )
                 : null;
-
+    
         const noteField = h(
             "div",
             { style: "margin-top: 10px;" },
@@ -902,80 +926,23 @@ export default class DoctorQueuePage extends Component {
                 { class: "dashboard-muted", style: fieldLabelStyle },
                 action === "decline" ? "Reason (optional)" : "Note (optional)"
             ),
-            h("label", {}, "Raw Notes"),
-            h("textarea", {
-                rows: 4,
-                value: draft.raw_notes,
-                oninput: e =>
-                    this.setClinicalField(
-                        booking.id,
-                        "raw_notes",
-                        e.target.value
-                    )
-            }),
-            
-            h("label", { style: "margin-top:12px;" }, "Outcome"),
             h("textarea", {
                 rows: 3,
-                value: draft.outcome_notes,
-                oninput: e =>
-                    this.setClinicalField(
-                        booking.id,
-                        "outcome_notes",
-                        e.target.value
-                    )
-            }),
-            
-            h("label", { style: "margin-top:12px;" }, "Plan"),
-            h("textarea", {
-                rows: 3,
-                value: draft.plan_notes,
-                oninput: e =>
-                    this.setClinicalField(
-                        booking.id,
-                        "plan_notes",
-                        e.target.value
-                    )
-            }),
-            
-            h("label", { style: "margin-top:12px;" }, "Follow-up"),
-            h("textarea", {
-                rows: 3,
-                value: draft.follow_up_notes,
-                oninput: e =>
-                    this.setClinicalField(
-                        booking.id,
-                        "follow_up_notes",
-                        e.target.value
-                    )
-            }),
+                value: this.draft.note,
+                style: `${fieldInputStyle} font-family: inherit; resize: vertical;`,
+                oninput: e => this.setDraftField("note", e.target.value),
+            })
         );
-        this.draftSaving[booking.id]
-            ? h(
-                  "p",
-                  {
-                      class: "dashboard-muted",
-                      style: "margin-top:10px;font-size:0.75rem;"
-                  },
-                  "Saving draft..."
-              )
-            : h(
-                  "p",
-                  {
-                      class: "dashboard-muted",
-                      style: "margin-top:10px;font-size:0.75rem;"
-                  },
-                  "Draft saved automatically"
-              ),
+    
         const submitLabel =
             action === "confirm" ? "Confirm" : action === "suggest" ? "Send Time" : "Confirm Decline";
-
+    
         const submitHandler = () => {
             if (action === "confirm") return this.handleConfirm(booking);
             if (action === "suggest") return this.handleSuggestTime(booking);
             if (action === "decline") return this.handleDecline(booking);
         };
-
+    
         return h(
             "div",
             {
