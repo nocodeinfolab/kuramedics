@@ -3,6 +3,7 @@
 import { Component } from "../../../core/component.js";
 import { h } from "../../../utils/dom.js";
 import api from "../../../services/api.js";
+import { h, autoGrow } from "../../../utils/dom.js";
 
 const PENDING_STATUSES = ["pending", "pending_confirmation", "reschedule_requested"];
 const CONFIRMED_STATUSES = ["confirmed"];
@@ -837,34 +838,50 @@ export default class DoctorQueuePage extends Component {
                 },
                 h("label", { class: "dashboard-muted", style: fieldLabelStyle }, "Raw Notes"),
                 h("textarea", {
+                    class: "autogrow-textarea",
                     rows: 3,
                     value: draft.raw_notes,
-                    style: `${fieldInputStyle} font-family: inherit; resize: vertical;`,
-                    oninput: e => this.setClinicalField(booking.id, "raw_notes", e.target.value)
+                    style: `${fieldInputStyle} font-family: inherit; resize: none; overflow: hidden;`,
+                    oninput: e => {
+                        this.setClinicalField(booking.id, "raw_notes", e.target.value);
+                        autoGrow(e.target);
+                    }
                 }),
                 
                 h("label", { class: "dashboard-muted", style: `${fieldLabelStyle} margin-top:10px;` }, "Outcome"),
                 h("textarea", {
+                    class: "autogrow-textarea",
                     rows: 2,
                     value: draft.outcome_notes,
-                    style: `${fieldInputStyle} font-family: inherit; resize: vertical;`,
-                    oninput: e => this.setClinicalField(booking.id, "outcome_notes", e.target.value)
+                    style: `${fieldInputStyle} font-family: inherit; resize: none; overflow: hidden;`,
+                    oninput: e => {
+                        this.setClinicalField(booking.id, "outcome_notes", e.target.value);
+                        autoGrow(e.target);
+                    }
                 }),
                 
                 h("label", { class: "dashboard-muted", style: `${fieldLabelStyle} margin-top:10px;` }, "Plan"),
                 h("textarea", {
+                    class: "autogrow-textarea",
                     rows: 2,
                     value: draft.plan_notes,
-                    style: `${fieldInputStyle} font-family: inherit; resize: vertical;`,
-                    oninput: e => this.setClinicalField(booking.id, "plan_notes", e.target.value)
+                    style: `${fieldInputStyle} font-family: inherit; resize: none; overflow: hidden;`,
+                    oninput: e => {
+                        this.setClinicalField(booking.id, "plan_notes", e.target.value);
+                        autoGrow(e.target);
+                    }
                 }),
                 
                 h("label", { class: "dashboard-muted", style: `${fieldLabelStyle} margin-top:10px;` }, "Follow-up"),
                 h("textarea", {
+                    class: "autogrow-textarea",
                     rows: 2,
                     value: draft.follow_up_notes,
-                    style: `${fieldInputStyle} font-family: inherit; resize: vertical;`,
-                    oninput: e => this.setClinicalField(booking.id, "follow_up_notes", e.target.value)
+                    style: `${fieldInputStyle} font-family: inherit; resize: none; overflow: hidden;`,
+                    oninput: e => {
+                        this.setClinicalField(booking.id, "follow_up_notes", e.target.value);
+                        autoGrow(e.target);
+                    }
                 }),
     
                 h(
@@ -1002,5 +1019,6 @@ export default class DoctorQueuePage extends Component {
         if (!this.el) return;
         const newTree = this.render();
         this.el.replaceChildren(...(Array.isArray(newTree) ? newTree : [newTree]).flat());
+        this.el.querySelectorAll(".autogrow-textarea").forEach(autoGrow);
     }
 }
