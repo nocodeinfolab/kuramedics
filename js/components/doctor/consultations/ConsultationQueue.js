@@ -293,11 +293,11 @@ export default class DoctorQueuePage extends Component {
                 // Try fetching draft consultation notes
                 const res = await api.get(
                     `/consultations/booking/${bookingId}/draft`
-
-                    console.log("Draft response:", res);
-                    console.log("Draft response.data:", res.data);
-                    console.log("Draft response.data?.data:", res.data?.data);
                 );
+                console.log("Draft response:", res);
+                console.log("Draft response.data:", res.data);
+                console.log("Draft response.data?.data:", res.data?.data);
+                
                 
                 const draftData = res.data || res;
                 
