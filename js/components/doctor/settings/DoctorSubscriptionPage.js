@@ -273,7 +273,7 @@ export default class DoctorSubscriptionPage extends Component {
         return h(
             "div",
             { class: "dashboard-card" },
-            h("h3", { style: "margin: 0 0 var(--space-3);" }, "Available Plans & Upgrades"),
+            h("h3", { style: "margin: 0 0 var(--space-3);" }, "Available Plans & s"),
             plans.length === 0
                 ? h("p", { class: "dashboard-muted" }, "No plans available at this time.")
                 : h(
@@ -310,7 +310,7 @@ export default class DoctorSubscriptionPage extends Component {
                                           disabled: isProcessing,
                                           onclick: () => this.handleRenew(plan.code)
                                       },
-                                      isProcessing ? "Initializing..." : isCurrent ? "Renew Current Plan" : `Upgrade to ${plan.label}`
+                                      isProcessing ? "Initializing..." : isCurrent ? "Renew Current Plan" : `Upgrade`
                                   )
                               ),
                               h("p", { class: "dashboard-muted", style: "margin-top: var(--space-3);" }, plan.description || "No description provided."),
