@@ -174,10 +174,10 @@ export default class DashboardHome extends Component {
         return h(
             "section",
             { class: "dashboard-section stats-grid" },
-            this.statCard("Today's Queue", "0"),
-            this.statCard("Patients", "0"),
-            this.statCard("Unread", "0"),
-            this.statCard("Earnings", "₦0")
+            this.statCard("Today's Queue", this.doctor?.todays_queue ?? 0),
+            this.statCard("Patients", this.doctor?.patients ?? 0),
+            this.statCard("Upcoming", this.doctor?.upcoming ?? 0),
+            this.statCard("Completed", this.doctor?.completed ?? 0)
         );
     }
 
