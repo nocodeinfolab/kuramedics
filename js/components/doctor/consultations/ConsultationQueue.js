@@ -835,7 +835,15 @@ export default class DoctorQueuePage extends Component {
                 {
                     style: "margin-top: var(--space-3); padding: 0.85rem; background: rgba(2,132,199,0.04); border-radius: 8px;",
                 },
+                h("p", {
+                    class: "dashboard-muted",
+                    style: "font-size: 0.72rem; margin-bottom: 10px; font-style: italic;"
+                }, "Outcome, Plan, and Follow-up notes are automatically visible to the patient."),
+            
                 h("label", { class: "dashboard-muted", style: fieldLabelStyle }, "Raw Notes"),
+                h("p", {
+                    style: "font-size: 0.7rem; color: #b45309; margin: -2px 0 6px;"
+                }, "Private — only visible to you. Not shared with the patient."),
                 h("textarea", {
                     class: "autogrow-textarea",
                     rows: 3,
@@ -846,7 +854,7 @@ export default class DoctorQueuePage extends Component {
                         autoGrow(e.target);
                     }
                 }),
-                
+            
                 h("label", { class: "dashboard-muted", style: `${fieldLabelStyle} margin-top:10px;` }, "Outcome"),
                 h("textarea", {
                     class: "autogrow-textarea",
@@ -858,7 +866,7 @@ export default class DoctorQueuePage extends Component {
                         autoGrow(e.target);
                     }
                 }),
-                
+            
                 h("label", { class: "dashboard-muted", style: `${fieldLabelStyle} margin-top:10px;` }, "Plan"),
                 h("textarea", {
                     class: "autogrow-textarea",
@@ -870,7 +878,7 @@ export default class DoctorQueuePage extends Component {
                         autoGrow(e.target);
                     }
                 }),
-                
+            
                 h("label", { class: "dashboard-muted", style: `${fieldLabelStyle} margin-top:10px;` }, "Follow-up"),
                 h("textarea", {
                     class: "autogrow-textarea",
@@ -886,7 +894,7 @@ export default class DoctorQueuePage extends Component {
                 h(
                     "p",
                     { class: "dashboard-muted", style: "margin-top:8px; font-size:0.75rem;" },
-                    isSaving ? "Saving draft..." : "Draft saved automatically"
+                    isSaving ? "Saving draft..." : "Draft saves automatically"
                 ),
     
                 h(
