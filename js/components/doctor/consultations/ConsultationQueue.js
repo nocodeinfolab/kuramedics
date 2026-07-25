@@ -337,8 +337,6 @@ export default class DoctorQueuePage extends Component {
         this.clinicalNotesMap[bookingId] = draft;
     
         this.scheduleDraftSave(bookingId);
-    
-        this.update();
     }
     scheduleDraftSave(bookingId) {
         clearTimeout(this.draftSaveTimers[bookingId]);
