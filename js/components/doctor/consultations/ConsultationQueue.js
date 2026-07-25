@@ -818,7 +818,7 @@ export default class DoctorQueuePage extends Component {
         const action = this.expandedAction;
     
         const fieldLabelStyle = "display: block; margin-bottom: 5px; font-size: 0.76rem; font-weight: 600; color: var(--color-text, #1e293b);";
-        const fieldInputStyle = "padding: 0.5rem; border: 1px solid var(--color-line); border-radius: 6px; width: 100%; font-size: 0.88rem; box-sizing: border-box;";
+        const fieldInputStyle = "padding: 0.5rem; border: 1.5px solid var(--color-line); border-radius: 6px; width: 100%; font-size: 0.88rem; box-sizing: border-box;";
     
         // 1. Render Clinical Notes view
         if (action === "clinical_notes") {
