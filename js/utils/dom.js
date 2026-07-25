@@ -20,10 +20,8 @@
  */
 export function h(tag, attrs = {}, ...children) {
   const el = document.createElement(tag);
-
   for (const [key, value] of Object.entries(attrs || {})) {
     if (value === null || value === undefined || value === false) continue;
-
     if (key === "class") {
       el.className = value;
     } else if (key === "html") {
@@ -32,13 +30,15 @@ export function h(tag, attrs = {}, ...children) {
       Object.assign(el.dataset, value);
     } else if (key.startsWith("on") && typeof value === "function") {
       el.addEventListener(key.slice(2).toLowerCase(), value);
+    } else if (key === "value" || key === "checked") {
+      el[key] = value; // set as a live DOM property, not an attribute —
+                        // required for <textarea>, and safer for checkboxes/radios
     } else if (typeof value === "boolean") {
       if (value) el.setAttribute(key, "");
     } else {
       el.setAttribute(key, value);
     }
   }
-
   appendChildren(el, children);
   return el;
 }
