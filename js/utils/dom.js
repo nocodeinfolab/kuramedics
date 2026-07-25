@@ -49,6 +49,11 @@ function appendChildren(el, children) {
     el.append(child.nodeType ? child : document.createTextNode(String(child)));
   }
 }
+/** Grows a textarea's height to fit its content, removing the need for a scrollbar. */
+export function autoGrow(el) {
+  el.style.height = "auto";
+  el.style.height = el.scrollHeight + "px";
+}
 
 /** Convenience for building raw SVG/text fragments trusted by this codebase. */
 export function raw(markup) {
