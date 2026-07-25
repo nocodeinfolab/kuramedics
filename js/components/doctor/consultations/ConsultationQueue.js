@@ -351,7 +351,7 @@ export default class DoctorQueuePage extends Component {
         if (!draft) return;
     
         this.draftSaving[bookingId] = true;
-        this.update();
+        
     
         try {
             await api.patch(
@@ -362,7 +362,7 @@ export default class DoctorQueuePage extends Component {
             console.error("Draft save failed", err);
         } finally {
             this.draftSaving[bookingId] = false;
-            this.update();
+            
         }
     }
 
