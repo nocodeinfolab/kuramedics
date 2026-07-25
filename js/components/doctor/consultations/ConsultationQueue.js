@@ -543,7 +543,7 @@ export default class DoctorQueuePage extends Component {
                     "span",
                     {
                         class: "dashboard-badge",
-                        style: `background: ${badgeColor}; font-size: 0.62rem; padding: 2px 7px; border-radius: 4px; white-space: nowrap; flex-shrink: 0;`,
+                        style: `background: ${badgeColor}; font-size: 0.72rem; padding: 3px 8px; border-radius: 4px; white-space: nowrap; flex-shrink: 0;`,
                     },
                     statusLabel
                 )
@@ -579,17 +579,17 @@ export default class DoctorQueuePage extends Component {
     renderReasonSection(booking) {
         const parsed = this.parseReason(booking.reason);
         if (!parsed) return null;
-
+    
         const { type, tags, notes } = parsed;
         if (!type && tags.length === 0 && !notes) return null;
-
+    
         return h(
             "div",
             { style: "margin-top: var(--space-2);" },
             type
                 ? h(
                       "span",
-                      { style: "font-size: 0.72rem; font-weight: 600; color: var(--color-primary, #0284c7);" },
+                      { style: "font-size: 0.85rem; font-weight: 600; color: var(--color-primary, #0284c7);" },
                       type
                   )
                 : null,
@@ -601,7 +601,7 @@ export default class DoctorQueuePage extends Component {
                           h(
                               "span",
                               {
-                                  style: "font-size: 0.68rem; line-height: 1.3; padding: 2px 7px; border-radius: 10px; background: var(--color-bg-muted, #f1f5f9); color: var(--color-ink-faint, #64748b); white-space: nowrap;",
+                                  style: "font-size: 0.78rem; line-height: 1.35; padding: 3px 8px; border-radius: 10px; background: var(--color-bg-muted, #f1f5f9); color: var(--color-ink-faint, #64748b); white-space: nowrap;",
                               },
                               `${tag.label}: ${tag.value}`
                           )
@@ -613,7 +613,7 @@ export default class DoctorQueuePage extends Component {
                       "p",
                       {
                           class: "dashboard-muted",
-                          style: "margin: 4px 0 0; font-size: 0.72rem; line-height: 1.35;",
+                          style: "margin: 4px 0 0; font-size: 0.82rem; line-height: 1.4;",
                       },
                       notes
                   )
