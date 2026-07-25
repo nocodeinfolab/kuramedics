@@ -193,6 +193,8 @@ export default class DoctorQueuePage extends Component {
                 booking_id: booking.id
             });
     
+            this.replaceBookingInList({ ...booking, status: "completed" });
+    
             this.successMessage =
                 `Consultation completed for ${booking.patient_name}.`;
     
