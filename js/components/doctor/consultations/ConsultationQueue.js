@@ -41,8 +41,11 @@ export default class DoctorQueuePage extends Component {
         this.searchTerm = "";
 
         this.expandedBookingId = null;
-        this.expandedAction = null; // 'confirm' | 'suggest' | 'decline'
+        this.expandedAction = null; // 'confirm' | 'suggest' | 'decline' | 'clinical_notes'
         this.draft = { date: "", note: "" };
+
+        // Tracks clinical notes drafts for each booking ID
+        this.clinicalNotesMap = {};
     }
 
     async afterMount() {
@@ -175,6 +178,37 @@ export default class DoctorQueuePage extends Component {
         }
     }
 
+    async handleSaveClinicalNotes(booking) {
+        const notes = this.clinicalNotesMap[booking.id] || "";
+        if (!notes.trim()) {
+            this.errorMessage = "Please enter clinical notes before saving.";
+            this.update();
+            return;
+        }
+
+        this.actionLoadingId = booking.id;
+        this.errorMessage = "";
+        this.successMessage = "";
+        this.update();
+
+        try {
+            // Option A: POST to record final clinical consultation notes
+            await api.post("/consultations", {
+                booking_id: booking.id,
+                doctor_notes: notes,
+            });
+
+            this.successMessage = `Clinical notes saved for ${booking.patient_name}.`;
+            this.closeActionForm();
+        } catch (error) {
+            console.error("Failed to save clinical notes:", error);
+            this.errorMessage = error.message || "Failed to save clinical notes.";
+        } finally {
+            this.actionLoadingId = null;
+            this.update();
+        }
+    }
+
     async handleMarkCompleted(booking) {
         this.actionLoadingId = booking.id;
         this.errorMessage = "";
@@ -244,11 +278,30 @@ export default class DoctorQueuePage extends Component {
 
     // ---------- Inline form state ----------
 
-    openActionForm(bookingId, action) {
+    async openActionForm(bookingId, action) {
         this.expandedBookingId = bookingId;
         this.expandedAction = action;
         this.draft = { date: "", note: "" };
         this.errorMessage = "";
+
+        // If opening clinical notes, fetch existing draft/consultation if not already loaded
+        if (action === "clinical_notes" && !this.clinicalNotesMap[bookingId]) {
+            this.actionLoadingId = bookingId;
+            this.update();
+
+            try {
+                // Try fetching draft consultation notes
+                const res = await api.get(`/consultations/booking/${bookingId}/draft`);
+                const draftData = res.data || res;
+                this.clinicalNotesMap[bookingId] = draftData.raw_notes || draftData.doctor_notes || "";
+            } catch (err) {
+                // Ignore 404s if no draft exists yet
+                this.clinicalNotesMap[bookingId] = "";
+            } finally {
+                this.actionLoadingId = null;
+            }
+        }
+
         this.update();
     }
 
@@ -261,6 +314,10 @@ export default class DoctorQueuePage extends Component {
 
     setDraftField(field, value) {
         this.draft = { ...this.draft, [field]: value };
+    }
+
+    setClinicalNotes(bookingId, text) {
+        this.clinicalNotesMap[bookingId] = text;
     }
 
     setTab(tab) {
@@ -300,9 +357,6 @@ export default class DoctorQueuePage extends Component {
 
     // ---------- Reason parsing ----------
 
-    // Parses strings like:
-    // "Video Consultation: Symptoms: headache | Duration: Not clearly stated | Notes: I am having headache and heart burns | Urgency: low"
-    // into { type: "Video Consultation", tags: [{label,value}], notes: "..." }
     parseReason(reason) {
         if (!reason || typeof reason !== "string") return null;
 
@@ -313,7 +367,6 @@ export default class DoctorQueuePage extends Component {
             if (idx !== -1 && (firstIdx === -1 || idx < firstIdx)) firstIdx = idx;
         }
 
-        // No recognizable structure — treat as plain freeform reason
         if (firstIdx === -1) return { type: null, tags: [], notes: reason.trim() };
 
         const type = firstIdx > 0 ? reason.slice(0, firstIdx).replace(/:\s*$/, "").trim() : null;
@@ -666,6 +719,16 @@ export default class DoctorQueuePage extends Component {
                 h(
                     "button",
                     {
+                        class: "btn btn-outline",
+                        style: btnStyle,
+                        disabled: isProcessing,
+                        onclick: () => this.openActionForm(booking.id, "clinical_notes"),
+                    },
+                    "Clinical Notes"
+                ),
+                h(
+                    "button",
+                    {
                         class: "btn btn-primary",
                         style: btnStyle,
                         disabled: isProcessing,
@@ -706,6 +769,59 @@ export default class DoctorQueuePage extends Component {
         const fieldLabelStyle = "display: block; margin-bottom: 5px; font-size: 0.76rem;";
         const fieldInputStyle = "padding: 0.5rem; border: 1px solid var(--color-line); border-radius: 6px; width: 100%; font-size: 0.88rem; box-sizing: border-box;";
 
+        // Render Clinical Notes view
+        if (action === "clinical_notes") {
+            const notesValue = this.clinicalNotesMap[booking.id] || "";
+
+            return h(
+                "div",
+                {
+                    style: "margin-top: var(--space-3); padding: 0.85rem; background: rgba(2,132,199,0.04); border-radius: 8px;",
+                },
+                h(
+                    "div",
+                    {},
+                    h(
+                        "label",
+                        { class: "dashboard-muted", style: fieldLabelStyle },
+                        "Clinical Consultation Notes"
+                    ),
+                    h("textarea", {
+                        value: notesValue,
+                        rows: 4,
+                        placeholder: "Type examination, diagnosis, prescriptions, or follow-up notes here...",
+                        style: `${fieldInputStyle} font-family: inherit; resize: vertical;`,
+                        oninput: e => this.setClinicalNotes(booking.id, e.target.value),
+                    })
+                ),
+                h(
+                    "div",
+                    { style: "display: flex; gap: 8px; margin-top: 12px;" },
+                    h(
+                        "button",
+                        {
+                            class: "btn btn-primary",
+                            style: "padding: 0.4rem 0.75rem; font-size: 0.8rem; border-radius: 6px;",
+                            disabled: isProcessing,
+                            onclick: () => this.handleSaveClinicalNotes(booking),
+                        },
+                        isProcessing ? "Saving..." : "Save Notes"
+                    ),
+                    h(
+                        "button",
+                        {
+                            class: "btn btn-outline",
+                            style: "padding: 0.4rem 0.75rem; font-size: 0.8rem; border-radius: 6px;",
+                            disabled: isProcessing,
+                            onclick: () => this.closeActionForm(),
+                        },
+                        "Cancel"
+                    )
+                )
+            );
+        }
+
+        // Render Standard confirmation / suggest / decline forms
         const dateField =
             action === "confirm" || action === "suggest"
                 ? h(
