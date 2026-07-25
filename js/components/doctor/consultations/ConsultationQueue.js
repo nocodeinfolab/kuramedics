@@ -812,11 +812,12 @@ export default class DoctorQueuePage extends Component {
             buttons
         );
     }
-
+    
+    
     renderActionForm(booking, isProcessing) {
         const action = this.expandedAction;
     
-        const fieldLabelStyle = "display: block; margin-bottom: 5px; font-size: 0.76rem;";
+        const fieldLabelStyle = "display: block; margin-bottom: 5px; font-size: 0.76rem; font-weight: 600; color: var(--color-text, #1e293b);";
         const fieldInputStyle = "padding: 0.5rem; border: 1px solid var(--color-line); border-radius: 6px; width: 100%; font-size: 0.88rem; box-sizing: border-box;";
     
         // 1. Render Clinical Notes view
@@ -840,7 +841,7 @@ export default class DoctorQueuePage extends Component {
                     style: "font-size: 0.72rem; margin-bottom: 10px; font-style: italic;"
                 }, "Outcome, Plan, and Follow-up notes are automatically visible to the patient."),
             
-                h("label", { class: "dashboard-muted", style: fieldLabelStyle }, "Raw Notes"),
+                h("label", { style: fieldLabelStyle }, "Raw Notes"),
                 h("p", {
                     style: "font-size: 0.7rem; color: #b45309; margin: -2px 0 6px;"
                 }, "Private — only visible to you. Not shared with the patient."),
@@ -855,7 +856,7 @@ export default class DoctorQueuePage extends Component {
                     }
                 }),
             
-                h("label", { class: "dashboard-muted", style: `${fieldLabelStyle} margin-top:10px;` }, "Outcome"),
+                h("label", { style: fieldLabelStyle }, "Outcome"),
                 h("textarea", {
                     class: "autogrow-textarea",
                     rows: 2,
@@ -867,7 +868,7 @@ export default class DoctorQueuePage extends Component {
                     }
                 }),
             
-                h("label", { class: "dashboard-muted", style: `${fieldLabelStyle} margin-top:10px;` }, "Plan"),
+                h("label", { style: fieldLabelStyle }, "Plan"),
                 h("textarea", {
                     class: "autogrow-textarea",
                     rows: 2,
@@ -879,7 +880,7 @@ export default class DoctorQueuePage extends Component {
                     }
                 }),
             
-                h("label", { class: "dashboard-muted", style: `${fieldLabelStyle} margin-top:10px;` }, "Follow-up"),
+                h("label", { style: fieldLabelStyle }, "Follow-up"),
                 h("textarea", {
                     class: "autogrow-textarea",
                     rows: 2,
