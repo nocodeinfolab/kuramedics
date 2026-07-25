@@ -44,6 +44,39 @@ export default class DashboardHome extends Component {
         }
     }
 
+    /**
+     * Returns a semantic tone for the current verification status,
+     * used to color-code badges consistently across the page.
+     */
+    getVerificationTone() {
+        const rawStatus = (
+            this.doctor?.verification_status || 
+            this.doctor?.status || 
+            ""
+        ).toLowerCase();
+
+        switch (rawStatus) {
+            case "verified":
+            case "approved":
+                return "success";
+            case "pending_review":
+            case "pending":
+                return "warning";
+            case "rejected":
+                return "danger";
+            default:
+                return "neutral";
+        }
+    }
+
+    getSubscriptionTone() {
+        const status = (this.doctor?.subscription_status || "active").toLowerCase();
+        if (status === "active" || status === "trialing") return "success";
+        if (status === "past_due" || status === "expiring") return "warning";
+        if (status === "cancelled" || status === "expired") return "danger";
+        return "neutral";
+    }
+
     render() {
         return h(
             "div",
@@ -74,8 +107,8 @@ export default class DashboardHome extends Component {
             h(
                 "div",
                 { class: "dashboard-hero-meta" },
-                this.badge(this.getFormattedVerificationStatus()),
-                this.badge(this.doctor.subscription_plan_name || "Starter Plan")
+                this.badge(this.getFormattedVerificationStatus(), this.getVerificationTone()),
+                this.badge(this.doctor.subscription_plan_name || "Starter Plan", this.getSubscriptionTone())
             )
         );
     }
@@ -149,22 +182,73 @@ export default class DashboardHome extends Component {
     }
 
     renderSubscription() {
+        const planName = this.doctor.subscription_plan_name || "Starter";
+        const status = this.doctor.subscription_status || "Active";
+        const tone = this.getSubscriptionTone();
+
         return h(
             "section",
             { class: "dashboard-card" },
-            h("h3", {}, "Subscription"),
-            h("p", { class: "dashboard-value" }, this.doctor.subscription_plan_name || "Starter"),
-            h("p", { class: "dashboard-muted" }, `Status: ${this.doctor.subscription_status || "Active"}`)
+            h(
+                "div",
+                { style: "display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);" },
+                h("h3", { style: "margin: 0;" }, "Subscription"),
+                this.badge(status, tone)
+            ),
+            h("p", { class: "dashboard-value", style: "margin-top: var(--space-2);" }, planName),
+            h(
+                "p",
+                { class: "dashboard-muted" },
+                "Your plan determines commission rates and platform visibility for new patients."
+            ),
+            h(
+                "button",
+                {
+                    class: "btn btn-outline",
+                    style: "margin-top: var(--space-3); padding: 0.4rem 0.9rem; font-size: var(--step-small);",
+                    onclick: () => this.onNavigate("subscription")
+                },
+                "Manage Subscription"
+            )
         );
     }
 
     renderVerification() {
+        const tone = this.getVerificationTone();
+        const label = this.getFormattedVerificationStatus();
+
+        const copy = {
+            success: "Your profile is verified. Patients can find and book you with confidence.",
+            warning: "Your submission is under review. We'll notify you as soon as it's approved.",
+            danger: "Your last submission needs attention before it can be approved. Please review and resubmit.",
+            neutral: "A verified badge builds trust with patients and improves your visibility in search results."
+        }[tone];
+
         return h(
             "section",
             { class: "dashboard-card" },
-            h("h3", {}, "Verification"),
-            h("p", { class: "dashboard-value" }, this.getFormattedVerificationStatus()),
-            h("p", { class: "dashboard-muted" }, "Verified doctors appear higher in patient search results.")
+            h(
+                "div",
+                { style: "display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);" },
+                h("h3", { style: "margin: 0;" }, "Verification"),
+                this.badge(label, tone)
+            ),
+            h(
+                "p",
+                { class: "dashboard-muted", style: "margin-top: var(--space-2);" },
+                copy
+            ),
+            tone !== "success"
+                ? h(
+                      "button",
+                      {
+                          class: "btn btn-outline",
+                          style: "margin-top: var(--space-3); padding: 0.4rem 0.9rem; font-size: var(--step-small);",
+                          onclick: () => this.onNavigate("settings")
+                      },
+                      tone === "danger" ? "Review Submission" : "Complete Profile"
+                  )
+                : null
         );
     }
 
@@ -210,7 +294,19 @@ export default class DashboardHome extends Component {
         );
     }
 
-    badge(text) {
-        return h("span", { class: "dashboard-badge" }, text);
+    
+    badge(text, tone = "neutral") {
+        const tones = {
+            success: "background: #10b981;",
+            warning: "background: #eab308;",
+            danger: "background: #ef4444;",
+            neutral: "" // falls back to default dashboard-badge styling
+        };
+
+        return h(
+            "span",
+            { class: "dashboard-badge", style: tones[tone] || "" },
+            text
+        );
     }
 }
