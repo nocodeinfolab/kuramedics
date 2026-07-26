@@ -242,7 +242,11 @@ export default class DoctorDashboardPage extends Component {
                 break;
     
             case "consultations":
-                new ConsultationQueue().mount(container);
+                new ConsultationQueue(this.doctor, (conversation) => {
+                    this.activeTab = "messages";
+                    this.pendingConversation = conversation;
+                    this.updatePage();
+                }).mount(container);
                 break;
     
             case "patients":
