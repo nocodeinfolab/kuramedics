@@ -151,8 +151,11 @@ export default class PatientDashboardPage extends Component {
         if (this.loading) {
             return h(
                 "div",
-                { class: "dashboard-loading" },
-                "Loading your dashboard..."
+                {
+                    class: "dashboard-loading",
+                    style: "width: 100%; min-height: 100vh; display: flex; align-items: center; justify-content: center; box-sizing: border-box;",
+                },
+                h("p", { class: "dashboard-muted" }, "Loading your dashboard...")
             );
         }
 
