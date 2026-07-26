@@ -128,10 +128,10 @@ export default class PatientDashboardPage extends Component {
             return h(
                 "div",
                 { class: "dashboard-loading" },
-                "Loading your dashboard..."
+                h("span", {}, "Loading your dashboard...")
             );
         }
-
+    
         if (this.needsOnboarding) {
             return this.renderOnboarding();
         }
