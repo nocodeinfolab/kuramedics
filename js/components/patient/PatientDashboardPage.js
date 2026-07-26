@@ -4,7 +4,7 @@ import { Component } from "../../core/component.js";
 import { h } from "../../utils/dom.js";
 import api from "../../services/api.js";
 import PatientCare from "./PatientCare.js";
-import PatientMessaging from "./messaging/PatientMessaging.js";
+import PatientMessaging from "./PatientMessaging.js";
 
 const REQUIRED_TRIAGE_FIELDS = ["date_of_birth", "gender"];
 
