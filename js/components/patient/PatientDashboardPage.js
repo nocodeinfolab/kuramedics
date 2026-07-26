@@ -375,7 +375,7 @@ export default class PatientDashboardPage extends Component {
                 container.replaceChildren(
                     this.renderComingSoon(
                         "Messages",
-                        "Secure messaging with your doctors. Secure messaging with your doctors. Secure messaging with your doctors."
+                        "Secure messaging with your doctors."
                     )
                 );
                 break;
