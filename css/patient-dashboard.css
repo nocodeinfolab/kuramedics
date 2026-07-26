@@ -314,3 +314,24 @@
   background: var(--color-primary-dark);
 }
 
+.dashboard-header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.dashboard-title {
+    margin: 0;
+}
+
+.dashboard-subtitle {
+    margin: 0;
+    opacity: 0.9;
+}
+
+.dashboard-date {
+    margin-top: var(--space-4);
+    font-size: 0.82rem;
+    color: rgba(255,255,255,.72);
+    font-weight: 500;
+}
