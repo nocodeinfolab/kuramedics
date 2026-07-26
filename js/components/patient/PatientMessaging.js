@@ -1,8 +1,8 @@
 // js/components/patient/messaging/PatientMessaging.js
 
-import { Component } from "../../../core/component.js";
-import { h } from "../../../utils/dom.js";
-import api from "../../../services/api.js";
+import { Component } from "../../core/component.js";
+import { h } from "../../utils/dom.js";
+import api from "../../services/api.js";
 
 const POLL_INTERVAL_MS = 8000;
 
