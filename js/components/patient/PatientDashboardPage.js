@@ -522,6 +522,16 @@ export default class PatientDashboardPage extends Component {
             )
         );
     }
+    formatDateTime(dateString) {
+        if (!dateString) return "";
+        return new Date(dateString).toLocaleString(undefined, {
+            weekday: "short",
+            month: "short",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        });
+    }
 
     update() {
         if (!this.el) return;
