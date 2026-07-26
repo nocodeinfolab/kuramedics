@@ -76,6 +76,8 @@ export default class PatientDashboardPage extends Component {
             { id: "messages", label: "Messages", icon: "chat" },
             { id: "profile", label: "Profile", icon: "person" },
         ];
+        this._tabInstances = {};
+        this._tabWrappers = {};
     }
 
     afterMount() {
@@ -367,16 +369,58 @@ export default class PatientDashboardPage extends Component {
     }
 
     mountCurrentPage(container) {
-        switch (this.activeTab) {
-            case "care":
-                new PatientCare(this.patient).mount(container);
-                break;
-            case "messages":
-                new PatientMessaging(this.patient).mount(container);
-                break;
-            default:
-                container.replaceChildren(this.renderActiveTab());
+        const cacheable = ["care", "messages"]; // tabs whose state should survive tab switches
+    
+        if (cacheable.includes(this.activeTab)) {
+            this.ensureTabMounted(container, this.activeTab);
+            this.showOnlyTab(container, this.activeTab);
+        } else {
+            // Non-cached tabs: clear any cached wrappers out of view, render fresh content
+            this.hideAllCachedWrappers(container);
+            container.querySelector("[data-static-tab]")?.remove();
+    
+            const staticNode = this.renderActiveTab();
+            staticNode.setAttribute?.("data-static-tab", "true");
+            container.appendChild(staticNode);
         }
+    }
+    
+    ensureTabMounted(container, tabId) {
+        if (this._tabInstances[tabId]) {
+            const wrapper = this._tabWrappers[tabId];
+            if (wrapper && wrapper.parentNode !== container) {
+                container.appendChild(wrapper);
+            }
+            return;
+        }
+    
+        const wrapper = document.createElement("div");
+        wrapper.dataset.tabWrapper = tabId;
+        container.appendChild(wrapper);
+        this._tabWrappers[tabId] = wrapper;
+    
+        const Ctor = tabId === "care" ? PatientCare : PatientMessaging;
+        const instance = new Ctor(this.patient);
+        this._tabInstances[tabId] = instance;
+    
+        instance.mount(wrapper);
+    }
+    
+    showOnlyTab(container, activeTabId) {
+        // Hide the static (non-cached) node if present
+        const staticNode = container.querySelector("[data-static-tab]");
+        if (staticNode) staticNode.style.display = "none";
+    
+        // Toggle visibility of each cached wrapper
+        Object.entries(this._tabWrappers).forEach(([tabId, wrapper]) => {
+            wrapper.style.display = tabId === activeTabId ? "" : "none";
+        });
+    }
+    
+    hideAllCachedWrappers(container) {
+        Object.values(this._tabWrappers).forEach(wrapper => {
+            wrapper.style.display = "none";
+        });
     }
 
     updatePage() {
@@ -818,5 +862,9 @@ export default class PatientDashboardPage extends Component {
         if (!this.el) return;
         const newTree = this.render();
         this.el.replaceChildren(...(Array.isArray(newTree) ? newTree : [newTree]).flat());
+    
+        if (!this.loading && !this.needsOnboarding) {
+            this.updatePage();
+        }
     }
 }
