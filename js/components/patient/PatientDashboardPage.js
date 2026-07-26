@@ -393,7 +393,21 @@ export default class PatientDashboardPage extends Component {
         this.mountCurrentPage(container);
     
         console.log("Active tab:", this.activeTab);
-        console.log(container.getBoundingClientRect());
+        console.log("Element:", container);
+        console.log("Tag:", container.tagName);
+        console.log("ID:", container.id);
+        console.log("Classes:", container.className);
+        console.log("Outer HTML:", container.outerHTML);
+    
+        const style = getComputedStyle(container);
+        console.log({
+            width: style.width,
+            maxWidth: style.maxWidth,
+            marginLeft: style.marginLeft,
+            marginRight: style.marginRight,
+            display: style.display,
+            position: style.position
+        });
     
         const buttons = this.el.querySelectorAll(".patient-bottom-nav__item");
         buttons.forEach((button, index) => {
@@ -403,7 +417,6 @@ export default class PatientDashboardPage extends Component {
             );
         });
     }
-
     renderHomeTab() {
         const summary = this.dashboardSummary;
         const hasProfileGaps =
