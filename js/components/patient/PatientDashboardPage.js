@@ -324,7 +324,8 @@ export default class PatientDashboardPage extends Component {
                 "section",
                 { class: "dashboard-header" },
                 h("p", { class: "dashboard-greeting" }, "Welcome back"),
-                h("h1", { class: "dashboard-title" }, this.patient?.full_name || "Your Dashboard")
+                h("h1", { class: "dashboard-title" }, this.patient?.full_name || "Your Dashboard"),
+                h("p", { class: "dashboard-subtitle" }, "Here's where things stand.")
             ),
 
             this.dashboardLoading
