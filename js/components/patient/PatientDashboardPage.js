@@ -31,6 +31,9 @@ export default class PatientDashboardPage extends Component {
         };
         this.onboardingSaving = false;
         this.onboardingError = "";
+        this.dashboardSummary = null;
+        this.dashboardLoading = true;
+        this.dashboardError = "";
 
         this.activeTab = "home";
 
@@ -60,6 +63,10 @@ export default class PatientDashboardPage extends Component {
             this.patient = profile;
             this.needsOnboarding = REQUIRED_TRIAGE_FIELDS.some(field => !profile?.[field]);
 
+            if (!this.needsOnboarding) {
+                this.loadDashboardSummary();
+            }
+
             if (this.needsOnboarding) {
                 this.onboardingDraft = {
                     date_of_birth: profile?.date_of_birth || "",
@@ -75,6 +82,22 @@ export default class PatientDashboardPage extends Component {
             this.needsOnboarding = true;
         } finally {
             this.loading = false;
+            this.update();
+        }
+    }
+    async loadDashboardSummary() {
+        this.dashboardLoading = true;
+        this.dashboardError = "";
+        this.update();
+
+        try {
+            const res = await api.get("/patient/dashboard/summary");
+            this.dashboardSummary = res.data || res;
+        } catch (error) {
+            console.error("Failed to load dashboard summary:", error);
+            this.dashboardError = error.message || "Failed to load your dashboard.";
+        } finally {
+            this.dashboardLoading = false;
             this.update();
         }
     }
@@ -104,6 +127,7 @@ export default class PatientDashboardPage extends Component {
 
             this.patient = profile;
             this.needsOnboarding = false;
+            this.loadDashboardSummary();
         } catch (error) {
             console.error("Failed to save patient profile:", error);
             this.onboardingError = error.message || "Failed to save your details. Please try again.";
@@ -289,6 +313,10 @@ export default class PatientDashboardPage extends Component {
     }
 
     renderHomeTab() {
+        const summary = this.dashboardSummary;
+        const hasProfileGaps =
+            !this.patient?.blood_group && !this.patient?.allergies && !this.patient?.chronic_conditions;
+
         return h(
             "div",
             { class: "dashboard-page" },
@@ -296,23 +324,163 @@ export default class PatientDashboardPage extends Component {
                 "section",
                 { class: "dashboard-header" },
                 h("p", { class: "dashboard-greeting" }, "Welcome back"),
-                h("h1", { class: "dashboard-title" }, this.patient?.full_name || "Your Dashboard"),
-                h("p", { class: "dashboard-subtitle" }, "Here's where things stand.")
+                h("h1", { class: "dashboard-title" }, this.patient?.full_name || "Your Dashboard")
             ),
+
+            this.dashboardLoading
+                ? h(
+                      "div",
+                      { class: "dashboard-card text-center py-4" },
+                      h("p", { class: "dashboard-muted" }, "Loading your dashboard...")
+                  )
+                : h(
+                      "div",
+                      { class: "services-list" },
+                      this.dashboardError
+                          ? h(
+                                "div",
+                                { class: "dashboard-card", style: "border-left: 4px solid #ef4444;" },
+                                h("p", { style: "color: #ef4444; margin: 0;" }, this.dashboardError)
+                            )
+                          : null,
+                      summary?.next_appointment ? this.renderNextAppointmentCard(summary.next_appointment) : null,
+                      summary?.unread_message_count > 0
+                          ? this.renderUnreadMessagesCard(summary.unread_message_count)
+                          : null,
+                      summary?.recent_consultation
+                          ? this.renderRecentConsultationCard(summary.recent_consultation)
+                          : null,
+                      hasProfileGaps ? this.renderProfileNudgeCard() : null,
+                      this.renderSymptomCheckCard()
+                  )
+        );
+    }
+
+    renderNextAppointmentCard(appointment) {
+        const statusLabel =
+            {
+                pending: "Pending",
+                pending_confirmation: "Awaiting Confirmation",
+                reschedule_requested: "New Time Suggested",
+                confirmed: "Confirmed",
+            }[appointment.status] || appointment.status;
+
+        const badgeColor = appointment.status === "confirmed" ? "#10b981" : "#f59e0b";
+
+        return h(
+            "div",
+            { class: "dashboard-card", style: "padding: 1rem 1.1rem;" },
             h(
                 "div",
-                { class: "dashboard-card", style: "padding: 1rem 1.1rem;" },
-                h("p", { class: "dashboard-muted", style: "margin: 0 0 4px; font-size: 0.8rem;" }, "Not feeling well?"),
-                h("p", { style: "margin: 0 0 12px; font-size: 0.92rem;" }, "Describe your symptoms and we'll help you find the right doctor."),
+                { style: "display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;" },
                 h(
-                    "button",
+                    "div",
+                    {},
+                    h("p", { class: "dashboard-muted", style: "margin: 0 0 4px; font-size: 0.78rem;" }, "Upcoming Appointment"),
+                    h("p", { style: "margin: 0 0 4px; font-size: 1rem; font-weight: 600;" }, appointment.doctor_name || "Your doctor"),
+                    h(
+                        "p",
+                        { class: "dashboard-muted", style: "margin: 0; font-size: 0.85rem;" },
+                        this.formatDateTime(appointment.booking_date)
+                    )
+                ),
+                h(
+                    "span",
                     {
-                        class: "btn btn-primary",
-                        style: "padding: 0.55rem 1rem; font-size: 0.85rem; border-radius: 8px;",
-                        onclick: () => this.setTab("find"),
+                        class: "dashboard-badge",
+                        style: `background: ${badgeColor}; font-size: 0.7rem; padding: 3px 9px; border-radius: 5px; white-space: nowrap;`,
                     },
-                    "Start symptom check"
+                    statusLabel
                 )
+            )
+        );
+    }
+
+    renderUnreadMessagesCard(count) {
+        return h(
+            "div",
+            {
+                class: "dashboard-card",
+                style: "padding: 1rem 1.1rem; display: flex; justify-content: space-between; align-items: center; gap: 10px; cursor: pointer;",
+                onclick: () => this.setTab("messages"),
+            },
+            h(
+                "p",
+                { style: "margin: 0; font-size: 0.9rem;" },
+                `You have ${count} new message${count === 1 ? "" : "s"}`
+            ),
+            h(
+                "button",
+                {
+                    class: "btn btn-outline",
+                    style: "padding: 0.4rem 0.8rem; font-size: 0.78rem; border-radius: 6px; flex-shrink: 0;",
+                },
+                "Open"
+            )
+        );
+    }
+
+    renderRecentConsultationCard(consultation) {
+        return h(
+            "div",
+            { class: "dashboard-card", style: "padding: 1rem 1.1rem;" },
+            h("p", { class: "dashboard-muted", style: "margin: 0 0 4px; font-size: 0.78rem;" }, "Recent Visit"),
+            h(
+                "p",
+                { style: "margin: 0 0 10px; font-size: 0.9rem;" },
+                `Your consultation with ${consultation.doctor_name || "your doctor"} is complete.`
+            ),
+            h(
+                "button",
+                {
+                    class: "btn btn-outline",
+                    style: "padding: 0.45rem 0.85rem; font-size: 0.8rem; border-radius: 6px;",
+                    onclick: () => this.setTab("care"),
+                },
+                "View my plan"
+            )
+        );
+    }
+
+    renderProfileNudgeCard() {
+        return h(
+            "div",
+            { class: "dashboard-card", style: "padding: 1rem 1.1rem; background: rgba(2,132,199,0.04);" },
+            h(
+                "p",
+                { style: "margin: 0 0 10px; font-size: 0.87rem;" },
+                "Add your allergies and health history so doctors and AI triage understand your situation better."
+            ),
+            h(
+                "button",
+                {
+                    class: "btn btn-outline",
+                    style: "padding: 0.45rem 0.85rem; font-size: 0.8rem; border-radius: 6px;",
+                    onclick: () => this.setTab("profile"),
+                },
+                "Complete your profile"
+            )
+        );
+    }
+
+    renderSymptomCheckCard() {
+        return h(
+            "div",
+            { class: "dashboard-card", style: "padding: 1rem 1.1rem;" },
+            h("p", { class: "dashboard-muted", style: "margin: 0 0 4px; font-size: 0.8rem;" }, "Not feeling well?"),
+            h(
+                "p",
+                { style: "margin: 0 0 12px; font-size: 0.92rem;" },
+                "Describe your symptoms and we'll help you find the right doctor."
+            ),
+            h(
+                "button",
+                {
+                    class: "btn btn-primary",
+                    style: "padding: 0.55rem 1rem; font-size: 0.85rem; border-radius: 8px;",
+                    onclick: () => this.setTab("find"),
+                },
+                "Start symptom check"
             )
         );
     }
