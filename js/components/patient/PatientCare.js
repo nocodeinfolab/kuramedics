@@ -153,7 +153,7 @@ export default class PatientCare extends Component {
     render() {
         return h(
             "div",
-            { class: "dashboard-page queue-page" },
+            { class: "dashboard-page" },
             this.renderHeader(),
             this.renderAlerts(),
             this.loading
