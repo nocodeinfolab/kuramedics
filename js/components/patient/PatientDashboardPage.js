@@ -364,30 +364,29 @@ export default class PatientDashboardPage extends Component {
         const hasProfileGaps =
             !this.patient?.blood_group && !this.patient?.allergies && !this.patient?.chronic_conditions;
 
+        // Determine if the patient has any appointments at all (upcoming or past)
+        const hasAnyAppointment = summary?.next_appointment || summary?.recent_consultation;
+
         return h(
             "div",
             { class: "dashboard-page" },
             h(
                 "section",
                 { class: "dashboard-header" },
-            
                 h(
                     "div",
                     { class: "dashboard-header__content" },
-            
                     h(
                         "h1",
                         { class: "dashboard-title" },
                         `${this.getGreeting()}, ${this.getFirstName(this.patient?.full_name)}`
                     ),
-            
                     h(
                         "p",
                         { class: "dashboard-subtitle" },
                         "Your personal healthcare hub."
                     ),
                     h("div", { class: "dashboard-header__divider" }),
-            
                     h(
                         "p",
                         { class: "dashboard-date" },
@@ -411,18 +410,117 @@ export default class PatientDashboardPage extends Component {
                                 h("p", { style: "color: #ef4444; margin: 0;" }, this.dashboardError)
                             )
                           : null,
-                      summary?.next_appointment ? this.renderNextAppointmentCard(summary.next_appointment) : null,
+
+                      // 1. Messages card (unread count or empty state)
                       summary?.unread_message_count > 0
                           ? this.renderUnreadMessagesCard(summary.unread_message_count)
-                          : null,
+                          : this.renderNoMessagesCard(),
+
+                      // 2. Appointment card (next appointment, or "Book your first appointment" if none at all)
+                      summary?.next_appointment
+                          ? this.renderNextAppointmentCard(summary.next_appointment)
+                          : hasAnyAppointment
+                              ? null // If there is a recent consultation but no upcoming, we skip the appointment card (the consultation card will show past visit)
+                              : this.renderBookFirstAppointmentCard(),
+
+                      // 3. Recent consultation card (actual or empty state)
                       summary?.recent_consultation
                           ? this.renderRecentConsultationCard(summary.recent_consultation)
-                          : null,
+                          : this.renderNoConsultationCard(),
+
+                      // 4. Profile nudge (always if gaps)
                       hasProfileGaps ? this.renderProfileNudgeCard() : null,
+
+                      // 5. Symptom check (always)
                       this.renderSymptomCheckCard()
                   )
         );
     }
+
+    // ---------- Card renderers for empty states ----------
+
+    renderNoMessagesCard() {
+        return h(
+            "div",
+            { class: "dashboard-card", style: "padding: 1rem 1.1rem; display: flex; justify-content: space-between; align-items: center; gap: 10px;" },
+            h(
+                "div",
+                { style: "display: flex; align-items: center; gap: 12px;" },
+                h(
+                    "div",
+                    { style: "padding: 8px; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" },
+                    Icons.message()
+                ),
+                h(
+                    "p",
+                    { style: "margin: 0; font-size: 0.9rem; color: #6b7280;" },
+                    "No new messages."
+                )
+            ),
+            h(
+                "button",
+                {
+                    class: "btn btn-outline",
+                    style: "padding: 0.4rem 0.8rem; font-size: 0.78rem; border-radius: 6px; flex-shrink: 0;",
+                    onclick: () => this.setTab("messages"),
+                },
+                "Open"
+            )
+        );
+    }
+
+    renderNoConsultationCard() {
+        return h(
+            "div",
+            { class: "dashboard-card", style: "padding: 1rem 1.1rem;" },
+            h(
+                "div",
+                { style: "display: flex; gap: 12px; align-items: center;" },
+                h(
+                    "div",
+                    { style: "padding: 8px; background: rgba(99, 102, 241, 0.1); color: #6366f1; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" },
+                    Icons.stethoscope()
+                ),
+                h(
+                    "p",
+                    { style: "margin: 0; font-size: 0.9rem; color: #6b7280;" },
+                    "You haven't had a consultation yet."
+                )
+            )
+        );
+    }
+
+    renderBookFirstAppointmentCard() {
+        return h(
+            "div",
+            { class: "dashboard-card", style: "padding: 1rem 1.1rem; display: flex; justify-content: space-between; align-items: center; gap: 10px;" },
+            h(
+                "div",
+                { style: "display: flex; align-items: center; gap: 12px;" },
+                h(
+                    "div",
+                    { style: "padding: 8px; background: rgba(16, 185, 129, 0.1); color: #10b981; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" },
+                    Icons.calendar()
+                ),
+                h(
+                    "p",
+                    { style: "margin: 0; font-size: 0.9rem;" },
+                    "Book your first appointment."
+                )
+            ),
+            h(
+                "button",
+                {
+                    class: "btn btn-primary",
+                    style: "padding: 0.4rem 0.8rem; font-size: 0.78rem; border-radius: 6px; flex-shrink: 0;",
+                    onclick: () => this.setTab("find"),
+                },
+                "Find Care"
+            )
+        );
+    }
+
+    // ---------- Existing card renderers (unchanged) ----------
 
     renderNextAppointmentCard(appointment) {
         const statusLabel =
@@ -647,6 +745,7 @@ export default class PatientDashboardPage extends Component {
             )
         );
     }
+
     formatDateTime(dateString) {
         if (!dateString) return "";
         return new Date(dateString).toLocaleString(undefined, {
@@ -657,6 +756,7 @@ export default class PatientDashboardPage extends Component {
             minute: "2-digit",
         });
     }
+
     getFirstName(fullName) {
         return fullName?.trim().split(" ")[0] || "";
     }
