@@ -1,42 +1,40 @@
 /* ==========================================================
-   Patient Dashboard (Solvlyt)
-   Shared shell with bottom tab bar on mobile and side rail 
-   from tablet/desktop up. Dedicated styling for onboarding, 
-   home, cards, and sub-page placeholders.
-   Built entirely from tokens.css using class object `CLS`.
+   Patient Dashboard
+   Shared shell (bottom tab bar on mobile, side rail from tablet up)
+   plus onboarding, home overview, and sub-pages.
+   Built entirely from design tokens.
    ========================================================== */
 
 :root {
-  --ptdb-nav-h: 64px;
-  --ptdb-rail-w: 232px;
+  --dash-nav-h: 64px;
+  --dash-rail-w: 232px;
 }
 
-/* ===== Root & Shell Layout ============================================== */
-
-.sv-ptdb-root {
+/* ===== Shell =========================================================== */
+.patient-dashboard {
   min-height: 100dvh;
   background: var(--color-bg-soft);
 }
 
-.sv-ptdb-loading-state {
+.patient-dashboard__content {
+  padding: var(--space-6) var(--space-5)
+    calc(var(--dash-nav-h) + env(safe-area-inset-bottom, 0px) + var(--space-6));
+  max-width: 960px;
+  margin-inline: auto;
+  animation: dash-fade-in var(--duration-medium) var(--ease-out);
+}
+
+.dashboard-loading {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 100dvh;
+  min-height: 50vh;
   font-family: var(--font-body);
-  font-size: var(--step-body, 1rem);
-  color: var(--color-ink-soft);
+  font-size: var(--step-lead);
+  color: var(--color-ink-faint);
 }
 
-.sv-ptdb-content-outlet {
-  padding: var(--space-5) var(--space-4)
-    calc(var(--ptdb-nav-h) + env(safe-area-inset-bottom, 0px) + var(--space-6));
-  max-width: 800px;
-  margin-inline: auto;
-  animation: ptdb-fade-in var(--duration-medium) var(--ease-out);
-}
-
-@keyframes ptdb-fade-in {
+@keyframes dash-fade-in {
   from {
     opacity: 0;
     transform: translateY(6px);
@@ -47,9 +45,8 @@
   }
 }
 
-/* ===== Bottom Navigation (Mobile default) =============================== */
-
-.sv-ptdb-bottom-nav {
+/* ===== Bottom tab bar (mobile, default) ================================ */
+.patient-bottom-nav {
   position: fixed;
   inset: auto 0 0 0;
   z-index: 50;
@@ -60,7 +57,7 @@
   padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 
-.sv-ptdb-bottom-nav-item {
+.patient-bottom-nav__item {
   position: relative;
   flex: 1;
   display: flex;
@@ -68,7 +65,7 @@
   align-items: center;
   justify-content: center;
   gap: var(--space-1);
-  height: var(--ptdb-nav-h);
+  height: var(--dash-nav-h);
   padding: 0;
   background: transparent;
   border: none;
@@ -77,7 +74,7 @@
   transition: color var(--duration-fast) var(--ease-out);
 }
 
-.sv-ptdb-bottom-nav-item::before {
+.patient-bottom-nav__item::before {
   content: "";
   position: absolute;
   top: 0;
@@ -90,19 +87,19 @@
   transition: transform var(--duration-fast) var(--ease-out);
 }
 
-.sv-ptdb-bottom-nav-item-active {
+.patient-bottom-nav__item--active {
   color: var(--color-primary);
 }
 
-.sv-ptdb-bottom-nav-item-active::before {
+.patient-bottom-nav__item--active::before {
   transform: translateX(-50%) scaleX(1);
 }
 
-.sv-ptdb-bottom-nav-item:hover {
+.patient-bottom-nav__item:hover {
   color: var(--color-primary-dark);
 }
 
-.sv-ptdb-bottom-nav-icon {
+.patient-bottom-nav__icon {
   width: 21px;
   height: 21px;
   background-color: currentColor;
@@ -115,28 +112,27 @@
   flex: none;
 }
 
-.sv-ptdb-bottom-nav-label {
+.patient-bottom-nav__label {
   font-family: var(--font-body);
   font-size: 0.68rem;
   font-weight: 600;
   letter-spacing: 0.01em;
 }
 
-/* ===== Navigation Icon Glyphs (CSS mask via tab icon name) ============== */
-
+/* ===== Icon glyphs (CSS mask, tint via currentColor) ==================== */
 .icon-house {
   -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 11.5 12 4l8 7.5'/%3E%3Cpath d='M6 10.5V19a1 1 0 0 0 1 1h4v-6h2v6h4a1 1 0 0 0 1-1v-8.5'/%3E%3C/svg%3E");
   mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 11.5 12 4l8 7.5'/%3E%3Cpath d='M6 10.5V19a1 1 0 0 0 1 1h4v-6h2v6h4a1 1 0 0 0 1-1v-8.5'/%3E%3C/svg%3E");
 }
 
 .icon-search {
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E");
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.3-4.3'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E");
 }
 
 .icon-heart {
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z'/%3E%3C/svg%3E");
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.72-8.72 1.06-1.06a5.5 5.5 0 0 0 0-7.78z'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l8.72-8.72 1.06-1.06a5.5 5.5 0 0 0 0-7.78z'/%3E%3C/svg%3E");
 }
 
 .icon-chat {
@@ -145,26 +141,25 @@
 }
 
 .icon-person {
-  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='12' cy='7' r='4'/%3E%3C/svg%3E");
-  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='12' cy='7' r='4'/%3E%3C/svg%3E");
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='12' cy='7' r='4'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2'/%3E%3Ccircle cx='12' cy='7' r='4'/%3E%3C/svg%3E");
 }
 
-/* ===== Side Rail Layout (Tablet & Desktop) ============================== */
-
+/* ===== Side rail (tablet and up) ======================================= */
 @media (min-width: 900px) {
-  .sv-ptdb-root {
+  .patient-dashboard {
     display: grid;
-    grid-template-columns: var(--ptdb-rail-w) 1fr;
+    grid-template-columns: var(--dash-rail-w) 1fr;
   }
 
-  .sv-ptdb-content-outlet {
+  .patient-dashboard__content {
     grid-column: 2;
-    padding: var(--space-8) var(--space-6);
+    padding: var(--space-8) var(--space-7);
     max-width: 880px;
     margin-inline: 0;
   }
 
-  .sv-ptdb-bottom-nav {
+  .patient-bottom-nav {
     position: sticky;
     top: 0;
     inset: auto;
@@ -181,7 +176,7 @@
     background: var(--color-white);
   }
 
-  .sv-ptdb-bottom-nav-item {
+  .patient-bottom-nav__item {
     flex-direction: row;
     justify-content: flex-start;
     gap: var(--space-3);
@@ -190,12 +185,15 @@
     border-radius: var(--radius-md);
   }
 
-  .sv-ptdb-bottom-nav-item:hover,
-  .sv-ptdb-bottom-nav-item-active {
+  .patient-bottom-nav__item:hover {
     background: var(--color-primary-soft);
   }
 
-  .sv-ptdb-bottom-nav-item::before {
+  .patient-bottom-nav__item--active {
+    background: var(--color-primary-soft);
+  }
+
+  .patient-bottom-nav__item::before {
     top: 50%;
     left: 0;
     width: 3px;
@@ -204,123 +202,21 @@
     transform: translateY(-50%) scaleY(0);
   }
 
-  .sv-ptdb-bottom-nav-item-active::before {
+  .patient-bottom-nav__item--active::before {
     transform: translateY(-50%) scaleY(1);
   }
 
-  .sv-ptdb-bottom-nav-label {
-    font-size: var(--step-small, 0.85rem);
+  .patient-bottom-nav__label {
+    font-size: var(--step-small);
   }
 }
 
-/* ===== Onboarding View ================================================= */
-
-.sv-ptdb-onboarding-page {
-  animation: ptdb-fade-in var(--duration-medium) var(--ease-out);
+/* ===== Dashboard Pages & Components ==================================== */
+.dashboard-page {
+  animation: dash-fade-in var(--duration-medium) var(--ease-out);
 }
 
-.sv-ptdb-onboarding-header {
-  background: linear-gradient(
-    135deg,
-    var(--color-primary),
-    var(--color-primary-dark)
-  );
-  border-radius: var(--radius-xl);
-  padding: var(--space-6);
-  margin-bottom: var(--space-5);
-  box-shadow: var(--shadow-card);
-  color: var(--color-white);
-}
-
-.sv-ptdb-onboarding-title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: clamp(1.4rem, 4vw, 1.8rem);
-  font-weight: 700;
-  line-height: 1.25;
-  color: var(--color-white);
-}
-
-.sv-ptdb-onboarding-subtitle {
-  margin-top: var(--space-2);
-  margin-bottom: 0;
-  font-size: var(--step-small, 0.875rem);
-  color: rgba(255, 255, 255, 0.85);
-}
-
-.sv-ptdb-onboarding-date {
-  margin-top: var(--space-1);
-  margin-bottom: 0;
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.75);
-}
-
-.sv-ptdb-onboarding-card {
-  background: var(--color-white);
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
-}
-
-.sv-ptdb-onboarding-field-label {
-  color: var(--color-ink);
-  font-family: var(--font-body);
-}
-
-.sv-ptdb-onboarding-field-input {
-  background: var(--color-white);
-  color: var(--color-ink);
-  transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
-}
-
-.sv-ptdb-onboarding-field-input:focus {
-  outline: none;
-  border-color: var(--color-primary) !important;
-  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
-}
-
-.sv-ptdb-onboarding-submit-btn {
-  width: 100%;
-  border: none;
-  background: var(--color-primary);
-  color: var(--color-white);
-  font-weight: 600;
-  cursor: pointer;
-  transition: background var(--duration-fast), transform var(--duration-fast), opacity var(--duration-fast);
-}
-
-.sv-ptdb-onboarding-submit-btn:hover:not(:disabled) {
-  background: var(--color-primary-dark);
-  transform: translateY(-1px);
-}
-
-.sv-ptdb-onboarding-submit-btn:disabled {
-  opacity: 0.65;
-  cursor: not-allowed;
-}
-
-.sv-ptdb-onboarding-error-box,
-.sv-ptdb-home-error-box {
-  background: #fef2f2;
-  padding: var(--space-3) var(--space-4);
-  border-radius: var(--radius-md);
-}
-
-.sv-ptdb-onboarding-error-text,
-.sv-ptdb-home-error-text {
-  font-size: var(--step-small, 0.875rem);
-}
-
-/* ===== Home Tab & Services Layout ====================================== */
-
-.sv-ptdb-home-page {
-  animation: ptdb-fade-in var(--duration-medium) var(--ease-out);
-}
-
-.sv-ptdb-home-header {
+.dashboard-header {
   background: linear-gradient(
     135deg,
     var(--color-primary),
@@ -333,208 +229,125 @@
   color: var(--color-white);
 }
 
-.sv-ptdb-home-title {
+.dashboard-greeting {
+  margin: 0 0 var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.dashboard-title {
   margin: 0;
   font-family: var(--font-display);
-  font-size: clamp(1.5rem, 5vw, 2rem);
+  font-size: clamp(1.35rem, 4vw, 1.7rem);
   font-weight: 700;
   line-height: 1.2;
   color: var(--color-white);
 }
 
-.sv-ptdb-home-subtitle {
+.dashboard-subtitle {
   margin-top: var(--space-2);
-  margin-bottom: 0;
-  font-size: var(--step-small, 0.875rem);
+  font-size: var(--step-small);
   color: rgba(255, 255, 255, 0.85);
 }
 
-.sv-ptdb-home-divider {
-  height: 1px;
-  background: rgba(255, 255, 255, 0.2);
-  margin: var(--space-4) 0 var(--space-3);
-}
-
-.sv-ptdb-home-date {
-  margin: 0;
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.sv-ptdb-home-services-list {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-4);
-}
-
-.sv-ptdb-home-loading-card {
+.dashboard-card {
   background: var(--color-white);
   border: 1px solid var(--color-line);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
+  padding: var(--space-5);
+  margin-bottom: var(--space-4);
 }
 
-.sv-ptdb-home-loading-text {
-  margin: 0;
-  color: var(--color-ink-soft);
-  font-size: var(--step-small, 0.875rem);
+.dashboard-muted {
+  color: var(--color-ink-faint) !important;
+  font-size: var(--step-small);
 }
 
-/* ===== Reusable Cards & Actions ========================================= */
-
-.sv-ptdb-card {
-  background: var(--color-white);
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
-  transition: box-shadow var(--duration-fast), transform var(--duration-fast);
+.text-center {
+  text-align: center;
 }
 
-.sv-ptdb-card[onclick]:hover {
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-lg, 0 10px 15px -3px rgba(0, 0, 0, 0.1));
+.py-4 {
+  padding-top: var(--space-6);
+  padding-bottom: var(--space-6);
 }
 
-.sv-ptdb-card-icon-wrap {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.sv-ptdb-card-text-muted {
-  color: var(--color-ink-faint, #6b7280);
-}
-
-.sv-ptdb-card-text-body {
-  color: var(--color-ink);
-  font-weight: 500;
-}
-
-.sv-ptdb-card-text-heading {
-  color: var(--color-ink);
-  font-family: var(--font-display);
-}
-
-.sv-ptdb-card-badge {
-  font-family: var(--font-mono);
-  font-weight: 600;
-  letter-spacing: 0.02em;
-}
-
-/* Action Buttons within Cards */
-
-.sv-ptdb-card-btn-outline {
+/* ===== Form Controls & Buttons ========================================= */
+.btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: transparent;
-  border: 1px solid var(--color-line);
-  color: var(--color-ink);
-  font-weight: 600;
-  cursor: pointer;
-  transition: background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-fast);
-}
-
-.sv-ptdb-card-btn-outline:hover {
-  background: var(--color-bg-soft);
-  border-color: var(--color-ink-faint);
-  transform: translateY(-1px);
-}
-
-.sv-ptdb-card-btn-primary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-primary);
+  gap: 0.6rem;
   border: none;
-  color: var(--color-white);
+  border-radius: var(--radius-md);
+  padding: 0.95rem 1.25rem;
+  font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background var(--duration-fast), transform var(--duration-fast);
+  transition:
+    background var(--duration-fast),
+    transform var(--duration-fast),
+    opacity var(--duration-fast);
 }
 
-.sv-ptdb-card-btn-primary:hover {
-  background: var(--color-primary-dark);
+.btn:hover {
   transform: translateY(-1px);
 }
 
-/* ===== Sub-page Placeholders =========================================== */
-
-.sv-ptdb-placeholder-page {
-  animation: ptdb-fade-in var(--duration-medium) var(--ease-out);
+.btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
 }
 
-.sv-ptdb-placeholder-header {
-  margin-bottom: var(--space-5);
+.btn-primary {
+  background: var(--color-primary);
+  color: var(--color-white);
 }
 
-.sv-ptdb-placeholder-title {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: var(--step-h2, 1.5rem);
-  font-weight: 700;
-  color: var(--color-ink);
+.btn-primary:hover {
+  background: var(--color-primary-dark);
 }
 
-.sv-ptdb-placeholder-card {
-  background: var(--color-white);
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
+.dashboard-header {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
 }
 
-.sv-ptdb-placeholder-description {
-  margin: 0;
-  color: var(--color-ink-soft);
-  font-size: 0.95rem;
+.dashboard-title {
+    margin: 0;
 }
 
-.sv-ptdb-placeholder-coming-soon {
-  color: var(--color-ink-faint);
-  font-family: var(--font-mono);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-.sv-ptdb-placeholder-page {
-  animation: ptdb-fade-in var(--duration-medium) var(--ease-out);
-  width: 100%;
+.dashboard-subtitle {
+    margin: 0;
+    opacity: 0.9;
 }
 
-.sv-ptdb-placeholder-card {
-  background: var(--color-white);
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-card);
-  width: 100%;
-  box-sizing: border-box;
-  
-  /* Give it a min-height so short tabs match taller ones */
-  min-height: 180px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
+.dashboard-date {
+    margin-top: var(--space-4);
+    font-size: 0.82rem;
+    color: rgba(255,255,255,.72);
+    font-weight: 500;
+}
+.dashboard-header__divider {
+    width: 100%;
+    height: 1px;
+    margin: var(--space-5) 0 var(--space-4);
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255,255,255,.45) 15%,
+        rgba(255,255,255,.45) 85%,
+        transparent
+    );
 }
 
-/* ===== Accessibility & Motion Preferences ============================== */
-
-@media (prefers-reduced-motion: reduce) {
-  .sv-ptdb-content-outlet,
-  .sv-ptdb-onboarding-page,
-  .sv-ptdb-home-page,
-  .sv-ptdb-placeholder-page {
-    animation: none;
-  }
-
-  .sv-ptdb-bottom-nav-item::before,
-  .sv-ptdb-card,
-  .sv-ptdb-onboarding-submit-btn,
-  .sv-ptdb-card-btn-outline,
-  .sv-ptdb-card-btn-primary {
-    transition: none;
-  }
+.patient-dashboard__content:has(.patient-messaging-page) {
+  max-width: 100% !important;
 }
