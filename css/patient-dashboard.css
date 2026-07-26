@@ -152,7 +152,7 @@
     grid-template-columns: var(--dash-rail-w) 1fr;
   }
   .patient-dashboard__content {
-    grid-column: 2;
+    grid-column: 3;
     padding: var(--space-8) var(--space-7);
     max-width: 880px;
     margin-inline: 0;
