@@ -215,7 +215,7 @@ export default class PatientMessaging extends Component {
             this.loading && this.view === "list"
                 ? h(
                       "div",
-                      { class: "dashboard-card text-center py-4" },
+                      { class: "dashboard-page queue-page patient-messaging-page" },
                       h("p", { class: "dashboard-muted" }, "Loading messages...")
                   )
                 : this.view === "list"
