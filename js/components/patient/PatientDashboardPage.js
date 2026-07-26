@@ -372,12 +372,7 @@ export default class PatientDashboardPage extends Component {
                 new PatientCare(this.patient).mount(container);
                 break;
             case "messages":
-                container.replaceChildren(
-                    this.renderComingSoon(
-                        "Messages",
-                        "Secure messaging with your doctors.Secure messaging with your doctors.Secure messaging with your doctors.Secure messaging with your doctors."
-                    )
-                );
+                new PatientMessaging(this.patient).mount(container);
                 break;
             default:
                 container.replaceChildren(this.renderActiveTab());
