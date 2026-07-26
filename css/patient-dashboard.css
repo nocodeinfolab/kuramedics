@@ -347,3 +347,7 @@
         transparent
     );
 }
+
+.patient-dashboard__content:has(.patient-messaging-page) {
+  max-width: 100% !important;
+}
