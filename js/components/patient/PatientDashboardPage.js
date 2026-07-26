@@ -339,11 +339,30 @@ export default class PatientDashboardPage extends Component {
             h(
                 "section",
                 { class: "dashboard-header" },
-                h("p", { class: "dashboard-greeting" }, "Welcome back"),
-                h("h1", { class: "dashboard-title" }, this.patient?.full_name || "Your Dashboard"),
-                h("p", { class: "dashboard-subtitle" }, "Your personal healthcare hub.")
+            
+                h(
+                    "div",
+                    { class: "dashboard-header__content" },
+            
+                    h(
+                        "h1",
+                        { class: "dashboard-title" },
+                        `${this.getGreeting()}, ${this.getFirstName(this.patient?.full_name)}`
+                    ),
+            
+                    h(
+                        "p",
+                        { class: "dashboard-subtitle" },
+                        "Your personal healthcare hub."
+                    ),
+            
+                    h(
+                        "p",
+                        { class: "dashboard-date" },
+                        this.getTodayLabel()
+                    )
+                )
             ),
-
             this.dashboardLoading
                 ? h(
                       "div",
