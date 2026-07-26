@@ -14,6 +14,36 @@ const GENDER_OPTIONS = [
 ];
 const BLOOD_GROUP_OPTIONS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", "Not sure"];
 
+// Inline Modern SVG Icons Helper
+const Icons = {
+    calendar: () => h("svg", { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" },
+        h("rect", { x: "3", y: "4", width: "18", height: "18", rx: "2", ry: "2" }),
+        h("line", { x1: "16", y1: "2", x2: "16", y2: "6" }),
+        h("line", { x1: "8", y1: "2", x2: "8", y2: "6" }),
+        h("line", { x1: "3", y1: "10", x2: "21", y2: "10" })
+    ),
+    message: () => h("svg", { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" },
+        h("path", { d: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" })
+    ),
+    stethoscope: () => h("svg", { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" },
+        h("path", { d: "M4.8 2.3A.3.3 0 0 0 4.5 2.6V8.5a5.5 5.5 0 0 0 11 0V2.6a.3.3 0 0 0-.3-.3h-1.4a.3.3 0 0 0-.3.3v5.9a3.5 3.5 0 0 1-7 0V2.6a.3.3 0 0 0-.3-.3H4.8z" }),
+        h("path", { d: "M10 14v2a4 4 0 0 0 4 4h1a3 3 0 1 0 0-6h-1" })
+    ),
+    userCheck: () => h("svg", { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" },
+        h("path", { d: "M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" }),
+        h("circle", { cx: "8.5", cy: "7", r: "4" }),
+        h("polyline", { points: "17 11 19 13 23 9" })
+    ),
+    activity: () => h("svg", { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" },
+        h("polyline", { points: "22 12 18 12 15 21 9 3 6 12 2 12" })
+    ),
+    alert: () => h("svg", { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" },
+        h("circle", { cx: "12", cy: "12", r: "10" }),
+        h("line", { x1: "12", y1: "8", x2: "12", y2: "12" }),
+        h("line", { x1: "12", y1: "16", x2: "12.01", y2: "16" })
+    )
+};
+
 export default class PatientDashboardPage extends Component {
     constructor() {
         super();
@@ -85,6 +115,7 @@ export default class PatientDashboardPage extends Component {
             this.update();
         }
     }
+
     async loadDashboardSummary() {
         this.dashboardLoading = true;
         this.dashboardError = "";
@@ -409,23 +440,32 @@ export default class PatientDashboardPage extends Component {
             { class: "dashboard-card", style: "padding: 1rem 1.1rem;" },
             h(
                 "div",
-                { style: "display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;" },
+                { style: "display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;" },
                 h(
                     "div",
-                    {},
-                    h("p", { class: "dashboard-muted", style: "margin: 0 0 4px; font-size: 0.78rem;" }, "Upcoming Appointment"),
-                    h("p", { style: "margin: 0 0 4px; font-size: 1rem; font-weight: 600;" }, appointment.doctor_name || "Your doctor"),
+                    { style: "display: flex; gap: 12px; align-items: flex-start;" },
                     h(
-                        "p",
-                        { class: "dashboard-muted", style: "margin: 0; font-size: 0.85rem;" },
-                        this.formatDateTime(appointment.booking_date)
+                        "div",
+                        { style: "padding: 8px; background: rgba(16, 185, 129, 0.1); color: #10b981; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" },
+                        Icons.calendar()
+                    ),
+                    h(
+                        "div",
+                        {},
+                        h("p", { class: "dashboard-muted", style: "margin: 0 0 4px; font-size: 0.78rem;" }, "Upcoming Appointment"),
+                        h("p", { style: "margin: 0 0 4px; font-size: 1rem; font-weight: 600;" }, appointment.doctor_name || "Your doctor"),
+                        h(
+                            "p",
+                            { class: "dashboard-muted", style: "margin: 0; font-size: 0.85rem;" },
+                            this.formatDateTime(appointment.booking_date)
+                        )
                     )
                 ),
                 h(
                     "span",
                     {
                         class: "dashboard-badge",
-                        style: `background: ${badgeColor}; font-size: 0.7rem; padding: 3px 9px; border-radius: 5px; white-space: nowrap;`,
+                        style: `background: ${badgeColor}; font-size: 0.7rem; padding: 3px 9px; border-radius: 5px; white-space: nowrap; color: #ffffff;`,
                     },
                     statusLabel
                 )
@@ -442,9 +482,18 @@ export default class PatientDashboardPage extends Component {
                 onclick: () => this.setTab("messages"),
             },
             h(
-                "p",
-                { style: "margin: 0; font-size: 0.9rem;" },
-                `You have ${count} new message${count === 1 ? "" : "s"}`
+                "div",
+                { style: "display: flex; align-items: center; gap: 12px;" },
+                h(
+                    "div",
+                    { style: "padding: 8px; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" },
+                    Icons.message()
+                ),
+                h(
+                    "p",
+                    { style: "margin: 0; font-size: 0.9rem;" },
+                    `You have ${count} new message${count === 1 ? "" : "s"}`
+                )
             ),
             h(
                 "button",
@@ -461,20 +510,33 @@ export default class PatientDashboardPage extends Component {
         return h(
             "div",
             { class: "dashboard-card", style: "padding: 1rem 1.1rem;" },
-            h("p", { class: "dashboard-muted", style: "margin: 0 0 4px; font-size: 0.78rem;" }, "Recent Visit"),
             h(
-                "p",
-                { style: "margin: 0 0 10px; font-size: 0.9rem;" },
-                `Your consultation with ${consultation.doctor_name || "your doctor"} is complete.`
-            ),
-            h(
-                "button",
-                {
-                    class: "btn btn-outline",
-                    style: "padding: 0.45rem 0.85rem; font-size: 0.8rem; border-radius: 6px;",
-                    onclick: () => this.setTab("care"),
-                },
-                "View my consultation notes"
+                "div",
+                { style: "display: flex; gap: 12px; align-items: flex-start;" },
+                h(
+                    "div",
+                    { style: "padding: 8px; background: rgba(99, 102, 241, 0.1); color: #6366f1; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" },
+                    Icons.stethoscope()
+                ),
+                h(
+                    "div",
+                    {},
+                    h("p", { class: "dashboard-muted", style: "margin: 0 0 4px; font-size: 0.78rem;" }, "Recent Visit"),
+                    h(
+                        "p",
+                        { style: "margin: 0 0 10px; font-size: 0.9rem;" },
+                        `Your consultation with ${consultation.doctor_name || "your doctor"} is complete.`
+                    ),
+                    h(
+                        "button",
+                        {
+                            class: "btn btn-outline",
+                            style: "padding: 0.45rem 0.85rem; font-size: 0.8rem; border-radius: 6px;",
+                            onclick: () => this.setTab("care"),
+                        },
+                        "View my consultation notes"
+                    )
+                )
             )
         );
     }
@@ -484,18 +546,31 @@ export default class PatientDashboardPage extends Component {
             "div",
             { class: "dashboard-card", style: "padding: 1rem 1.1rem; background: rgba(2,132,199,0.04);" },
             h(
-                "p",
-                { style: "margin: 0 0 10px; font-size: 0.87rem;" },
-                "Add your allergies and health history so doctors and AI triage understand your situation better."
-            ),
-            h(
-                "button",
-                {
-                    class: "btn btn-outline",
-                    style: "padding: 0.45rem 0.85rem; font-size: 0.8rem; border-radius: 6px;",
-                    onclick: () => this.setTab("profile"),
-                },
-                "Complete your profile"
+                "div",
+                { style: "display: flex; gap: 12px; align-items: flex-start;" },
+                h(
+                    "div",
+                    { style: "padding: 8px; background: rgba(2, 132, 199, 0.1); color: #0284c7; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" },
+                    Icons.userCheck()
+                ),
+                h(
+                    "div",
+                    {},
+                    h(
+                        "p",
+                        { style: "margin: 0 0 10px; font-size: 0.87rem;" },
+                        "Add your allergies and health history so doctors and AI triage understand your situation better."
+                    ),
+                    h(
+                        "button",
+                        {
+                            class: "btn btn-outline",
+                            style: "padding: 0.45rem 0.85rem; font-size: 0.8rem; border-radius: 6px;",
+                            onclick: () => this.setTab("profile"),
+                        },
+                        "Complete your profile"
+                    )
+                )
             )
         );
     }
@@ -504,20 +579,33 @@ export default class PatientDashboardPage extends Component {
         return h(
             "div",
             { class: "dashboard-card", style: "padding: 1rem 1.1rem;" },
-            h("p", { class: "dashboard-muted", style: "margin: 0 0 4px; font-size: 0.8rem;" }, "Not feeling well?"),
             h(
-                "p",
-                { style: "margin: 0 0 12px; font-size: 0.92rem;" },
-                "Describe your symptoms and we'll help you find the right doctor."
-            ),
-            h(
-                "button",
-                {
-                    class: "btn btn-primary",
-                    style: "padding: 0.55rem 1rem; font-size: 0.85rem; border-radius: 8px;",
-                    onclick: () => this.setTab("find"),
-                },
-                "Start symptom check"
+                "div",
+                { style: "display: flex; gap: 12px; align-items: flex-start;" },
+                h(
+                    "div",
+                    { style: "padding: 8px; background: rgba(236, 72, 153, 0.1); color: #ec4899; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" },
+                    Icons.activity()
+                ),
+                h(
+                    "div",
+                    {},
+                    h("p", { class: "dashboard-muted", style: "margin: 0 0 4px; font-size: 0.8rem;" }, "Not feeling well?"),
+                    h(
+                        "p",
+                        { style: "margin: 0 0 12px; font-size: 0.92rem;" },
+                        "Describe your symptoms and we'll help you find the right doctor."
+                    ),
+                    h(
+                        "button",
+                        {
+                            class: "btn btn-primary",
+                            style: "padding: 0.55rem 1rem; font-size: 0.85rem; border-radius: 8px;",
+                            onclick: () => this.setTab("find"),
+                        },
+                        "Start symptom check"
+                    )
+                )
             )
         );
     }
