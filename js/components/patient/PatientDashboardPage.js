@@ -51,7 +51,6 @@ export default class PatientDashboardPage extends Component {
 
     async loadPatient() {
         this.loading = true;
-        this.update();
 
         try {
             const res = await api.get("/patient-profile/me");
@@ -131,7 +130,7 @@ export default class PatientDashboardPage extends Component {
                 h("span", {}, "Loading your dashboard...")
             );
         }
-    
+
         if (this.needsOnboarding) {
             return this.renderOnboarding();
         }
