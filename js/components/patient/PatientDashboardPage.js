@@ -355,6 +355,7 @@ export default class PatientDashboardPage extends Component {
                         { class: "dashboard-subtitle" },
                         "Your personal healthcare hub."
                     ),
+                    h("div", { class: "dashboard-header__divider" }),
             
                     h(
                         "p",
