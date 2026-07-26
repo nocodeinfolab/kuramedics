@@ -32,6 +32,7 @@ export default class PatientCare extends Component {
 
         this.activeTab = "upcoming";
         this.expandedBookingId = null;
+        this._hasRenderedOnce = false;
     }
 
     async afterMount() {
@@ -151,9 +152,12 @@ export default class PatientCare extends Component {
     // ---------- Render ----------
 
     render() {
+        const isFirstRender = !this._hasRenderedOnce;
+        this._hasRenderedOnce = true;
+
         return h(
             "div",
-            { class: "dashboard-page" },
+            { class: `dashboard-page${isFirstRender ? " dashboard-page--enter" : ""}` },
             this.renderHeader(),
             this.renderAlerts(),
             this.loading
@@ -165,7 +169,6 @@ export default class PatientCare extends Component {
                 : this.renderContent()
         );
     }
-
     renderHeader() {
         return h(
             "section",
