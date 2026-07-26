@@ -213,6 +213,9 @@
 
 /* ===== Dashboard Pages & Components ==================================== */
 .dashboard-page {
+  
+}
+.dashboard-page--enter {
   animation: dash-fade-in var(--duration-medium) var(--ease-out);
 }
 
