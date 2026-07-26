@@ -474,7 +474,7 @@ export default class PatientDashboardPage extends Component {
                     style: "padding: 0.45rem 0.85rem; font-size: 0.8rem; border-radius: 6px;",
                     onclick: () => this.setTab("care"),
                 },
-                "View my plan"
+                "View my consultation notes"
             )
         );
     }
