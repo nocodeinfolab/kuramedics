@@ -259,6 +259,8 @@ export default class PatientCare extends Component {
                 ? "var(--color-ink-faint)"
                 : booking.status === "reschedule_requested"
                 ? "#f59e0b"
+                : booking.status === "pending_confirmation"
+                ? "#f59e0b"
                 : "#0284c7";
 
         return h(
