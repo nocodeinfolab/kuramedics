@@ -400,7 +400,7 @@ export default class PatientDashboardPage extends Component {
                 container.replaceChildren(this.renderPlaceholder("My Care", "Track your appointments and view your consultation notes."));
                 break;
             case "messages":
-                container.replaceChildren(this.renderPlaceholder("Messages", "Secure messaging with your doctors."));
+                container.replaceChildren(this.renderPlaceholder("Messages", "Secure messaging with your doctors. Secure messaging with your doctors. Secure messaging with your doctors"));
                 break;
             case "profile":
                 container.replaceChildren(this.renderPlaceholder("Profile", "Manage your contact details, emergency contact, and medical summary."));
