@@ -4,6 +4,7 @@ import { Component } from "../../core/component.js";
 import { h } from "../../utils/dom.js";
 import api from "../../services/api.js";
 import PatientCare from "./PatientCare.js";
+import PatientMessaging from "./messaging/PatientMessaging.js";
 
 const REQUIRED_TRIAGE_FIELDS = ["date_of_birth", "gender"];
 
@@ -357,8 +358,7 @@ export default class PatientDashboardPage extends Component {
                 return this.renderHomeTab();
             case "find":
                 return this.renderComingSoon("Find Care", "Browse and book verified doctors, guided by AI triage.");
-            case "messages":
-                return this.renderComingSoon("Messages", "Secure conversations with your doctors.");
+            
             case "profile":
                 return this.renderComingSoon("Profile", "Manage your contact details, emergency contact, and medical summary.");
             default:
@@ -370,6 +370,9 @@ export default class PatientDashboardPage extends Component {
         switch (this.activeTab) {
             case "care":
                 new PatientCare(this.patient).mount(container);
+                break;
+            case "messages":
+                new PatientMessaging(this.patient).mount(container);
                 break;
             default:
                 container.replaceChildren(this.renderActiveTab());
