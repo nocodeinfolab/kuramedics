@@ -23,54 +23,62 @@ export default class PatientCare extends Component {
     constructor(patient) {
         super();
         this.patient = patient ?? {};
-
+    
         this.loading = true;
         this.errorMessage = "";
-
+    
         this.bookings = [];
         this.recordsByBookingId = {};
-
+    
         this.activeTab = "upcoming";
         this.expandedBookingId = null;
-        this._hasRenderedOnce = false;
+    
+        this._lastFetchedAt = null;   // add this
     }
-
+    
     async afterMount() {
         await this.loadData();
     }
-
+    
     // ---------- Data loading ----------
-
-    async loadData() {
-        this.loading = true;
-        this.errorMessage = "";
-        this.update();
-
+    
+    async loadData({ silent = false } = {}) {
+        if (!silent) {
+            this.loading = true;
+            this.errorMessage = "";
+            this.update();
+        }
+    
         try {
             const [bookingsRes, recordsRes] = await Promise.all([
                 api.get("/bookings?page=1&limit=50"),
                 api.get("/consultations/my-records"),
             ]);
-
+    
             const bookingsPayload = bookingsRes.data || bookingsRes;
             this.bookings = bookingsPayload.rows || bookingsPayload.data || bookingsPayload.items || [];
-
+    
             const recordsPayload = recordsRes.data || recordsRes;
             const records = Array.isArray(recordsPayload) ? recordsPayload : recordsPayload.rows || recordsPayload.data || [];
-
+    
             this.recordsByBookingId = {};
             records.forEach(record => {
                 this.recordsByBookingId[record.booking_id] = record;
             });
+    
+            this._lastFetchedAt = Date.now();   // add this
         } catch (error) {
             console.error("Failed to load care history:", error);
-            this.errorMessage = error.message || "Failed to load your appointments.";
+            if (!silent) this.errorMessage = error.message || "Failed to load your appointments.";
         } finally {
-            this.loading = false;
+            if (!silent) this.loading = false;
             this.update();
         }
     }
-
+    
+    isStale(ttlMs = 60_000) {
+        return !this._lastFetchedAt || Date.now() - this._lastFetchedAt > ttlMs;
+    }
     // ---------- Interaction ----------
 
     setTab(tab) {
