@@ -6,7 +6,12 @@ import api from "../../services/api.js";
 
 const REQUIRED_TRIAGE_FIELDS = ["date_of_birth", "gender"];
 
-const GENDER_OPTIONS = ["Female", "Male", "Other", "Prefer not to say"];
+const GENDER_OPTIONS = [
+    { value: "female", label: "Female" },
+    { value: "male", label: "Male" },
+    { value: "other", label: "Other" },
+    { value: "prefer_not_to_say", label: "Prefer not to say" },
+];
 const BLOOD_GROUP_OPTIONS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", "Not sure"];
 
 export default class PatientDashboardPage extends Component {
@@ -201,7 +206,7 @@ export default class PatientDashboardPage extends Component {
                         },
                         h("option", { value: "" }, "Select..."),
                         GENDER_OPTIONS.map(option =>
-                            h("option", { value: option }, option)
+                            h("option", { value: option.value }, option.label)
                         )
                     )
                 ),
