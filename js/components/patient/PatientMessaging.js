@@ -209,7 +209,7 @@ export default class PatientMessaging extends Component {
     render() {
         return h(
             "div",
-            { class: "dashboard-page queue-page" },
+            { class: "dashboard-page" },
             this.view === "list" ? this.renderListHeader() : this.renderThreadHeader(),
             this.view === "list" ? this.renderListAlerts() : null,
             this.loading && this.view === "list"
@@ -230,12 +230,16 @@ export default class PatientMessaging extends Component {
         return h(
             "section",
             { class: "dashboard-header" },
-            h("p", { class: "dashboard-greeting" }, "My Messages"),
-            h("h1", { class: "dashboard-title" }, "Messages"),
             h(
-                "p",
-                { class: "dashboard-subtitle" },
-                "Secure conversations with your doctors."
+                "div",
+                { class: "dashboard-header__content" },
+                h("p", { class: "dashboard-greeting" }, "My Messages"),
+                h("h1", { class: "dashboard-title" }, "Messages"),
+                h(
+                    "p",
+                    { class: "dashboard-subtitle" },
+                    "Secure conversations with your doctors."
+                )
             )
         );
     }
