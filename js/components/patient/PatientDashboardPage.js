@@ -64,7 +64,7 @@ export default class PatientDashboardPage extends Component {
             this.needsOnboarding = REQUIRED_TRIAGE_FIELDS.some(field => !profile?.[field]);
 
             if (!this.needsOnboarding) {
-                await this.loadDashboardSummary();
+                this.loadDashboardSummary();
             }
 
             if (this.needsOnboarding) {
