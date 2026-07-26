@@ -386,12 +386,15 @@ export default class PatientDashboardPage extends Component {
 
     updatePage() {
         if (!this.el) return;
-
+    
         const container = this.el.querySelector("#patient-dashboard-content");
         if (!container) return;
-
+    
+        console.log("Active tab:", this.activeTab);
+        console.log(container.getBoundingClientRect());
+    
         this.mountCurrentPage(container);
-
+    
         const buttons = this.el.querySelectorAll(".patient-bottom-nav__item");
         buttons.forEach((button, index) => {
             button.classList.toggle(
