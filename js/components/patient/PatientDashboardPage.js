@@ -387,10 +387,18 @@ export default class PatientDashboardPage extends Component {
     
     ensureTabMounted(container, tabId) {
         if (this._tabInstances[tabId]) {
+            const instance = this._tabInstances[tabId];
             const wrapper = this._tabWrappers[tabId];
+    
             if (wrapper && wrapper.parentNode !== container) {
                 container.appendChild(wrapper);
             }
+    
+            // Revalidate silently if the cached data has gone stale
+            if (typeof instance.isStale === "function" && instance.isStale()) {
+                instance.loadData({ silent: true });
+            }
+    
             return;
         }
     
