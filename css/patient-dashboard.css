@@ -313,3 +313,34 @@
 .btn-primary:hover {
   background: var(--color-primary-dark);
 }
+/* ===== Loading State ===== */
+.dashboard-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  gap: var(--space-4);
+  color: var(--color-ink-faint);
+  font-family: var(--font-body);
+  font-size: var(--step-small);
+  font-weight: 500;
+  animation: dash-fade-in var(--duration-medium) var(--ease-out);
+}
+
+/* Pulse / Spinner element */
+.dashboard-loading::before {
+  content: "";
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: 3px solid var(--color-primary-soft);
+  border-top-color: var(--color-primary);
+  animation: dashboard-spinner 0.8s linear infinite;
+}
+
+@keyframes dashboard-spinner {
+  to {
+    transform: rotate(360deg);
+  }
+}
