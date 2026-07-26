@@ -3,8 +3,6 @@
 import { Component } from "../../core/component.js";
 import { h } from "../../utils/dom.js";
 import api from "../../services/api.js";
-import PatientCare from "./PatientCare.js";
-import PatientMessaging from "./PatientMessaging.js";
 
 const REQUIRED_TRIAGE_FIELDS = ["date_of_birth", "gender"];
 
@@ -15,6 +13,66 @@ const GENDER_OPTIONS = [
     { value: "prefer_not_to_say", label: "Prefer not to say" },
 ];
 const BLOOD_GROUP_OPTIONS = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-", "Not sure"];
+
+// ---------- Scoped, file-unique class names ----------
+// Prefix "sv-ptdb-" (Solvlyt Patient Dashboard) chosen to avoid any collision
+// with global/shared CSS class names used elsewhere in the app.
+const CLS = {
+    root: "sv-ptdb-root",
+    loading: "sv-ptdb-loading-state",
+
+    onboardingPage: "sv-ptdb-onboarding-page",
+    onboardingHeader: "sv-ptdb-onboarding-header",
+    onboardingHeaderInner: "sv-ptdb-onboarding-header-inner",
+    onboardingTitle: "sv-ptdb-onboarding-title",
+    onboardingSubtitle: "sv-ptdb-onboarding-subtitle",
+    onboardingDate: "sv-ptdb-onboarding-date",
+    onboardingErrorBox: "sv-ptdb-onboarding-error-box",
+    onboardingErrorText: "sv-ptdb-onboarding-error-text",
+    onboardingCard: "sv-ptdb-onboarding-card",
+    onboardingFieldLabel: "sv-ptdb-onboarding-field-label",
+    onboardingFieldInput: "sv-ptdb-onboarding-field-input",
+    onboardingSubmitBtn: "sv-ptdb-onboarding-submit-btn",
+
+    content: "sv-ptdb-content-outlet",
+
+    homePage: "sv-ptdb-home-page",
+    homeHeader: "sv-ptdb-home-header",
+    homeHeaderInner: "sv-ptdb-home-header-inner",
+    homeTitle: "sv-ptdb-home-title",
+    homeSubtitle: "sv-ptdb-home-subtitle",
+    homeDivider: "sv-ptdb-home-divider",
+    homeDate: "sv-ptdb-home-date",
+    homeServicesList: "sv-ptdb-home-services-list",
+    homeErrorBox: "sv-ptdb-home-error-box",
+    homeErrorText: "sv-ptdb-home-error-text",
+    homeLoadingCard: "sv-ptdb-home-loading-card",
+    homeLoadingText: "sv-ptdb-home-loading-text",
+
+    card: "sv-ptdb-card",
+    cardIconWrap: "sv-ptdb-card-icon-wrap",
+    cardRowBetween: "sv-ptdb-card-row-between",
+    cardRowStart: "sv-ptdb-card-row-start",
+    cardTextMuted: "sv-ptdb-card-text-muted",
+    cardTextBody: "sv-ptdb-card-text-body",
+    cardTextHeading: "sv-ptdb-card-text-heading",
+    cardBtnOutline: "sv-ptdb-card-btn-outline",
+    cardBtnPrimary: "sv-ptdb-card-btn-primary",
+    cardBadge: "sv-ptdb-card-badge",
+
+    placeholderPage: "sv-ptdb-placeholder-page",
+    placeholderHeader: "sv-ptdb-placeholder-header",
+    placeholderTitle: "sv-ptdb-placeholder-title",
+    placeholderCard: "sv-ptdb-placeholder-card",
+    placeholderDescription: "sv-ptdb-placeholder-description",
+    placeholderComingSoon: "sv-ptdb-placeholder-coming-soon",
+
+    bottomNav: "sv-ptdb-bottom-nav",
+    bottomNavItem: "sv-ptdb-bottom-nav-item",
+    bottomNavItemActive: "sv-ptdb-bottom-nav-item-active",
+    bottomNavIcon: "sv-ptdb-bottom-nav-icon",
+    bottomNavLabel: "sv-ptdb-bottom-nav-label",
+};
 
 // Inline Modern SVG Icons Helper
 const Icons = {
@@ -110,7 +168,6 @@ export default class PatientDashboardPage extends Component {
             }
         } catch (error) {
             console.error("Failed to load patient profile:", error);
-            // Treat as needing onboarding rather than dead-ending the page
             this.needsOnboarding = true;
         } finally {
             this.loading = false;
@@ -121,8 +178,6 @@ export default class PatientDashboardPage extends Component {
             }
         }
     }
-
-    // ---------- Onboarding ----------
 
     async loadDashboardSummary() {
         this.dashboardLoading = true;
@@ -140,7 +195,7 @@ export default class PatientDashboardPage extends Component {
             this.update();
         }
     }
-    
+
     // ---------- Onboarding ----------
 
     setOnboardingField(field, value) {
@@ -190,7 +245,7 @@ export default class PatientDashboardPage extends Component {
         if (this.loading) {
             return h(
                 "div",
-                { class: "dashboard-loading" },
+                { class: CLS.loading },
                 "Loading your dashboard..."
             );
         }
@@ -201,14 +256,8 @@ export default class PatientDashboardPage extends Component {
 
         return h(
             "div",
-            { class: "patient-dashboard" },
-            h(
-                "main",
-                {
-                    id: "patient-dashboard-content",
-                    class: "patient-dashboard__content",
-                }
-            ),
+            { class: CLS.root },
+            h("main", { id: "patient-dashboard-content", class: CLS.content }),
             this.renderBottomNavigation()
         );
     }
@@ -216,60 +265,46 @@ export default class PatientDashboardPage extends Component {
     // ---------- Onboarding view ----------
 
     renderOnboarding() {
-        const fieldLabelStyle = "display: block; margin-bottom: 5px; font-size: 0.82rem; font-weight: 600;";
-        const fieldInputStyle = "padding: 0.6rem 0.7rem; border: 1px solid var(--color-line); border-radius: 6px; width: 100%; font-size: 0.9rem; box-sizing: border-box; font-family: inherit;";
-
         return h(
             "main",
-            { class: "dashboard-page", style: "max-width: 480px; margin: 0 auto; padding: var(--space-3);" },
+            { class: CLS.onboardingPage, style: "max-width: 480px; margin: 0 auto; padding: var(--space-3);" },
             h(
                 "section",
-                { class: "dashboard-header" },
-            
+                { class: CLS.onboardingHeader },
                 h(
                     "div",
-                    { class: "dashboard-header__content" },
-            
+                    { class: CLS.onboardingHeaderInner },
                     h(
                         "h1",
-                        { class: "dashboard-title" },
+                        { class: CLS.onboardingTitle },
                         `${this.getGreeting()}, ${this.getFirstName(this.patient?.full_name)}`
                     ),
-            
-                    h(
-                        "p",
-                        { class: "dashboard-subtitle" },
-                        "Your personal healthcare hub."
-                    ),
-            
-                    h(
-                        "p",
-                        { class: "dashboard-date" },
-                        this.getTodayLabel()
-                    )
+                    h("p", { class: CLS.onboardingSubtitle }, "Your personal healthcare hub."),
+                    h("p", { class: CLS.onboardingDate }, this.getTodayLabel())
                 )
             ),
 
             this.onboardingError
                 ? h(
                       "div",
-                      { class: "dashboard-card", style: "border-left: 4px solid #ef4444; margin-bottom: var(--space-3);" },
-                      h("p", { style: "color: #ef4444; margin: 0;" }, this.onboardingError)
+                      { class: CLS.onboardingErrorBox, style: "border-left: 4px solid #ef4444; margin-bottom: var(--space-3);" },
+                      h("p", { class: CLS.onboardingErrorText, style: "color: #ef4444; margin: 0;" }, this.onboardingError)
                   )
                 : null,
 
             h(
                 "div",
-                { class: "dashboard-card", style: "padding: 1.1rem; display: flex; flex-direction: column; gap: 14px;" },
+                { class: CLS.onboardingCard, style: "padding: 1.1rem; display: flex; flex-direction: column; gap: 14px;" },
 
                 h(
                     "div",
                     {},
-                    h("label", { style: fieldLabelStyle }, "Date of birth"),
+                    h("label", { class: CLS.onboardingFieldLabel, style: "display: block; margin-bottom: 5px; font-size: 0.82rem; font-weight: 600;" }, "Date of birth"),
                     h("input", {
                         type: "date",
                         value: this.onboardingDraft.date_of_birth,
-                        style: fieldInputStyle,
+                        class: CLS.onboardingFieldInput,
+                        style: "padding: 0.6rem 0.7rem; border: 1px solid var(--color-line); border-radius: 6px; width: 100%; font-size: 0.9rem; box-sizing: border-box; font-family: inherit;",
                         oninput: e => this.setOnboardingField("date_of_birth", e.target.value),
                     })
                 ),
@@ -277,48 +312,47 @@ export default class PatientDashboardPage extends Component {
                 h(
                     "div",
                     {},
-                    h("label", { style: fieldLabelStyle }, "Gender"),
+                    h("label", { class: CLS.onboardingFieldLabel, style: "display: block; margin-bottom: 5px; font-size: 0.82rem; font-weight: 600;" }, "Gender"),
                     h(
                         "select",
                         {
                             value: this.onboardingDraft.gender,
-                            style: fieldInputStyle,
+                            class: CLS.onboardingFieldInput,
+                            style: "padding: 0.6rem 0.7rem; border: 1px solid var(--color-line); border-radius: 6px; width: 100%; font-size: 0.9rem; box-sizing: border-box; font-family: inherit;",
                             onchange: e => this.setOnboardingField("gender", e.target.value),
                         },
                         h("option", { value: "" }, "Select..."),
-                        GENDER_OPTIONS.map(option =>
-                            h("option", { value: option.value }, option.label)
-                        )
+                        GENDER_OPTIONS.map(option => h("option", { value: option.value }, option.label))
                     )
                 ),
 
                 h(
                     "div",
                     {},
-                    h("label", { style: fieldLabelStyle }, "Blood group (optional)"),
+                    h("label", { class: CLS.onboardingFieldLabel, style: "display: block; margin-bottom: 5px; font-size: 0.82rem; font-weight: 600;" }, "Blood group (optional)"),
                     h(
                         "select",
                         {
                             value: this.onboardingDraft.blood_group,
-                            style: fieldInputStyle,
+                            class: CLS.onboardingFieldInput,
+                            style: "padding: 0.6rem 0.7rem; border: 1px solid var(--color-line); border-radius: 6px; width: 100%; font-size: 0.9rem; box-sizing: border-box; font-family: inherit;",
                             onchange: e => this.setOnboardingField("blood_group", e.target.value),
                         },
                         h("option", { value: "" }, "Not sure / skip"),
-                        BLOOD_GROUP_OPTIONS.map(option =>
-                            h("option", { value: option }, option)
-                        )
+                        BLOOD_GROUP_OPTIONS.map(option => h("option", { value: option }, option))
                     )
                 ),
 
                 h(
                     "div",
                     {},
-                    h("label", { style: fieldLabelStyle }, "Any known allergies? (optional)"),
+                    h("label", { class: CLS.onboardingFieldLabel, style: "display: block; margin-bottom: 5px; font-size: 0.82rem; font-weight: 600;" }, "Any known allergies? (optional)"),
                     h("input", {
                         type: "text",
                         placeholder: "e.g. penicillin, peanuts — or leave blank if none",
                         value: this.onboardingDraft.allergies,
-                        style: fieldInputStyle,
+                        class: CLS.onboardingFieldInput,
+                        style: "padding: 0.6rem 0.7rem; border: 1px solid var(--color-line); border-radius: 6px; width: 100%; font-size: 0.9rem; box-sizing: border-box; font-family: inherit;",
                         oninput: e => this.setOnboardingField("allergies", e.target.value),
                     })
                 ),
@@ -326,12 +360,13 @@ export default class PatientDashboardPage extends Component {
                 h(
                     "div",
                     {},
-                    h("label", { style: fieldLabelStyle }, "Any ongoing health conditions? (optional)"),
+                    h("label", { class: CLS.onboardingFieldLabel, style: "display: block; margin-bottom: 5px; font-size: 0.82rem; font-weight: 600;" }, "Any ongoing health conditions? (optional)"),
                     h("input", {
                         type: "text",
                         placeholder: "e.g. diabetes, hypertension — or leave blank if none",
                         value: this.onboardingDraft.chronic_conditions,
-                        style: fieldInputStyle,
+                        class: CLS.onboardingFieldInput,
+                        style: "padding: 0.6rem 0.7rem; border: 1px solid var(--color-line); border-radius: 6px; width: 100%; font-size: 0.9rem; box-sizing: border-box; font-family: inherit;",
                         oninput: e => this.setOnboardingField("chronic_conditions", e.target.value),
                     })
                 ),
@@ -339,7 +374,7 @@ export default class PatientDashboardPage extends Component {
                 h(
                     "button",
                     {
-                        class: "btn btn-primary",
+                        class: CLS.onboardingSubmitBtn,
                         style: "padding: 0.65rem 1rem; font-size: 0.9rem; border-radius: 8px; margin-top: 6px;",
                         disabled: this.onboardingSaving,
                         onclick: () => this.submitOnboarding(),
@@ -351,174 +386,120 @@ export default class PatientDashboardPage extends Component {
     }
 
     // ---------- Main dashboard tabs ----------
-
-    renderActiveTab() {
-        switch (this.activeTab) {
-            case "home":
-                return this.renderHomeTab();
-            case "find":
-                return this.renderComingSoon("Find Care", "Browse and book verified doctors, guided by AI triage.");
-            
-            case "profile":
-                return this.renderComingSoon("Profile", "Manage your contact details, emergency contact, and medical summary.");
-            default:
-                return this.renderHomeTab();
-        }
-    }
+    // Every tab except "home" is a plain placeholder.
 
     mountCurrentPage(container) {
         switch (this.activeTab) {
+            case "home":
+                container.replaceChildren(this.renderHomeTab());
+                break;
+            case "find":
+                container.replaceChildren(this.renderPlaceholder("Find Care", "Browse and book verified doctors, guided by AI triage."));
+                break;
             case "care":
-                new PatientCare(this.patient).mount(container);
+                container.replaceChildren(this.renderPlaceholder("My Care", "Track your appointments and view your consultation notes."));
                 break;
             case "messages":
-                container.replaceChildren(
-                    this.renderComingSoon(
-                        "Messages",
-                        "Secure messaging with your doctors."
-                    )
-                );
+                container.replaceChildren(this.renderPlaceholder("Messages", "Secure messaging with your doctors."));
+                break;
+            case "profile":
+                container.replaceChildren(this.renderPlaceholder("Profile", "Manage your contact details, emergency contact, and medical summary."));
                 break;
             default:
-                container.replaceChildren(this.renderActiveTab());
+                container.replaceChildren(this.renderHomeTab());
         }
     }
 
     updatePage() {
         if (!this.el) return;
-    
+
         const container = this.el.querySelector("#patient-dashboard-content");
         if (!container) return;
-    
+
         this.mountCurrentPage(container);
-    
-        console.log("Active tab:", this.activeTab);
-        console.log("Element:", container);
-        console.log("Tag:", container.tagName);
-        console.log("ID:", container.id);
-        console.log("Classes:", container.className);
-        console.log("Outer HTML:", container.outerHTML);
-    
-        const style = getComputedStyle(container);
-        console.log({
-            width: style.width,
-            maxWidth: style.maxWidth,
-            marginLeft: style.marginLeft,
-            marginRight: style.marginRight,
-            display: style.display,
-            position: style.position
-        });
-    
-        const buttons = this.el.querySelectorAll(".patient-bottom-nav__item");
+
+        const buttons = this.el.querySelectorAll(`.${CLS.bottomNavItem}`);
         buttons.forEach((button, index) => {
-            button.classList.toggle(
-                "patient-bottom-nav__item--active",
-                this.tabs[index].id === this.activeTab
-            );
+            button.classList.toggle(CLS.bottomNavItemActive, this.tabs[index].id === this.activeTab);
         });
     }
+
     renderHomeTab() {
         const summary = this.dashboardSummary;
         const hasProfileGaps =
             !this.patient?.blood_group && !this.patient?.allergies && !this.patient?.chronic_conditions;
 
-        // Determine if the patient has any appointments at all (upcoming or past)
         const hasAnyAppointment = summary?.next_appointment || summary?.recent_consultation;
 
         return h(
             "div",
-            { class: "dashboard-page" },
+            { class: CLS.homePage },
             h(
                 "section",
-                { class: "dashboard-header" },
+                { class: CLS.homeHeader },
                 h(
                     "div",
-                    { class: "dashboard-header__content" },
-                    h(
-                        "h1",
-                        { class: "dashboard-title" },
-                        `${this.getGreeting()}, ${this.getFirstName(this.patient?.full_name)}`
-                    ),
-                    h(
-                        "p",
-                        { class: "dashboard-subtitle" },
-                        "Your personal healthcare hub."
-                    ),
-                    h("div", { class: "dashboard-header__divider" }),
-                    h(
-                        "p",
-                        { class: "dashboard-date" },
-                        this.getTodayLabel()
-                    )
+                    { class: CLS.homeHeaderInner },
+                    h("h1", { class: CLS.homeTitle }, `${this.getGreeting()}, ${this.getFirstName(this.patient?.full_name)}`),
+                    h("p", { class: CLS.homeSubtitle }, "Your personal healthcare hub."),
+                    h("div", { class: CLS.homeDivider }),
+                    h("p", { class: CLS.homeDate }, this.getTodayLabel())
                 )
             ),
             this.dashboardLoading
                 ? h(
                       "div",
-                      { class: "dashboard-card text-center py-4" },
-                      h("p", { class: "dashboard-muted" }, "Loading your dashboard...")
+                      { class: CLS.homeLoadingCard, style: "text-align: center; padding: 1.5rem 1rem;" },
+                      h("p", { class: CLS.homeLoadingText }, "Loading your dashboard...")
                   )
                 : h(
                       "div",
-                      { class: "services-list" },
+                      { class: CLS.homeServicesList },
                       this.dashboardError
                           ? h(
                                 "div",
-                                { class: "dashboard-card", style: "border-left: 4px solid #ef4444;" },
-                                h("p", { style: "color: #ef4444; margin: 0;" }, this.dashboardError)
+                                { class: CLS.homeErrorBox, style: "border-left: 4px solid #ef4444;" },
+                                h("p", { class: CLS.homeErrorText, style: "color: #ef4444; margin: 0;" }, this.dashboardError)
                             )
                           : null,
 
-                      // 1. Messages card (unread count or empty state)
                       summary?.unread_message_count > 0
                           ? this.renderUnreadMessagesCard(summary.unread_message_count)
                           : this.renderNoMessagesCard(),
 
-                      // 2. Appointment card (next appointment, or "Book your first appointment" if none at all)
                       summary?.next_appointment
                           ? this.renderNextAppointmentCard(summary.next_appointment)
                           : hasAnyAppointment
-                              ? null // If there is a recent consultation but no upcoming, we skip the appointment card (the consultation card will show past visit)
+                              ? null
                               : this.renderBookFirstAppointmentCard(),
 
-                      // 3. Recent consultation card (actual or empty state)
                       summary?.recent_consultation
                           ? this.renderRecentConsultationCard(summary.recent_consultation)
                           : this.renderNoConsultationCard(),
 
-                      // 4. Profile nudge (always if gaps)
                       hasProfileGaps ? this.renderProfileNudgeCard() : null,
 
-                      // 5. Symptom check (always)
                       this.renderSymptomCheckCard()
                   )
         );
     }
 
-    // ---------- Card renderers for empty states ----------
+    // ---------- Card renderers ----------
 
     renderNoMessagesCard() {
         return h(
             "div",
-            { class: "dashboard-card", style: "padding: 1rem 1.1rem; display: flex; justify-content: space-between; align-items: center; gap: 10px;" },
+            { class: CLS.card, style: "padding: 1rem 1.1rem; display: flex; justify-content: space-between; align-items: center; gap: 10px;" },
             h(
                 "div",
-                { style: "display: flex; align-items: center; gap: 12px;" },
-                h(
-                    "div",
-                    { style: "padding: 8px; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" },
-                    Icons.message()
-                ),
-                h(
-                    "p",
-                    { style: "margin: 0; font-size: 0.9rem; color: #6b7280;" },
-                    "No new messages."
-                )
+                { class: CLS.cardRowStart, style: "display: flex; align-items: center; gap: 12px;" },
+                h("div", { class: CLS.cardIconWrap, style: "padding: 8px; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" }, Icons.message()),
+                h("p", { class: CLS.cardTextMuted, style: "margin: 0; font-size: 0.9rem; color: #6b7280;" }, "No new messages.")
             ),
             h(
                 "button",
                 {
-                    class: "btn btn-outline",
+                    class: CLS.cardBtnOutline,
                     style: "padding: 0.4rem 0.8rem; font-size: 0.78rem; border-radius: 6px; flex-shrink: 0;",
                     onclick: () => this.setTab("messages"),
                 },
@@ -530,20 +511,12 @@ export default class PatientDashboardPage extends Component {
     renderNoConsultationCard() {
         return h(
             "div",
-            { class: "dashboard-card", style: "padding: 1rem 1.1rem;" },
+            { class: CLS.card, style: "padding: 1rem 1.1rem;" },
             h(
                 "div",
-                { style: "display: flex; gap: 12px; align-items: center;" },
-                h(
-                    "div",
-                    { style: "padding: 8px; background: rgba(99, 102, 241, 0.1); color: #6366f1; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" },
-                    Icons.stethoscope()
-                ),
-                h(
-                    "p",
-                    { style: "margin: 0; font-size: 0.9rem; color: #6b7280;" },
-                    "You haven't had a consultation yet."
-                )
+                { class: CLS.cardRowStart, style: "display: flex; gap: 12px; align-items: center;" },
+                h("div", { class: CLS.cardIconWrap, style: "padding: 8px; background: rgba(99, 102, 241, 0.1); color: #6366f1; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" }, Icons.stethoscope()),
+                h("p", { class: CLS.cardTextMuted, style: "margin: 0; font-size: 0.9rem; color: #6b7280;" }, "You haven't had a consultation yet.")
             )
         );
     }
@@ -551,25 +524,17 @@ export default class PatientDashboardPage extends Component {
     renderBookFirstAppointmentCard() {
         return h(
             "div",
-            { class: "dashboard-card", style: "padding: 1rem 1.1rem; display: flex; justify-content: space-between; align-items: center; gap: 10px;" },
+            { class: CLS.card, style: "padding: 1rem 1.1rem; display: flex; justify-content: space-between; align-items: center; gap: 10px;" },
             h(
                 "div",
-                { style: "display: flex; align-items: center; gap: 12px;" },
-                h(
-                    "div",
-                    { style: "padding: 8px; background: rgba(16, 185, 129, 0.1); color: #10b981; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" },
-                    Icons.calendar()
-                ),
-                h(
-                    "p",
-                    { style: "margin: 0; font-size: 0.9rem;" },
-                    "Book your first appointment."
-                )
+                { class: CLS.cardRowStart, style: "display: flex; align-items: center; gap: 12px;" },
+                h("div", { class: CLS.cardIconWrap, style: "padding: 8px; background: rgba(16, 185, 129, 0.1); color: #10b981; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" }, Icons.calendar()),
+                h("p", { class: CLS.cardTextBody, style: "margin: 0; font-size: 0.9rem;" }, "Book your first appointment.")
             ),
             h(
                 "button",
                 {
-                    class: "btn btn-primary",
+                    class: CLS.cardBtnPrimary,
                     style: "padding: 0.4rem 0.8rem; font-size: 0.78rem; border-radius: 6px; flex-shrink: 0;",
                     onclick: () => this.setTab("find"),
                 },
@@ -577,8 +542,6 @@ export default class PatientDashboardPage extends Component {
             )
         );
     }
-
-    // ---------- Existing card renderers (unchanged) ----------
 
     renderNextAppointmentCard(appointment) {
         const statusLabel =
@@ -593,36 +556,25 @@ export default class PatientDashboardPage extends Component {
 
         return h(
             "div",
-            { class: "dashboard-card", style: "padding: 1rem 1.1rem;" },
+            { class: CLS.card, style: "padding: 1rem 1.1rem;" },
             h(
                 "div",
-                { style: "display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;" },
+                { class: CLS.cardRowBetween, style: "display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;" },
                 h(
                     "div",
                     { style: "display: flex; gap: 12px; align-items: flex-start;" },
-                    h(
-                        "div",
-                        { style: "padding: 8px; background: rgba(16, 185, 129, 0.1); color: #10b981; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" },
-                        Icons.calendar()
-                    ),
+                    h("div", { class: CLS.cardIconWrap, style: "padding: 8px; background: rgba(16, 185, 129, 0.1); color: #10b981; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" }, Icons.calendar()),
                     h(
                         "div",
                         {},
-                        h("p", { class: "dashboard-muted", style: "margin: 0 0 4px; font-size: 0.78rem;" }, "Upcoming Appointment"),
-                        h("p", { style: "margin: 0 0 4px; font-size: 1rem; font-weight: 600;" }, appointment.doctor_name || "Your doctor"),
-                        h(
-                            "p",
-                            { class: "dashboard-muted", style: "margin: 0; font-size: 0.85rem;" },
-                            this.formatDateTime(appointment.booking_date)
-                        )
+                        h("p", { class: CLS.cardTextMuted, style: "margin: 0 0 4px; font-size: 0.78rem;" }, "Upcoming Appointment"),
+                        h("p", { class: CLS.cardTextHeading, style: "margin: 0 0 4px; font-size: 1rem; font-weight: 600;" }, appointment.doctor_name || "Your doctor"),
+                        h("p", { class: CLS.cardTextMuted, style: "margin: 0; font-size: 0.85rem;" }, this.formatDateTime(appointment.booking_date))
                     )
                 ),
                 h(
                     "span",
-                    {
-                        class: "dashboard-badge",
-                        style: `background: ${badgeColor}; font-size: 0.7rem; padding: 3px 9px; border-radius: 5px; white-space: nowrap; color: #ffffff;`,
-                    },
+                    { class: CLS.cardBadge, style: `background: ${badgeColor}; font-size: 0.7rem; padding: 3px 9px; border-radius: 5px; white-space: nowrap; color: #ffffff;` },
                     statusLabel
                 )
             )
@@ -632,66 +584,31 @@ export default class PatientDashboardPage extends Component {
     renderUnreadMessagesCard(count) {
         return h(
             "div",
-            {
-                class: "dashboard-card",
-                style: "padding: 1rem 1.1rem; display: flex; justify-content: space-between; align-items: center; gap: 10px; cursor: pointer;",
-                onclick: () => this.setTab("messages"),
-            },
+            { class: CLS.card, style: "padding: 1rem 1.1rem; display: flex; justify-content: space-between; align-items: center; gap: 10px; cursor: pointer;", onclick: () => this.setTab("messages") },
             h(
                 "div",
-                { style: "display: flex; align-items: center; gap: 12px;" },
-                h(
-                    "div",
-                    { style: "padding: 8px; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" },
-                    Icons.message()
-                ),
-                h(
-                    "p",
-                    { style: "margin: 0; font-size: 0.9rem;" },
-                    `You have ${count} new message${count === 1 ? "" : "s"}`
-                )
+                { class: CLS.cardRowStart, style: "display: flex; align-items: center; gap: 12px;" },
+                h("div", { class: CLS.cardIconWrap, style: "padding: 8px; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" }, Icons.message()),
+                h("p", { class: CLS.cardTextBody, style: "margin: 0; font-size: 0.9rem;" }, `You have ${count} new message${count === 1 ? "" : "s"}`)
             ),
-            h(
-                "button",
-                {
-                    class: "btn btn-outline",
-                    style: "padding: 0.4rem 0.8rem; font-size: 0.78rem; border-radius: 6px; flex-shrink: 0;",
-                },
-                "Open"
-            )
+            h("button", { class: CLS.cardBtnOutline, style: "padding: 0.4rem 0.8rem; font-size: 0.78rem; border-radius: 6px; flex-shrink: 0;" }, "Open")
         );
     }
 
     renderRecentConsultationCard(consultation) {
         return h(
             "div",
-            { class: "dashboard-card", style: "padding: 1rem 1.1rem;" },
+            { class: CLS.card, style: "padding: 1rem 1.1rem;" },
             h(
                 "div",
-                { style: "display: flex; gap: 12px; align-items: flex-start;" },
-                h(
-                    "div",
-                    { style: "padding: 8px; background: rgba(99, 102, 241, 0.1); color: #6366f1; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" },
-                    Icons.stethoscope()
-                ),
+                { class: CLS.cardRowStart, style: "display: flex; gap: 12px; align-items: flex-start;" },
+                h("div", { class: CLS.cardIconWrap, style: "padding: 8px; background: rgba(99, 102, 241, 0.1); color: #6366f1; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" }, Icons.stethoscope()),
                 h(
                     "div",
                     {},
-                    h("p", { class: "dashboard-muted", style: "margin: 0 0 4px; font-size: 0.78rem;" }, "Recent Visit"),
-                    h(
-                        "p",
-                        { style: "margin: 0 0 10px; font-size: 0.9rem;" },
-                        `Your consultation with ${consultation.doctor_name || "your doctor"} is complete.`
-                    ),
-                    h(
-                        "button",
-                        {
-                            class: "btn btn-outline",
-                            style: "padding: 0.45rem 0.85rem; font-size: 0.8rem; border-radius: 6px;",
-                            onclick: () => this.setTab("care"),
-                        },
-                        "View my consultation notes"
-                    )
+                    h("p", { class: CLS.cardTextMuted, style: "margin: 0 0 4px; font-size: 0.78rem;" }, "Recent Visit"),
+                    h("p", { class: CLS.cardTextBody, style: "margin: 0 0 10px; font-size: 0.9rem;" }, `Your consultation with ${consultation.doctor_name || "your doctor"} is complete.`),
+                    h("button", { class: CLS.cardBtnOutline, style: "padding: 0.45rem 0.85rem; font-size: 0.8rem; border-radius: 6px;", onclick: () => this.setTab("care") }, "View my consultation notes")
                 )
             )
         );
@@ -700,32 +617,16 @@ export default class PatientDashboardPage extends Component {
     renderProfileNudgeCard() {
         return h(
             "div",
-            { class: "dashboard-card", style: "padding: 1rem 1.1rem; background: rgba(2,132,199,0.04);" },
+            { class: CLS.card, style: "padding: 1rem 1.1rem; background: rgba(2,132,199,0.04);" },
             h(
                 "div",
-                { style: "display: flex; gap: 12px; align-items: flex-start;" },
-                h(
-                    "div",
-                    { style: "padding: 8px; background: rgba(2, 132, 199, 0.1); color: #0284c7; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" },
-                    Icons.userCheck()
-                ),
+                { class: CLS.cardRowStart, style: "display: flex; gap: 12px; align-items: flex-start;" },
+                h("div", { class: CLS.cardIconWrap, style: "padding: 8px; background: rgba(2, 132, 199, 0.1); color: #0284c7; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" }, Icons.userCheck()),
                 h(
                     "div",
                     {},
-                    h(
-                        "p",
-                        { style: "margin: 0 0 10px; font-size: 0.87rem;" },
-                        "Add your allergies and health history so doctors and AI triage understand your situation better."
-                    ),
-                    h(
-                        "button",
-                        {
-                            class: "btn btn-outline",
-                            style: "padding: 0.45rem 0.85rem; font-size: 0.8rem; border-radius: 6px;",
-                            onclick: () => this.setTab("profile"),
-                        },
-                        "Complete your profile"
-                    )
+                    h("p", { class: CLS.cardTextBody, style: "margin: 0 0 10px; font-size: 0.87rem;" }, "Add your allergies and health history so doctors and AI triage understand your situation better."),
+                    h("button", { class: CLS.cardBtnOutline, style: "padding: 0.45rem 0.85rem; font-size: 0.8rem; border-radius: 6px;", onclick: () => this.setTab("profile") }, "Complete your profile")
                 )
             )
         );
@@ -734,52 +635,38 @@ export default class PatientDashboardPage extends Component {
     renderSymptomCheckCard() {
         return h(
             "div",
-            { class: "dashboard-card", style: "padding: 1rem 1.1rem;" },
+            { class: CLS.card, style: "padding: 1rem 1.1rem;" },
             h(
                 "div",
-                { style: "display: flex; gap: 12px; align-items: flex-start;" },
-                h(
-                    "div",
-                    { style: "padding: 8px; background: rgba(236, 72, 153, 0.1); color: #ec4899; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" },
-                    Icons.activity()
-                ),
+                { class: CLS.cardRowStart, style: "display: flex; gap: 12px; align-items: flex-start;" },
+                h("div", { class: CLS.cardIconWrap, style: "padding: 8px; background: rgba(236, 72, 153, 0.1); color: #ec4899; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" }, Icons.activity()),
                 h(
                     "div",
                     {},
-                    h("p", { class: "dashboard-muted", style: "margin: 0 0 4px; font-size: 0.8rem;" }, "Not feeling well?"),
-                    h(
-                        "p",
-                        { style: "margin: 0 0 12px; font-size: 0.92rem;" },
-                        "Describe your symptoms and we'll help you find the right doctor."
-                    ),
-                    h(
-                        "button",
-                        {
-                            class: "btn btn-primary",
-                            style: "padding: 0.55rem 1rem; font-size: 0.85rem; border-radius: 8px;",
-                            onclick: () => this.setTab("find"),
-                        },
-                        "Start symptom check"
-                    )
+                    h("p", { class: CLS.cardTextMuted, style: "margin: 0 0 4px; font-size: 0.8rem;" }, "Not feeling well?"),
+                    h("p", { class: CLS.cardTextBody, style: "margin: 0 0 12px; font-size: 0.92rem;" }, "Describe your symptoms and we'll help you find the right doctor."),
+                    h("button", { class: CLS.cardBtnPrimary, style: "padding: 0.55rem 1rem; font-size: 0.85rem; border-radius: 8px;", onclick: () => this.setTab("find") }, "Start symptom check")
                 )
             )
         );
     }
 
-    renderComingSoon(title, description) {
+    // ---------- Placeholder tab (used for find, care, messages, profile) ----------
+
+    renderPlaceholder(title, description) {
         return h(
             "div",
-            { class: "dashboard-page" },
+            { class: CLS.placeholderPage },
             h(
                 "section",
-                { class: "dashboard-header" },
-                h("h1", { class: "dashboard-title" }, title)
+                { class: CLS.placeholderHeader },
+                h("h1", { class: CLS.placeholderTitle }, title)
             ),
             h(
                 "div",
-                { class: "dashboard-card text-center py-4" },
-                h("p", { class: "dashboard-muted" }, description),
-                h("p", { class: "dashboard-muted", style: "margin-top: 6px; font-size: 0.8rem;" }, "Coming soon.")
+                { class: CLS.placeholderCard, style: "text-align: center; padding: 1.5rem 1rem;" },
+                h("p", { class: CLS.placeholderDescription }, description),
+                h("p", { class: CLS.placeholderComingSoon, style: "margin-top: 6px; font-size: 0.8rem;" }, "Coming soon.")
             )
         );
     }
@@ -787,18 +674,16 @@ export default class PatientDashboardPage extends Component {
     renderBottomNavigation() {
         return h(
             "nav",
-            { class: "patient-bottom-nav" },
+            { class: CLS.bottomNav },
             this.tabs.map(tab =>
                 h(
                     "button",
                     {
-                        class: `patient-bottom-nav__item ${
-                            this.activeTab === tab.id ? "patient-bottom-nav__item--active" : ""
-                        }`,
+                        class: `${CLS.bottomNavItem} ${this.activeTab === tab.id ? CLS.bottomNavItemActive : ""}`,
                         onclick: () => this.setTab(tab.id),
                     },
-                    h("span", { class: `icon-${tab.icon} patient-bottom-nav__icon` }),
-                    h("span", { class: "patient-bottom-nav__label" }, tab.label)
+                    h("span", { class: `icon-${tab.icon} ${CLS.bottomNavIcon}` }),
+                    h("span", { class: CLS.bottomNavLabel }, tab.label)
                 )
             )
         );
@@ -818,15 +703,14 @@ export default class PatientDashboardPage extends Component {
     getFirstName(fullName) {
         return fullName?.trim().split(" ")[0] || "";
     }
-    
+
     getGreeting() {
         const hour = new Date().getHours();
-    
         if (hour < 12) return "Good morning";
         if (hour < 17) return "Good afternoon";
         return "Good evening";
     }
-    
+
     getTodayLabel() {
         return new Date().toLocaleDateString(undefined, {
             weekday: "long",
