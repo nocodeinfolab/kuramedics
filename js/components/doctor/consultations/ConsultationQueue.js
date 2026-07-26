@@ -20,14 +20,16 @@ const STATUS_LABELS = {
 const PAGE_LIMIT = 20;
 
 export default class DoctorQueuePage extends Component {
-    constructor(doctor) {
+    constructor(doctor, onOpenConversation) {
         super();
         this.doctor = doctor ?? {};
+        this.onOpenConversation = onOpenConversation;
 
         this.loading = true;
         this.loadingMore = false;
         this.archivingAll = false;
         this.actionLoadingId = null;
+        this.messageLoadingId = null;
 
         this.errorMessage = "";
         this.successMessage = "";
@@ -229,6 +231,29 @@ export default class DoctorQueuePage extends Component {
             this.errorMessage = error.message || "Failed to mark appointment as completed.";
         } finally {
             this.actionLoadingId = null;
+            this.update();
+        }
+    }
+    async handleMessagePatient(booking) {
+        this.messageLoadingId = booking.id;
+        this.errorMessage = "";
+        this.successMessage = "";
+        this.update();
+
+        try {
+            const res = await api.post(`/chat/bookings/${booking.id}/initiate`);
+            const conversation = res.data || res;
+
+            if (typeof this.onOpenConversation === "function") {
+                this.onOpenConversation(conversation);
+            } else {
+                this.successMessage = `Conversation started with ${booking.patient_name}.`;
+            }
+        } catch (error) {
+            console.error("Failed to start conversation:", error);
+            this.errorMessage = error.message || "Failed to open conversation.";
+        } finally {
+            this.messageLoadingId = null;
             this.update();
         }
     }
@@ -767,7 +792,19 @@ export default class DoctorQueuePage extends Component {
         }
 
         if (CONFIRMED_STATUSES.includes(booking.status)) {
+            const isMessaging = this.messageLoadingId === booking.id;
+
             buttons.push(
+                h(
+                    "button",
+                    {
+                        class: "btn btn-outline",
+                        style: btnStyle,
+                        disabled: isProcessing || isMessaging,
+                        onclick: () => this.handleMessagePatient(booking),
+                    },
+                    isMessaging ? "Opening..." : "Message"
+                ),
                 h(
                     "button",
                     {
