@@ -184,12 +184,28 @@ export default class PatientDashboardPage extends Component {
             h(
                 "section",
                 { class: "dashboard-header" },
-                h("p", { class: "dashboard-greeting" }, "Before we begin"),
-                h("h1", { class: "dashboard-title" }, "Tell us a little about yourself"),
+            
                 h(
-                    "p",
-                    { class: "dashboard-subtitle" },
-                    "This helps our AI triage understand your situation and get you to the right doctor faster. You can add more detail later in your profile."
+                    "div",
+                    { class: "dashboard-header__content" },
+            
+                    h(
+                        "h1",
+                        { class: "dashboard-title" },
+                        `${this.getGreeting()}, ${this.getFirstName(this.patient?.full_name)}`
+                    ),
+            
+                    h(
+                        "p",
+                        { class: "dashboard-subtitle" },
+                        "Your personal healthcare hub."
+                    ),
+            
+                    h(
+                        "p",
+                        { class: "dashboard-date" },
+                        this.getTodayLabel()
+                    )
                 )
             ),
 
@@ -532,6 +548,25 @@ export default class PatientDashboardPage extends Component {
             hour: "2-digit",
             minute: "2-digit",
         });
+    }
+    getFirstName(fullName) {
+        return fullName?.trim().split(" ")[0] || "";
+    }
+    
+    getGreeting() {
+        const hour = new Date().getHours();
+    
+        if (hour < 12) return "Good morning";
+        if (hour < 17) return "Good afternoon";
+        return "Good evening";
+    }
+    
+    getTodayLabel() {
+        return new Date().toLocaleDateString(undefined, {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+        }).replace(",", " •");
     }
 
     update() {
