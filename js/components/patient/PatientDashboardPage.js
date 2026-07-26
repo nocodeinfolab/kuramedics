@@ -3,6 +3,7 @@
 import { Component } from "../../core/component.js";
 import { h } from "../../utils/dom.js";
 import api from "../../services/api.js";
+import PatientCare from "./PatientCare.js";
 
 const REQUIRED_TRIAGE_FIELDS = ["date_of_birth", "gender"];
 
@@ -113,8 +114,14 @@ export default class PatientDashboardPage extends Component {
         } finally {
             this.loading = false;
             this.update();
+
+            if (!this.needsOnboarding) {
+                this.updatePage();
+            }
         }
     }
+
+    // ---------- Onboarding ----------
 
     async loadDashboardSummary() {
         this.dashboardLoading = true;
@@ -173,7 +180,7 @@ export default class PatientDashboardPage extends Component {
     setTab(tabId) {
         if (this.activeTab === tabId) return;
         this.activeTab = tabId;
-        this.update();
+        this.updatePage();
     }
 
     // ---------- Render ----------
@@ -196,8 +203,10 @@ export default class PatientDashboardPage extends Component {
             { class: "patient-dashboard" },
             h(
                 "main",
-                { class: "patient-dashboard__content" },
-                this.renderActiveTab()
+                {
+                    id: "patient-dashboard-content",
+                    class: "patient-dashboard__content",
+                }
             ),
             this.renderBottomNavigation()
         );
@@ -348,8 +357,6 @@ export default class PatientDashboardPage extends Component {
                 return this.renderHomeTab();
             case "find":
                 return this.renderComingSoon("Find Care", "Browse and book verified doctors, guided by AI triage.");
-            case "care":
-                return this.renderComingSoon("My Care", "Your appointments and consultation notes from every doctor you've seen.");
             case "messages":
                 return this.renderComingSoon("Messages", "Secure conversations with your doctors.");
             case "profile":
@@ -357,6 +364,33 @@ export default class PatientDashboardPage extends Component {
             default:
                 return this.renderHomeTab();
         }
+    }
+
+    mountCurrentPage(container) {
+        switch (this.activeTab) {
+            case "care":
+                new PatientCare(this.patient).mount(container);
+                break;
+            default:
+                container.replaceChildren(this.renderActiveTab());
+        }
+    }
+
+    updatePage() {
+        if (!this.el) return;
+
+        const container = this.el.querySelector("#patient-dashboard-content");
+        if (!container) return;
+
+        this.mountCurrentPage(container);
+
+        const buttons = this.el.querySelectorAll(".patient-bottom-nav__item");
+        buttons.forEach((button, index) => {
+            button.classList.toggle(
+                "patient-bottom-nav__item--active",
+                this.tabs[index].id === this.activeTab
+            );
+        });
     }
 
     renderHomeTab() {
