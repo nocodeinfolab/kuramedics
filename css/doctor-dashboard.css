@@ -124,33 +124,36 @@
 
 /* ===== Side rail (tablet and up) ======================================= */
 @media (min-width: 900px) {
-  .doctor-dashboard {
-    display: grid;
-    grid-template-columns: var(--dash-rail-w) 1fr;
-  }
 
-  .doctor-dashboard__content {
-    grid-column: 2;
-    padding: var(--space-8) var(--space-7);
-    max-width: 880px;
-    margin-inline: 0;
+  .doctor-dashboard {
+    display: block;
   }
 
   .doctor-bottom-nav {
-    position: sticky;
+    position: fixed;
     top: 0;
-    inset: auto;
-    grid-column: 1;
-    grid-row: 1 / -1;
-    height: 100dvh;
+    left: 0;
+    width: var(--dash-rail-w);
+    height: 100vh;
+    z-index: 100;
+
+    display: flex;
     flex-direction: column;
     justify-content: flex-start;
     align-items: stretch;
     gap: var(--space-1);
+
     padding: var(--space-6) var(--space-3);
+
     border-top: none;
     border-right: 1px solid var(--color-line);
     background: var(--color-white);
+  }
+
+  .doctor-dashboard__content {
+    margin-left: var(--dash-rail-w);
+    padding: var(--space-8) var(--space-7);
+    max-width: 880px;
   }
 
   .doctor-bottom-nav__item {
