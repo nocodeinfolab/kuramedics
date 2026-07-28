@@ -863,6 +863,8 @@ export default class PatientDashboardPage extends Component {
     }
 
     renderBottomNavigation() {
+        const unreadCount = this.dashboardSummary?.unread_message_count || 0;
+    
         return h(
             "nav",
             { class: "patient-bottom-nav" },
@@ -875,7 +877,18 @@ export default class PatientDashboardPage extends Component {
                         }`,
                         onclick: () => this.setTab(tab.id),
                     },
-                    h("span", { class: `icon-${tab.icon} patient-bottom-nav__icon` }),
+                    h(
+                        "span",
+                        { class: "patient-bottom-nav__icon-wrap" },
+                        h("span", { class: `icon-${tab.icon} patient-bottom-nav__icon` }),
+                        tab.id === "messages" && unreadCount > 0
+                            ? h(
+                                  "span",
+                                  { class: "patient-bottom-nav__badge" },
+                                  unreadCount > 9 ? "9+" : String(unreadCount)
+                              )
+                            : null
+                    ),
                     h("span", { class: "patient-bottom-nav__label" }, tab.label)
                 )
             )
