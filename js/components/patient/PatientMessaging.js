@@ -158,18 +158,18 @@ export default class PatientMessaging extends Component {
     async sendMessage() {
         const body = this.messageDraft.trim();
         if (!body || this.sending || !this.activeConversationId) return;
-
+    
         this.sending = true;
         this.messagesError = "";
         this.update();
-
+    
         try {
             const res = await api.post(`/chat/conversations/${this.activeConversationId}/messages`, {
                 body,
                 message_type: "text",
             });
             const newMessage = res.data || res;
-            this.messages = [...this.messages, newMessage];
+            this.addMessageIfNew(newMessage);
             this.messageDraft = "";
         } catch (error) {
             console.error("Failed to send message:", error);
@@ -192,12 +192,7 @@ export default class PatientMessaging extends Component {
         const isActiveThread = this.view === "thread" && this.activeConversationId === message.conversation_id;
     
         if (isActiveThread) {
-            // Avoid duplicating a message we already appended optimistically ourselves
-            const alreadyExists = this.messages.some(m => m.id === message.id);
-            if (!alreadyExists) {
-                this.messages = [...this.messages, message];
-            }
-            // We're actively viewing this thread — mark it read immediately
+            this.addMessageIfNew(message); 
             api.patch(`/chat/conversations/${message.conversation_id}/read`, {}).catch(() => {});
             this.onMessagesRead(1);
         }
@@ -218,6 +213,16 @@ export default class PatientMessaging extends Component {
         });
     
         this.update();
+    }
+
+    // ---------- Message list helpers ----------
+
+    addMessageIfNew(message) {
+        const alreadyExists = this.messages.some(m => m.id === message.id);
+        if (!alreadyExists) {
+            this.messages = [...this.messages, message];
+        }
+        return !alreadyExists;
     }
 
     // ---------- Derived data ----------
