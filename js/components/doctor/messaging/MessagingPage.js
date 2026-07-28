@@ -101,7 +101,6 @@ export default class MessagingPage extends Component {
 
         await this.loadMessages(conversation.id);
 
-        // Mark as read, then reflect it locally so the badge clears without a full reload
         try {
             await api.patch(`/chat/conversations/${conversation.id}/read`, {});
             this.conversations = this.conversations.map(c =>
@@ -124,7 +123,6 @@ export default class MessagingPage extends Component {
         this.messageDraft = "";
         this.update();
 
-        // Refresh list in the background so previews/unread counts stay current
         this.loadConversations();
     }
 
@@ -235,7 +233,7 @@ export default class MessagingPage extends Component {
     render() {
         return h(
             "div",
-            { class: "dashboard-page queue-page" },
+            { class: `dashboard-page queue-page ${this.view === "thread" ? "in-thread-view" : ""}` },
             this.view === "list" ? this.renderListHeader() : this.renderThreadHeader(),
             this.view === "list" ? this.renderListAlerts() : null,
             this.loading && this.view === "list"
@@ -397,7 +395,7 @@ export default class MessagingPage extends Component {
 
         return h(
             "section",
-            { class: "dashboard-header", style: "display: flex; align-items: flex-start; gap: 10px;" },
+            { class: "dashboard-header chat-thread-header", style: "display: flex; align-items: flex-start; gap: 10px;" },
             h(
                 "button",
                 {
@@ -427,7 +425,10 @@ export default class MessagingPage extends Component {
     renderThread() {
         return h(
             "div",
-            { class: "dashboard-card", style: "padding: 0; display: flex; flex-direction: column; height: calc(100vh - 220px); overflow: hidden;" },
+            { 
+                class: "dashboard-card chat-thread-card", 
+                style: "padding: 0; display: flex; flex-direction: column; height: calc(100dvh - 220px); min-height: 350px; overflow: hidden;" 
+            },
             this.renderThreadStatusBar(),
             this.messagesError
                 ? h(
@@ -440,7 +441,7 @@ export default class MessagingPage extends Component {
                 "div",
                 {
                     id: "chat-thread-body",
-                    style: "flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 10px;",
+                    style: "flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 10px; -webkit-overflow-scrolling: touch;",
                 },
                 this.messagesLoading
                     ? h("p", { class: "dashboard-muted text-center" }, "Loading conversation...")
@@ -513,7 +514,10 @@ export default class MessagingPage extends Component {
 
         return h(
             "div",
-            { style: "border-top: 1px solid var(--color-line); padding: 0.75rem; display: flex; gap: 8px; align-items: flex-end;" },
+            { 
+                class: "chat-composer",
+                style: "border-top: 1px solid var(--color-line); padding: 0.75rem; display: flex; gap: 8px; align-items: flex-end; background: var(--color-bg-card, #ffffff); zone-index: 10;" 
+            },
             h("textarea", {
                 rows: 1,
                 placeholder: isClosed ? "Reopen the conversation to send a message" : "Type a message...",
