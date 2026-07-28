@@ -13,10 +13,11 @@ const STATUS_LABELS = {
 };
 
 export default class PatientMessaging extends Component {
-    constructor(patient, socket) {
+    constructor(patient, socket, onMessagesRead) {
         super();
         this.patient = patient ?? {};
         this.socket = socket ?? null;
+        this.onMessagesRead = onMessagesRead ?? (() => {}); 
 
         this.loading = true;
         this.errorMessage = "";
@@ -98,15 +99,21 @@ export default class PatientMessaging extends Component {
         this.messageDraft = "";
         this.update();
     
-        this.socket?.emit("conversation:join", { conversationId: conversation.id });   // add this
+        this.socket?.emit("conversation:join", { conversationId: conversation.id });
     
         await this.loadMessages(conversation.id);
     
         try {
+            const previousUnread = conversation.unread_count || 0;   
+    
             await api.patch(`/chat/conversations/${conversation.id}/read`, {});
             this.conversations = this.conversations.map(c =>
                 c.id === conversation.id ? { ...c, unread_count: 0 } : c
             );
+    
+            if (previousUnread > 0) {
+                this.onMessagesRead(previousUnread);   
+            }
         } catch (error) {
             console.error("Failed to mark conversation read:", error);
         }
@@ -117,13 +124,14 @@ export default class PatientMessaging extends Component {
 
     closeThread() {
         this.stopPolling();
+        this.socket?.emit("conversation:leave", { conversationId: this.activeConversationId });   // add this
         this.view = "list";
         this.activeConversationId = null;
         this.activeConversation = null;
         this.messages = [];
         this.messageDraft = "";
         this.update();
-
+    
         this.loadConversations();
     }
 
@@ -191,6 +199,7 @@ export default class PatientMessaging extends Component {
             }
             // We're actively viewing this thread — mark it read immediately
             api.patch(`/chat/conversations/${message.conversation_id}/read`, {}).catch(() => {});
+            this.onMessagesRead(1);
         }
     
         // Keep the conversation list preview and unread badge in sync either way
