@@ -547,7 +547,7 @@ export default class PatientMessaging extends Component {
                 {
                     class: "btn btn-primary",
                     style: "padding: 0.55rem 1rem; font-size: 0.85rem; border-radius: 8px; flex-shrink: 0;",
-                    disabled: isClosed || this.sending || !this.messageDraft.trim(),
+                    disabled: this.sending,
                     onclick: () => this.sendMessage(),
                 },
                 this.sending ? "Sending..." : "Send"
