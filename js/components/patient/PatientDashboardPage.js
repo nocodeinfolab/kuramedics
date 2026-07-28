@@ -5,6 +5,7 @@ import { h } from "../../utils/dom.js";
 import api from "../../services/api.js";
 import PatientCare from "./PatientCare.js";
 import PatientMessaging from "./PatientMessaging.js";
+import { io } from "socket.io-client";
 
 const REQUIRED_TRIAGE_FIELDS = ["date_of_birth", "gender"];
 
@@ -82,7 +83,44 @@ export default class PatientDashboardPage extends Component {
 
     afterMount() {
         this.loadPatient();
+        this.connectSocket();
     }
+    
+    connectSocket() {
+        const token = /* your existing token retrieval, e.g. localStorage.getItem("kuramedics_token") */;
+        if (!token) return;
+    
+        this.socket = io(API_BASE_URL, {   // match your actual API base URL constant
+            auth: { token },
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 10000,
+        });
+    
+        this.socket.on("connect_error", (err) => {
+            console.error("Chat socket connection error:", err.message);
+        });
+    
+        this.socket.on("message:new", (message) => {
+            const isForOtherParticipant = message.sender_role !== "patient";
+    
+            if (isForOtherParticipant) {
+                this.dashboardSummary = {
+                    ...this.dashboardSummary,
+                    unread_message_count: (this.dashboardSummary?.unread_message_count || 0) + 1,
+                };
+                this.update();
+            }
+    
+            this._tabInstances?.messages?.receiveIncomingMessage?.(message);
+        });
+    }
+    
+    unmount() {
+        this.socket?.disconnect();
+        super.unmount?.();
+    }
+    
 
     // ---------- Data loading ----------
 
@@ -408,9 +446,11 @@ export default class PatientDashboardPage extends Component {
         this._tabWrappers[tabId] = wrapper;
     
         const Ctor = tabId === "care" ? PatientCare : PatientMessaging;
-        const instance = new Ctor(this.patient);
+        const instance = tabId === "messages"
+            ? new Ctor(this.patient, this.socket)
+            : new Ctor(this.patient);
         this._tabInstances[tabId] = instance;
-    
+        
         instance.mount(wrapper);
     }
     
