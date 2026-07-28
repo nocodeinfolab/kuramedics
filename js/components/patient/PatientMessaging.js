@@ -13,9 +13,10 @@ const STATUS_LABELS = {
 };
 
 export default class PatientMessaging extends Component {
-    constructor(patient) {
+    constructor(patient, socket) {
         super();
         this.patient = patient ?? {};
+        this.socket = socket ?? null;
 
         this.loading = true;
         this.errorMessage = "";
@@ -96,9 +97,11 @@ export default class PatientMessaging extends Component {
         this.messages = [];
         this.messageDraft = "";
         this.update();
-
+    
+        this.socket?.emit("conversation:join", { conversationId: conversation.id });   // add this
+    
         await this.loadMessages(conversation.id);
-
+    
         try {
             await api.patch(`/chat/conversations/${conversation.id}/read`, {});
             this.conversations = this.conversations.map(c =>
@@ -107,7 +110,7 @@ export default class PatientMessaging extends Component {
         } catch (error) {
             console.error("Failed to mark conversation read:", error);
         }
-
+    
         this.startPolling(conversation.id);
         this.update();
     }
@@ -171,6 +174,40 @@ export default class PatientMessaging extends Component {
 
     setSearchTerm(term) {
         this.searchTerm = term;
+        this.update();
+    }
+    // ---------- Live updates (called externally by PatientDashboardPage) ----------
+
+    receiveIncomingMessage(message) {
+        if (!message || !message.conversation_id) return;
+    
+        const isActiveThread = this.view === "thread" && this.activeConversationId === message.conversation_id;
+    
+        if (isActiveThread) {
+            // Avoid duplicating a message we already appended optimistically ourselves
+            const alreadyExists = this.messages.some(m => m.id === message.id);
+            if (!alreadyExists) {
+                this.messages = [...this.messages, message];
+            }
+            // We're actively viewing this thread — mark it read immediately
+            api.patch(`/chat/conversations/${message.conversation_id}/read`, {}).catch(() => {});
+        }
+    
+        // Keep the conversation list preview and unread badge in sync either way
+        this.conversations = this.conversations.map(c => {
+            if (c.id !== message.conversation_id) return c;
+            return {
+                ...c,
+                last_message_body: message.body,
+                last_message_type: message.message_type,
+                last_message_created_at: message.created_at,
+                last_message_deleted_at: null,
+                unread_count: isActiveThread || message.sender_role === "patient"
+                    ? c.unread_count || 0
+                    : (c.unread_count || 0) + 1,
+            };
+        });
+    
         this.update();
     }
 
