@@ -4,7 +4,7 @@ import { Component } from "../../../core/component.js";
 import { h } from "../../../utils/dom.js";
 import api from "../../../services/api.js";
 
-const POLL_INTERVAL_MS = 8000;
+const POLL_INTERVAL_MS = 60000;
 
 const STATUS_LABELS = {
     open: "Open",
