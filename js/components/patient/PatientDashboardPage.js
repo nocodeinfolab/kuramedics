@@ -121,7 +121,14 @@ export default class PatientDashboardPage extends Component {
         super.unmount?.();
     }
     
-
+    onMessagesRead(count = 1) {
+        const current = this.dashboardSummary?.unread_message_count || 0;
+        this.dashboardSummary = {
+            ...this.dashboardSummary,
+            unread_message_count: Math.max(0, current - count),
+        };
+        this.update();
+    }
     // ---------- Data loading ----------
 
     async loadPatient() {
@@ -447,7 +454,7 @@ export default class PatientDashboardPage extends Component {
     
         const Ctor = tabId === "care" ? PatientCare : PatientMessaging;
         const instance = tabId === "messages"
-            ? new Ctor(this.patient, this.socket)
+            ? new Ctor(this.patient, this.socket, (count) => this.onMessagesRead(count))
             : new Ctor(this.patient);
         this._tabInstances[tabId] = instance;
         
