@@ -87,10 +87,10 @@ export default class PatientDashboardPage extends Component {
     }
     
     connectSocket() {
-        const token = /* your existing token retrieval, e.g. localStorage.getItem("kuramedics_token") */;
+        const token = localStorage.getItem("accessToken");
         if (!token) return;
     
-        this.socket = io(API_BASE_URL, {   // match your actual API base URL constant
+        this.socket = io(https://doctors-consultation-backend.onrender.com, {   
             auth: { token },
             reconnection: true,
             reconnectionDelay: 1000,
