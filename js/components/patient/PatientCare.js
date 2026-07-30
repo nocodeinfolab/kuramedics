@@ -322,37 +322,44 @@ export default class PatientCare extends Component {
     }
 
     renderRescheduleComparison(booking) {
-        
-        const originalDate = booking.patient_requested_time;
-        const suggestedDate = booking.doctor_suggested_time || booking.booking_date;
-
         return h(
             "div",
             {
                 style: "margin-top: 10px; padding: 0.7rem 0.85rem; background: rgba(139, 92, 246, 0.06); border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 8px; display: flex; flex-direction: column; gap: 6px;",
             },
-            originalDate
+    
+            booking.patient_requested_time
                 ? h(
                       "p",
                       { style: "margin: 0; font-size: 0.82rem;" },
-                      h("span", { class: "dashboard-muted", style: "font-size: 0.76rem;" }, "You requested: "),
+                      h("span", { class: "dashboard-muted" }, "You requested: "),
                       h(
                           "span",
-                          { style: "text-decoration: line-through; color: var(--color-ink-faint);" },
-                          this.formatDateTime(originalDate)
+                          {
+                              style: "text-decoration: line-through; color: var(--color-ink-faint);",
+                          },
+                          this.formatDateTime(booking.patient_requested_time)
                       )
                   )
                 : null,
-            h(
-                "p",
-                { style: "margin: 0; font-size: 0.86rem;" },
-                h("span", { class: "dashboard-muted", style: "font-size: 0.76rem;" }, "Doctor suggested: "),
-                h("span", { style: "font-weight: 700; color: #7c3aed;" }, this.formatDateTime(booking.booking_date))
-            ),
+    
+            booking.doctor_suggested_time
+                ? h(
+                      "p",
+                      { style: "margin: 0; font-size: 0.86rem;" },
+                      h("span", { class: "dashboard-muted" }, "Doctor suggested: "),
+                      h(
+                          "span",
+                          { style: "font-weight:700; color:#7c3aed;" },
+                          this.formatDateTime(booking.doctor_suggested_time)
+                      )
+                  )
+                : null,
+    
             booking.confirmation_note
                 ? h(
                       "p",
-                      { class: "dashboard-muted", style: "margin: 2px 0 0; font-size: 0.8rem; line-height: 1.45;" },
+                      { class: "dashboard-muted" },
                       `"${booking.confirmation_note}"`
                   )
                 : null
