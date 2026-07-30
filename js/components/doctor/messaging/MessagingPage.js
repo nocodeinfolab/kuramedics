@@ -4,7 +4,7 @@ import { Component } from "../../../core/component.js";
 import { h } from "../../../utils/dom.js";
 import api from "../../../services/api.js";
 
-const POLL_INTERVAL_MS = 60000;
+const POLL_INTERVAL_MS = 60000; // safety-net fallback; live delivery is via socket
 
 const STATUS_LABELS = {
     open: "Open",
@@ -13,9 +13,11 @@ const STATUS_LABELS = {
 };
 
 export default class MessagingPage extends Component {
-    constructor(doctor) {
+    constructor(doctor, socket, onMessagesRead) {
         super();
         this.doctor = doctor ?? {};
+        this.socket = socket ?? null;
+        this.onMessagesRead = onMessagesRead ?? (() => {});
 
         this.loading = true;
         this.errorMessage = "";
@@ -45,6 +47,9 @@ export default class MessagingPage extends Component {
 
     beforeUnmount() {
         this.stopPolling();
+        if (this.activeConversationId) {
+            this.socket?.emit("conversation:leave", { conversationId: this.activeConversationId });
+        }
     }
 
     // ---------- Data loading ----------
@@ -89,6 +94,46 @@ export default class MessagingPage extends Component {
         }
     }
 
+    // ---------- Message list helpers ----------
+
+    addMessageIfNew(message) {
+        const alreadyExists = this.messages.some(m => m.id === message.id);
+        if (!alreadyExists) {
+            this.messages = [...this.messages, message];
+        }
+        return !alreadyExists;
+    }
+
+    // ---------- Live updates (called externally by DoctorDashboardPage) ----------
+
+    receiveIncomingMessage(message) {
+        if (!message || !message.conversation_id) return;
+
+        const isActiveThread = this.view === "thread" && this.activeConversationId === message.conversation_id;
+
+        if (isActiveThread) {
+            this.addMessageIfNew(message);
+            api.patch(`/chat/conversations/${message.conversation_id}/read`, {}).catch(() => {});
+            this.onMessagesRead(1);
+        }
+
+        this.conversations = this.conversations.map(c => {
+            if (c.id !== message.conversation_id) return c;
+            return {
+                ...c,
+                last_message_body: message.body,
+                last_message_type: message.message_type,
+                last_message_created_at: message.created_at,
+                last_message_deleted_at: null,
+                unread_count: isActiveThread || message.sender_role === "doctor"
+                    ? c.unread_count || 0
+                    : (c.unread_count || 0) + 1,
+            };
+        });
+
+        this.update();
+    }
+
     // ---------- Thread navigation ----------
 
     async openConversation(conversation) {
@@ -99,13 +144,21 @@ export default class MessagingPage extends Component {
         this.messageDraft = "";
         this.update();
 
+        this.socket?.emit("conversation:join", { conversationId: conversation.id });
+
         await this.loadMessages(conversation.id);
 
         try {
+            const previousUnread = conversation.unread_count || 0;
+
             await api.patch(`/chat/conversations/${conversation.id}/read`, {});
             this.conversations = this.conversations.map(c =>
                 c.id === conversation.id ? { ...c, unread_count: 0 } : c
             );
+
+            if (previousUnread > 0) {
+                this.onMessagesRead(previousUnread);
+            }
         } catch (error) {
             console.error("Failed to mark conversation read:", error);
         }
@@ -116,6 +169,7 @@ export default class MessagingPage extends Component {
 
     closeThread() {
         this.stopPolling();
+        this.socket?.emit("conversation:leave", { conversationId: this.activeConversationId });
         this.view = "list";
         this.activeConversationId = null;
         this.activeConversation = null;
@@ -144,6 +198,9 @@ export default class MessagingPage extends Component {
 
     setMessageDraft(value) {
         this.messageDraft = value;
+        // No update() here on purpose — the send button no longer depends on
+        // draft content (see renderComposer), so we avoid re-rendering (and
+        // dropping textarea focus/cursor) on every keystroke.
     }
 
     async sendMessage() {
@@ -160,7 +217,7 @@ export default class MessagingPage extends Component {
                 message_type: "text",
             });
             const newMessage = res.data || res;
-            this.messages = [...this.messages, newMessage];
+            this.addMessageIfNew(newMessage);
             this.messageDraft = "";
         } catch (error) {
             console.error("Failed to send message:", error);
@@ -537,7 +594,10 @@ export default class MessagingPage extends Component {
                 {
                     class: "btn btn-primary",
                     style: "padding: 0.55rem 1rem; font-size: 0.85rem; border-radius: 8px; flex-shrink: 0;",
-                    disabled: isClosed || this.sending || !this.messageDraft.trim(),
+                    // Always active except while a send is in flight or the
+                    // conversation is closed — empty-body and closed-thread
+                    // sends are still guarded inside sendMessage() itself.
+                    disabled: isClosed || this.sending,
                     onclick: () => this.sendMessage(),
                 },
                 this.sending ? "Sending..." : "Send"
