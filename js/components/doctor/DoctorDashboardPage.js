@@ -550,11 +550,14 @@ export default class DoctorDashboardPage extends Component {
                     "Loading dashboard..."
                 )
             );
-
+        
         } else {
-
+        
+            // Remove the loading indicator once data has finished loading
+            container.querySelector(".dashboard-loading")?.remove();
+        
             this.mountCurrentPage(container);
-
+        
         }
 
         const buttons = this.el.querySelectorAll(
