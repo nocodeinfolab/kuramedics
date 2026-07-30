@@ -484,7 +484,7 @@ export default class MessagingPage extends Component {
             "div",
             { 
                 class: "dashboard-card chat-thread-card", 
-                style: "padding: 0; display: flex; flex-direction: column; height: calc(100dvh - 350px); min-height: 250px; overflow: hidden;" 
+                style: "padding: 0; display: flex; flex-direction: column; height: calc(100dvh - 320px); min-height: 290px; overflow: hidden;" 
             },
             this.renderThreadStatusBar(),
             this.messagesError
