@@ -456,7 +456,7 @@ export default class PatientMessaging extends Component {
     renderThread() {
         return h(
             "div",
-            { class: "dashboard-card", style: "padding: 0; display: flex; flex-direction: column; height: calc(100vh - 320px); overflow: hidden;" },
+            { class: "dashboard-card", style: "padding: 0; display: flex; flex-direction: column; height: calc(100vh - 320px); min-height: 250px; overflow: hidden;" },
             this.renderThreadStatusBar(),
             this.messagesError
                 ? h(
