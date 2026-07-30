@@ -23,50 +23,50 @@ export default class PatientCare extends Component {
     constructor(patient) {
         super();
         this.patient = patient ?? {};
-    
+
         this.loading = true;
         this.errorMessage = "";
-    
+
         this.bookings = [];
         this.recordsByBookingId = {};
-    
+
         this.activeTab = "upcoming";
         this.expandedBookingId = null;
-    
-        this._lastFetchedAt = null;   // add this
+
+        this._lastFetchedAt = null;
     }
-    
+
     async afterMount() {
         await this.loadData();
     }
-    
+
     // ---------- Data loading ----------
-    
+
     async loadData({ silent = false } = {}) {
         if (!silent) {
             this.loading = true;
             this.errorMessage = "";
             this.update();
         }
-    
+
         try {
             const [bookingsRes, recordsRes] = await Promise.all([
                 api.get("/bookings?page=1&limit=50"),
                 api.get("/consultations/my-records"),
             ]);
-    
+
             const bookingsPayload = bookingsRes.data || bookingsRes;
             this.bookings = bookingsPayload.rows || bookingsPayload.data || bookingsPayload.items || [];
-    
+
             const recordsPayload = recordsRes.data || recordsRes;
             const records = Array.isArray(recordsPayload) ? recordsPayload : recordsPayload.rows || recordsPayload.data || [];
-    
+
             this.recordsByBookingId = {};
             records.forEach(record => {
                 this.recordsByBookingId[record.booking_id] = record;
             });
-    
-            this._lastFetchedAt = Date.now();   // add this
+
+            this._lastFetchedAt = Date.now();
         } catch (error) {
             console.error("Failed to load care history:", error);
             if (!silent) this.errorMessage = error.message || "Failed to load your appointments.";
@@ -75,10 +75,11 @@ export default class PatientCare extends Component {
             this.update();
         }
     }
-    
+
     isStale(ttlMs = 60_000) {
         return !this._lastFetchedAt || Date.now() - this._lastFetchedAt > ttlMs;
     }
+
     // ---------- Interaction ----------
 
     setTab(tab) {
@@ -261,6 +262,7 @@ export default class PatientCare extends Component {
     renderBookingCard(booking) {
         const isExpanded = this.expandedBookingId === booking.id;
         const isCompleted = COMPLETED_STATUSES.includes(booking.status);
+        const isRescheduleRequested = booking.status === "reschedule_requested";
         const statusLabel = STATUS_LABELS[booking.status] || booking.status;
 
         const badgeColor =
@@ -269,7 +271,7 @@ export default class PatientCare extends Component {
                 : booking.status === "completed"
                 ? "var(--color-ink-faint)"
                 : booking.status === "reschedule_requested"
-                ? "#f59e0b"
+                ? "#8b5cf6" // distinct purple — was sharing amber with pending_confirmation
                 : booking.status === "pending_confirmation"
                 ? "#f59e0b"
                 : "#0284c7";
@@ -302,11 +304,12 @@ export default class PatientCare extends Component {
                     "span",
                     {
                         class: "dashboard-badge",
-                        style: `background: ${badgeColor}; font-size: 0.7rem; padding: 3px 9px; border-radius: 5px; white-space: nowrap; flex-shrink: 0;`,
+                        style: `background: ${badgeColor}; font-size: 0.7rem; padding: 3px 9px; border-radius: 5px; white-space: nowrap; flex-shrink: 0; color: #ffffff;`,
                     },
                     statusLabel
                 )
             ),
+            isRescheduleRequested ? this.renderRescheduleComparison(booking) : null,
             isCompleted
                 ? h(
                       "p",
@@ -315,6 +318,50 @@ export default class PatientCare extends Component {
                   )
                 : null,
             isCompleted && isExpanded ? this.renderConsultationNotes(booking) : null
+        );
+    }
+
+    renderRescheduleComparison(booking) {
+        // NOTE: `original_booking_date` is assumed to be the field the backend
+        // preserves *before* PATCH /bookings/:id/suggest-time overwrites
+        // `booking_date` with the doctor's proposed time. If your booking
+        // model uses a different column name (e.g. `requested_date`,
+        // `previous_booking_date`), update the key below to match — and if
+        // no such field is currently being preserved server-side, the
+        // original time can't be shown here until the backend starts
+        // storing it before the overwrite.
+        const originalDate = booking.original_booking_date;
+
+        return h(
+            "div",
+            {
+                style: "margin-top: 10px; padding: 0.7rem 0.85rem; background: rgba(139, 92, 246, 0.06); border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 8px; display: flex; flex-direction: column; gap: 6px;",
+            },
+            originalDate
+                ? h(
+                      "p",
+                      { style: "margin: 0; font-size: 0.82rem;" },
+                      h("span", { class: "dashboard-muted", style: "font-size: 0.76rem;" }, "You requested: "),
+                      h(
+                          "span",
+                          { style: "text-decoration: line-through; color: var(--color-ink-faint);" },
+                          this.formatDateTime(originalDate)
+                      )
+                  )
+                : null,
+            h(
+                "p",
+                { style: "margin: 0; font-size: 0.86rem;" },
+                h("span", { class: "dashboard-muted", style: "font-size: 0.76rem;" }, "Doctor suggested: "),
+                h("span", { style: "font-weight: 700; color: #7c3aed;" }, this.formatDateTime(booking.booking_date))
+            ),
+            booking.confirmation_note
+                ? h(
+                      "p",
+                      { class: "dashboard-muted", style: "margin: 2px 0 0; font-size: 0.8rem; line-height: 1.45;" },
+                      `"${booking.confirmation_note}"`
+                  )
+                : null
         );
     }
 
