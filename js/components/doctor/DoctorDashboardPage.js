@@ -115,6 +115,28 @@ export default class DoctorDashboardPage extends Component {
         console.log("DoctorDashboardPage: afterMount()");
         this.loadDoctor();
         this.connectSocket();
+        this.loadUnreadMessageCount();
+
+    }
+
+    async loadUnreadMessageCount() {
+
+        try {
+
+            const res = await api.get("/chat/conversations");
+            const payload = res.data || res;
+            const conversations = Array.isArray(payload) ? payload : payload.rows || payload.data || [];
+
+            const total = conversations.reduce((sum, c) => sum + (c.unread_count || 0), 0);
+
+            this.unreadMessageCount = total;
+            this.updateUnreadBadge();
+
+        } catch (error) {
+
+            console.error("Failed to load initial unread message count:", error);
+
+        }
 
     }
 
