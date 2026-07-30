@@ -328,6 +328,16 @@ export default class DoctorDashboardPage extends Component {
             this.loading
         );
 
+        // Remove anything left over that isn't one of our managed wrappers —
+        // most importantly the initial "Loading dashboard..." div from the
+        // very first render(), which otherwise has nothing left to clear it
+        // now that we append wrappers instead of using replaceChildren().
+        Array.from(container.children).forEach(child => {
+            if (!child.hasAttribute("data-static-wrapper") && !child.hasAttribute("data-tab-wrapper")) {
+                child.remove();
+            }
+        });
+
         let staticWrapper = container.querySelector('[data-static-wrapper]');
         if (!staticWrapper) {
             staticWrapper = document.createElement("div");
@@ -550,14 +560,11 @@ export default class DoctorDashboardPage extends Component {
                     "Loading dashboard..."
                 )
             );
-        
+
         } else {
-        
-            // Remove the loading indicator once data has finished loading
-            container.querySelector(".dashboard-loading")?.remove();
-        
+
             this.mountCurrentPage(container);
-        
+
         }
 
         const buttons = this.el.querySelectorAll(
