@@ -322,15 +322,9 @@ export default class PatientCare extends Component {
     }
 
     renderRescheduleComparison(booking) {
-        // NOTE: `original_booking_date` is assumed to be the field the backend
-        // preserves *before* PATCH /bookings/:id/suggest-time overwrites
-        // `booking_date` with the doctor's proposed time. If your booking
-        // model uses a different column name (e.g. `requested_date`,
-        // `previous_booking_date`), update the key below to match — and if
-        // no such field is currently being preserved server-side, the
-        // original time can't be shown here until the backend starts
-        // storing it before the overwrite.
-        const originalDate = booking.original_booking_date;
+        
+        const originalDate = booking.patient_requested_time;
+        const suggestedDate = booking.doctor_suggested_time || booking.booking_date;
 
         return h(
             "div",
