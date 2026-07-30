@@ -19,8 +19,11 @@
 .doctor-dashboard__content {
   padding: var(--space-6) var(--space-5)
     calc(var(--dash-nav-h) + env(safe-area-inset-bottom, 0px) + var(--space-6));
-  max-width: 960px;
-  margin-inline: auto;
+  
+  /* CHANGE: Remove max-width limit entirely */
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   animation: dash-fade-in var(--duration-medium) var(--ease-out);
 }
 
