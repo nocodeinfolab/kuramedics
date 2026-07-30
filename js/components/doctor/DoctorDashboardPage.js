@@ -14,6 +14,12 @@ import DoctorConsultationServicesPage from "./settings/DoctorConsultationService
 import DoctorSubscriptionPage from "./settings/DoctorSubscriptionPage.js";
 import api from "../../services/api.js";
 
+// Loaded via <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+// in index.html — `io` is a global, not an ES module import, since this is a
+// no-bundler vanilla JS project. See patient-side wiring for the same pattern.
+/* global io */
+const SOCKET_BASE_URL = "https://doctors-consultation-backend.onrender.com";
+
 export default class DoctorDashboardPage extends Component {
 
     constructor() {
@@ -25,6 +31,14 @@ export default class DoctorDashboardPage extends Component {
         this.settingsView = "menu";
         this.loading = true;
         this.doctor = null;
+
+        this.socket = null;
+        this.unreadMessageCount = 0;
+        this._recentlySeenMessageIds = new Set();
+
+        this._tabInstances = {};
+        this._tabWrappers = {};
+        this.pendingConversation = null;
 
         this.tabs = [
             {
@@ -100,7 +114,86 @@ export default class DoctorDashboardPage extends Component {
 
         console.log("DoctorDashboardPage: afterMount()");
         this.loadDoctor();
+        this.connectSocket();
 
+    }
+
+    beforeUnmount() {
+
+        this.socket?.disconnect();
+        this._tabInstances?.messages?.unmount?.();
+
+    }
+
+    // ---------- Realtime (WebSocket) ----------
+
+    connectSocket() {
+
+        const token = localStorage.getItem("accessToken");
+        if (!token) return;
+
+        this.socket = io(SOCKET_BASE_URL, {
+            auth: { token },
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionDelayMax: 10000,
+        });
+
+        this.socket.on("connect_error", (err) => {
+            console.error("Chat socket connection error:", err.message);
+        });
+
+        this.socket.on("message:new", (message) => {
+            if (this._recentlySeenMessageIds.has(message.id)) return;
+            this._recentlySeenMessageIds.add(message.id);
+
+            // The doctor is the recipient whenever the patient sent it.
+            const isForDoctor = message.sender_role === "patient";
+
+            if (isForDoctor) {
+                this.unreadMessageCount += 1;
+                this.updateUnreadBadge();
+            }
+
+            // If the Messages tab is already cached/mounted, push the
+            // message straight into it. If the doctor is actively viewing
+            // that exact thread, PatientMessaging-equivalent logic there
+            // will call onMessagesRead(1) right back, netting the badge
+            // to zero change for that message — same pattern as the
+            // patient-side implementation.
+            this._tabInstances?.messages?.receiveIncomingMessage?.(message);
+        });
+
+    }
+
+    onMessagesRead(count = 1) {
+        this.unreadMessageCount = Math.max(0, this.unreadMessageCount - count);
+        this.updateUnreadBadge();
+    }
+
+    // Nav bar is only rendered once (see renderBottomNavigation / updatePage,
+    // which toggles classes via direct DOM manipulation rather than a full
+    // re-render). We follow the same approach for the badge to avoid
+    // rebuilding the whole nav on every message event.
+    updateUnreadBadge() {
+        if (!this.el) return;
+
+        const wrap = this.el.querySelector('[data-tab-icon="messages"]');
+        if (!wrap) return;
+
+        let badge = wrap.querySelector(".doctor-bottom-nav__badge");
+
+        if (this.unreadMessageCount > 0) {
+            const text = this.unreadMessageCount > 9 ? "9+" : String(this.unreadMessageCount);
+            if (!badge) {
+                badge = document.createElement("span");
+                badge.className = "doctor-bottom-nav__badge";
+                wrap.appendChild(badge);
+            }
+            badge.textContent = text;
+        } else if (badge) {
+            badge.remove();
+        }
     }
 
     async loadDoctor() {
@@ -212,9 +305,17 @@ export default class DoctorDashboardPage extends Component {
 
     /**
      * Mounts the component for whichever tab/settings-view is currently
-     * active into `container`. Uses `.mount()` (not `.render()`) so that
-     * lifecycle hooks like `afterMount()` — which is what triggers data
-     * fetching in pages like DoctorProfilePage — actually run.
+     * active into `container`.
+     *
+     * The Messages tab is cached: it lives in its own persistent wrapper
+     * div that is only ever created once and then shown/hidden, so its
+     * component instance (conversation list, open thread, etc.) survives
+     * switching to other tabs and back — no refetch, no lost state, and
+     * the socket keeps feeding it live messages regardless of which tab
+     * is currently visible.
+     *
+     * All other tabs keep their original behaviour: freshly mounted into
+     * a separate "static" wrapper every time the tab is selected.
      */
     mountCurrentPage(container) {
 
@@ -226,77 +327,123 @@ export default class DoctorDashboardPage extends Component {
             "| Loading:",
             this.loading
         );
-    
-        // Helper method to navigate tabs directly from home or other views
+
+        let staticWrapper = container.querySelector('[data-static-wrapper]');
+        if (!staticWrapper) {
+            staticWrapper = document.createElement("div");
+            staticWrapper.dataset.staticWrapper = "true";
+            container.appendChild(staticWrapper);
+        }
+
+        if (this.activeTab === "messages") {
+            staticWrapper.style.display = "none";
+            this.ensureMessagesTabMounted(container);
+            this.showMessagesTab(true);
+        } else {
+            this.showMessagesTab(false);
+            staticWrapper.style.display = "";
+            this.mountStaticTab(staticWrapper);
+        }
+
+    }
+
+    ensureMessagesTabMounted(container) {
+
+        if (this._tabInstances.messages) {
+            const wrapper = this._tabWrappers.messages;
+            if (wrapper && wrapper.parentNode !== container) {
+                container.appendChild(wrapper);
+            }
+            return;
+        }
+
+        const wrapper = document.createElement("div");
+        wrapper.dataset.tabWrapper = "messages";
+        container.appendChild(wrapper);
+        this._tabWrappers.messages = wrapper;
+
+        const instance = new MessagingPage(
+            this.doctor,
+            this.socket,
+            (count) => this.onMessagesRead(count)
+        );
+        this._tabInstances.messages = instance;
+
+        instance.mount(wrapper);
+
+    }
+
+    showMessagesTab(show) {
+        const wrapper = this._tabWrappers.messages;
+        if (wrapper) wrapper.style.display = show ? "" : "none";
+    }
+
+    mountStaticTab(staticWrapper) {
+
         const navigateToTab = (tabId, settingsView = "menu") => {
             this.activeTab = tabId;
             this.settingsView = settingsView;
             this.updatePage();
         };
-    
+
         switch (this.activeTab) {
-    
+
             case "home":
-                // Pass navigateToTab so clicking the banner switches to settings
-                new DashboardHome(this.doctor, (tabId) => navigateToTab(tabId)).mount(container);
+                new DashboardHome(this.doctor, (tabId) => navigateToTab(tabId)).mount(staticWrapper);
                 break;
-    
+
             case "consultations":
                 new ConsultationQueue(this.doctor, (conversation) => {
                     this.activeTab = "messages";
                     this.pendingConversation = conversation;
                     this.updatePage();
-                }).mount(container);
+                }).mount(staticWrapper);
                 break;
-    
+
             case "patients":
-                new PatientRecords().mount(container);
+                new PatientRecords().mount(staticWrapper);
                 break;
-    
-            case "messages":
-                new MessagingPage().mount(container);
-                break;
-    
+
             case "finance":
-                new FinancialSummary().mount(container);
+                new FinancialSummary().mount(staticWrapper);
                 break;
-    
+
             case "settings":
                 if (this.settingsView === "profile") {
-    
+
                     new DoctorProfilePage(
                         this.doctor,
                         () => this.navigateSettings("menu")
-                    ).mount(container);
-    
+                    ).mount(staticWrapper);
+
                 } else if (this.settingsView === "consultation-services") {
-    
+
                     new DoctorConsultationServicesPage(
                         this.doctor,
                         () => this.navigateSettings("menu")
-                    ).mount(container);
+                    ).mount(staticWrapper);
                 } else if (this.settingsView === "subscription") {
 
                     new DoctorSubscriptionPage(
                         this.doctor,
                         () => this.navigateSettings("menu")
-                    ).mount(container);
-    
+                    ).mount(staticWrapper);
+
                 } else {
-    
+
                     new SettingsPage(
                         this.doctor,
                         view => this.navigateSettings(view)
-                    ).mount(container);
-    
+                    ).mount(staticWrapper);
+
                 }
                 break;
-    
+
             default:
-                new DashboardHome(this.doctor, (tabId) => navigateToTab(tabId)).mount(container);
-    
+                new DashboardHome(this.doctor, (tabId) => navigateToTab(tabId)).mount(staticWrapper);
+
         }
-    
+
     }
 
     navigateSettings(view) {
@@ -336,8 +483,22 @@ export default class DoctorDashboardPage extends Component {
                     h(
                         "span",
                         {
-                            class: `icon-${tab.icon} doctor-bottom-nav__icon`
-                        }
+                            class: "doctor-bottom-nav__icon-wrap",
+                            "data-tab-icon": tab.id
+                        },
+                        h(
+                            "span",
+                            {
+                                class: `icon-${tab.icon} doctor-bottom-nav__icon`
+                            }
+                        ),
+                        tab.id === "messages" && this.unreadMessageCount > 0
+                            ? h(
+                                "span",
+                                { class: "doctor-bottom-nav__badge" },
+                                this.unreadMessageCount > 9 ? "9+" : String(this.unreadMessageCount)
+                            )
+                            : null
                     ),
 
                     h(
