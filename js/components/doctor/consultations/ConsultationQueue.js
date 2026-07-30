@@ -815,16 +815,7 @@ export default class DoctorQueuePage extends Component {
                     },
                     "Clinical Notes"
                 ),
-                h(
-                    "button",
-                    {
-                        class: "btn btn-primary",
-                        style: btnStyle,
-                        disabled: isProcessing,
-                        onclick: () => this.handleMarkCompleted(booking),
-                    },
-                    isProcessing ? "Updating..." : "Mark Completed"
-                )
+                
             );
         }
 
