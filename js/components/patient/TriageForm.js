@@ -121,11 +121,18 @@ export default class TriageForm extends Component {
                     value: this.inputText,
                     style: fieldInputStyle,
                     disabled: this.submitting,
-                    oninput: e => this.setInputText(e.target.value),
+                    oninput: e => {
+                        this.setInputText(e.target.value);
+                        const submitBtn = this.el?.querySelector("[data-triage-submit]");
+                        if (submitBtn) {
+                            submitBtn.disabled = this.submitting || !this.inputText.trim();
+                        }
+                    },
                 }),
                 h(
                     "button",
                     {
+                        "data-triage-submit": "true",
                         class: "btn btn-primary",
                         style: "padding: 0.65rem 1rem; font-size: 0.9rem; border-radius: 8px;",
                         disabled: this.submitting || !this.inputText.trim(),
