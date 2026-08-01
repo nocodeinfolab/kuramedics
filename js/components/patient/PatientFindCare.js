@@ -4,6 +4,7 @@ import { Component } from "../../core/component.js";
 import { h } from "../../utils/dom.js";
 import TriageForm from "./TriageForm.js";
 import DoctorList from "./DoctorList.js";
+import BookingForm from "./BookingForm.js";
 
 export default class PatientFindCare extends Component {
     constructor(patient) {
@@ -70,12 +71,7 @@ export default class PatientFindCare extends Component {
     }
 
     // ---------- Mounting ----------
-
-    /**
-     * Mounts whichever step is active into `container`. Steps backed by a
-     * real Component (TriageForm now; DoctorList/BookingForm once built)
-     * use `.mount()` so lifecycle hooks like `afterMount()` actually run.
-     */
+    
     mountCurrentPage(container) {
         switch (this.step) {
             case "triage":
@@ -103,14 +99,13 @@ export default class PatientFindCare extends Component {
                 break;
 
             case "booking":
-                // TODO: swap in BookingForm.js once built.
-                container.replaceChildren(
-                    this.renderPlaceholder(
-                        "Book appointment",
-                        "Booking form coming soon.",
-                        () => this.handleBackToDoctorProfile()
-                    )
-                );
+                new BookingForm(
+                    this.patient,
+                    this.selectedDoctor,
+                    this.triageResult,
+                    (booking) => this.handleBookingComplete(booking),
+                    () => this.handleBackToDoctors()
+                ).mount(container);
                 break;
 
             case "confirmation":
