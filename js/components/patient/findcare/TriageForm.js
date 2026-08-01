@@ -1,8 +1,8 @@
 // js/components/patient/TriageForm.js
 
-import { Component } from "../../../core/component.js";
-import { h } from "../../../utils/dom.js";
-import api from "../../../services/api.js";
+import { Component } from "../../core/component.js";
+import { h } from "../../utils/dom.js";
+import api from "../../services/api.js";
 
 const URGENCY_LABELS = {
     low: "Low urgency",
