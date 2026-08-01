@@ -108,6 +108,7 @@ export default class PatientFindCare extends Component {
                     this.patient,
                     this.selectedDoctor,
                     this.triageResult,
+                    this.selectedService,
                     (booking) => this.handleBookingComplete(booking),
                     () => this.handleBackToDoctorProfile()
                 ).mount(container);
