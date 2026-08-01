@@ -1,4 +1,4 @@
-// js/components/patient/findcare/TriageForm.js
+// js/components/patient/TriageForm.js
 
 import { Component } from "../../../core/component.js";
 import { h } from "../../../utils/dom.js";
