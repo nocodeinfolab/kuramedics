@@ -3,6 +3,7 @@
 import { Component } from "../../core/component.js";
 import { h } from "../../utils/dom.js";
 import TriageForm from "./TriageForm.js";
+import DoctorList from "./DoctorList.js";
 
 export default class PatientFindCare extends Component {
     constructor(patient) {
@@ -82,17 +83,12 @@ export default class PatientFindCare extends Component {
                 break;
 
             case "doctors":
-                // TODO: swap in DoctorList.js once built.
-                // new DoctorList(this.patient, this.triageResult, (doctor) => this.handleDoctorSelected(doctor), () => this.startOver()).mount(container);
-                container.replaceChildren(
-                    this.renderPlaceholder(
-                        "Doctors matching your triage",
-                        this.triageResult?.suggested_specialization
-                            ? `Looking for ${this.triageResult.suggested_specialization} doctors near you.`
-                            : "Browsing all available doctors.",
-                        () => this.startOver()
-                    )
-                );
+                new DoctorList(
+                    this.patient,
+                    this.triageResult,
+                    (doctor) => this.handleDoctorSelected(doctor),
+                    () => this.startOver()
+                ).mount(container);
                 break;
 
             case "doctor_profile":
