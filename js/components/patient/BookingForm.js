@@ -53,7 +53,9 @@ export default class BookingForm extends Component {
             this.doctorProfile = profile;
             this.services = profile.services || [];
 
-            if (this.services.length === 1) {
+            if (this.preselectedServiceId && this.services.some(s => s.id === this.preselectedServiceId)) {
+                this.selectedServiceId = this.preselectedServiceId;
+            } else if (this.services.length === 1) {
                 this.selectedServiceId = this.services[0].id;
             }
         } catch (error) {
