@@ -4,6 +4,7 @@ import { Component } from "../../core/component.js";
 import { h } from "../../utils/dom.js";
 import TriageForm from "./TriageForm.js";
 import DoctorList from "./DoctorList.js";
+import DoctorProfile from "./DoctorProfile.js";
 import BookingForm from "./BookingForm.js";
 
 export default class PatientFindCare extends Component {
@@ -34,6 +35,12 @@ export default class PatientFindCare extends Component {
     handleDoctorSelected(doctor) {
         this.selectedDoctor = doctor;
         this.step = "doctor_profile";
+        this.updatePage();
+    }
+    handleProceedToBooking(doctorProfile, serviceId) {
+        this.selectedDoctorProfile = doctorProfile;
+        this.selectedService = serviceId;
+        this.step = "booking";
         this.updatePage();
     }
 
@@ -88,14 +95,12 @@ export default class PatientFindCare extends Component {
                 break;
 
             case "doctor_profile":
-                // TODO: swap in a doctor profile view once built.
-                container.replaceChildren(
-                    this.renderPlaceholder(
-                        this.selectedDoctor?.full_name || "Doctor profile",
-                        "Consultation service selection coming soon.",
-                        () => this.handleBackToDoctors()
-                    )
-                );
+                new DoctorProfile(
+                    this.patient,
+                    this.selectedDoctor,
+                    (profile, serviceId) => this.handleProceedToBooking(profile, serviceId),
+                    () => this.handleBackToDoctors()
+                ).mount(container);
                 break;
 
             case "booking":
@@ -104,7 +109,7 @@ export default class PatientFindCare extends Component {
                     this.selectedDoctor,
                     this.triageResult,
                     (booking) => this.handleBookingComplete(booking),
-                    () => this.handleBackToDoctors()
+                    () => this.handleBackToDoctorProfile()
                 ).mount(container);
                 break;
 
