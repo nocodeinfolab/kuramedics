@@ -5,6 +5,7 @@ import { h } from "../../utils/dom.js";
 import api from "../../services/api.js";
 import PatientCare from "./PatientCare.js";
 import PatientMessaging from "./PatientMessaging.js";
+import PatientFindCare from "./PatientFindCare.js";
 const SOCKET_BASE_URL = "https://doctors-consultation-backend.onrender.com";
 
 const REQUIRED_TRIAGE_FIELDS = ["date_of_birth", "gender"];
@@ -403,9 +404,6 @@ export default class PatientDashboardPage extends Component {
         switch (this.activeTab) {
             case "home":
                 return this.renderHomeTab();
-            case "find":
-                return this.renderComingSoon("Find Care", "Browse and book verified doctors, guided by AI triage.");
-            
             case "profile":
                 return this.renderComingSoon("Profile", "Manage your contact details, emergency contact, and medical summary.");
             default:
@@ -414,7 +412,7 @@ export default class PatientDashboardPage extends Component {
     }
 
     mountCurrentPage(container) {
-        const cacheable = ["care", "messages"]; // tabs whose state should survive tab switches
+        const cacheable = ["care", "messages", "find"]; // tabs whose state should survive tab switches
     
         if (cacheable.includes(this.activeTab)) {
             this.ensureTabMounted(container, this.activeTab);
@@ -452,12 +450,16 @@ export default class PatientDashboardPage extends Component {
         container.appendChild(wrapper);
         this._tabWrappers[tabId] = wrapper;
     
-        const Ctor = tabId === "care" ? PatientCare : PatientMessaging;
-        const instance = tabId === "messages"
-            ? new Ctor(this.patient, this.socket, (count) => this.onMessagesRead(count))
-            : new Ctor(this.patient);
+        let instance;
+        if (tabId === "care") {
+            instance = new PatientCare(this.patient);
+        } else if (tabId === "messages") {
+            instance = new PatientMessaging(this.patient, this.socket, (count) => this.onMessagesRead(count));
+        } else if (tabId === "find") {
+            instance = new PatientFindCare(this.patient);
+        }
+
         this._tabInstances[tabId] = instance;
-        
         instance.mount(wrapper);
     }
     
