@@ -45,7 +45,7 @@ export default class DoctorList extends Component {
 
     async loadSpecializations() {
         try {
-            const res = await api.get("/doctors/specializations");
+            const res = await api.get("/directory/specializations");
             const payload = res.data || res;
             this.specializations = Array.isArray(payload) ? payload : payload.rows || payload.data || [];
             this.update();
@@ -76,7 +76,7 @@ export default class DoctorList extends Component {
             if (this.selectedSpecialization) params.set("specialization", this.selectedSpecialization);
             if (this.searchTerm.trim()) params.set("search", this.searchTerm.trim());
 
-            const res = await api.get(`/doctors?${params.toString()}`);
+            const res = await api.get(`/directory?${params.toString()}`);
             const payload = res.data || res;
             const rows = payload.rows || payload.data || payload.items || [];
             const total = payload.total ?? payload.count ?? rows.length;
