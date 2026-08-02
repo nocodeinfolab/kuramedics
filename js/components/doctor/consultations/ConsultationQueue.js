@@ -702,6 +702,13 @@ export default class DoctorQueuePage extends Component {
             ),
             this.renderReasonSection(booking),
             this.renderCardActions(booking, isProcessing),
+            CONFIRMED_STATUSES.includes(booking.status) && booking.payment_status !== "paid"
+                ? h(
+                      "p",
+                      { style: "margin: 8px 0 0; font-size: 0.76rem; color: #b45309;" },
+                      "Messaging and clinical notes unlock once the patient completes payment."
+                  )
+                : null,
             isExpanded ? this.renderActionForm(booking, isProcessing) : null
         );
     }
@@ -793,6 +800,7 @@ export default class DoctorQueuePage extends Component {
 
         if (CONFIRMED_STATUSES.includes(booking.status)) {
             const isMessaging = this.messageLoadingId === booking.id;
+            const isPaid = booking.payment_status === "paid";
 
             buttons.push(
                 h(
@@ -800,22 +808,23 @@ export default class DoctorQueuePage extends Component {
                     {
                         class: "btn btn-outline",
                         style: btnStyle,
-                        disabled: isProcessing || isMessaging,
+                        disabled: isProcessing || isMessaging || !isPaid,
+                        title: isPaid ? undefined : "Available once the patient completes payment",
                         onclick: () => this.handleMessagePatient(booking),
                     },
-                    isMessaging ? "Opening..." : "Message"
+                    isMessaging ? "Opening..." : isPaid ? "Message" : "🔒 Message"
                 ),
                 h(
                     "button",
                     {
                         class: "btn btn-outline",
                         style: btnStyle,
-                        disabled: isProcessing,
+                        disabled: isProcessing || !isPaid,
+                        title: isPaid ? undefined : "Available once the patient completes payment",
                         onclick: () => this.openActionForm(booking.id, "clinical_notes"),
                     },
-                    "Clinical Notes"
-                ),
-                
+                    isPaid ? "Clinical Notes" : "🔒 Clinical Notes"
+                )
             );
         }
 
