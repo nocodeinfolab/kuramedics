@@ -20,9 +20,10 @@ const STATUS_LABELS = {
 const SECTION_ORDER = ["Outcome", "Plan", "Follow-up"];
 
 export default class PatientCare extends Component {
-    constructor(patient) {
+    constructor(patient, onOpenConversation) {
         super();
         this.patient = patient ?? {};
+        this.onOpenConversation = onOpenConversation;
 
         this.loading = true;
         this.errorMessage = "";
@@ -32,6 +33,7 @@ export default class PatientCare extends Component {
 
         this.activeTab = "upcoming";
         this.expandedBookingId = null;
+        this.messageLoadingId = null;
 
         this._lastFetchedAt = null;
     }
@@ -92,6 +94,31 @@ export default class PatientCare extends Component {
     toggleBooking(bookingId) {
         this.expandedBookingId = this.expandedBookingId === bookingId ? null : bookingId;
         this.update();
+    }
+    async handleMessageDoctor(booking) {
+        this.messageLoadingId = booking.id;
+        this.errorMessage = "";
+        this.update();
+
+        try {
+            const res = await api.post(`/chat/bookings/${booking.id}/initiate`);
+            const conversation = res.data || res;
+
+            if (typeof this.onOpenConversation === "function") {
+                this.onOpenConversation(conversation);
+            }
+        } catch (error) {
+            console.error("Failed to start conversation:", error);
+            this.errorMessage = error.message || "Failed to open conversation.";
+        } finally {
+            this.messageLoadingId = null;
+            this.update();
+        }
+    }
+
+    handlePayNow(booking) {
+        // TODO: wire up once payment endpoints are built.
+        console.log("Pay now clicked for booking:", booking.id);
     }
 
     // ---------- Derived data ----------
@@ -310,6 +337,7 @@ export default class PatientCare extends Component {
                 )
             ),
             isRescheduleRequested ? this.renderRescheduleComparison(booking) : null,
+            CONFIRMED_STATUSES.includes(booking.status) ? this.renderConfirmedActions(booking) : null,
             isCompleted
                 ? h(
                       "p",
@@ -318,6 +346,50 @@ export default class PatientCare extends Component {
                   )
                 : null,
             isCompleted && isExpanded ? this.renderConsultationNotes(booking) : null
+        );
+    }
+
+    renderConfirmedActions(booking) {
+        const isPaid = booking.payment_status === "paid";
+        const isMessaging = this.messageLoadingId === booking.id;
+        const btnStyle = "padding: 0.4rem 0.75rem; font-size: 0.8rem; border-radius: 6px; line-height: 1.4;";
+
+        if (!isPaid) {
+            return h(
+                "div",
+                {
+                    style: "margin-top: 10px; padding: 0.7rem 0.85rem; background: rgba(2,132,199,0.06); border: 1px solid rgba(2,132,199,0.25); border-radius: 8px; display: flex; flex-direction: column; gap: 8px;",
+                },
+                h(
+                    "p",
+                    { style: "margin: 0; font-size: 0.82rem; line-height: 1.45;" },
+                    "Your doctor has confirmed this appointment time. Complete payment to unlock messaging and start your consultation."
+                ),
+                h(
+                    "button",
+                    {
+                        class: "btn btn-primary",
+                        style: btnStyle,
+                        onclick: () => this.handlePayNow(booking),
+                    },
+                    `Pay Now${booking.consultation_fee_amount ? ` · ₦${Number(booking.consultation_fee_amount).toLocaleString()}` : ""}`
+                )
+            );
+        }
+
+        return h(
+            "div",
+            { style: "display: flex; gap: 8px; margin-top: 10px;" },
+            h(
+                "button",
+                {
+                    class: "btn btn-outline",
+                    style: btnStyle,
+                    disabled: isMessaging,
+                    onclick: () => this.handleMessageDoctor(booking),
+                },
+                isMessaging ? "Opening..." : "Message"
+            )
         );
     }
 
