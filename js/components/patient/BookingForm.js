@@ -12,11 +12,12 @@ export default class BookingForm extends Component {
      * @param {(booking: object) => void} onBookingComplete
      * @param {() => void} onBack
      */
-    constructor(patient, doctor, triageResult, onBookingComplete, onBack) {
+    constructor(patient, doctor, triageResult, preselectedServiceId, onBookingComplete, onBack) {
         super();
         this.patient = patient ?? {};
         this.doctor = doctor ?? {};
         this.triageResult = triageResult ?? null;
+        this.preselectedServiceId = preselectedServiceId || null;
         this.onBookingComplete = onBookingComplete;
         this.onBack = onBack;
 
