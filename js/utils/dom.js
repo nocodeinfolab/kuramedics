@@ -20,6 +20,8 @@
  */
 export function h(tag, attrs = {}, ...children) {
   const el = document.createElement(tag);
+  let deferredValue;
+
   for (const [key, value] of Object.entries(attrs || {})) {
     if (value === null || value === undefined || value === false) continue;
     if (key === "class") {
@@ -30,16 +32,25 @@ export function h(tag, attrs = {}, ...children) {
       Object.assign(el.dataset, value);
     } else if (key.startsWith("on") && typeof value === "function") {
       el.addEventListener(key.slice(2).toLowerCase(), value);
+    } else if (key === "value" && tag === "select") {
+      // <select> has no value to set until its <option> children exist,
+      // so defer this until after appendChildren runs below.
+      deferredValue = value;
     } else if (key === "value" || key === "checked") {
-      el[key] = value; // set as a live DOM property, not an attribute —
-                        // required for <textarea>, and safer for checkboxes/radios
+      el[key] = value;
     } else if (typeof value === "boolean") {
       if (value) el.setAttribute(key, "");
     } else {
       el.setAttribute(key, value);
     }
   }
+
   appendChildren(el, children);
+
+  if (deferredValue !== undefined) {
+    el.value = deferredValue;
+  }
+
   return el;
 }
 
