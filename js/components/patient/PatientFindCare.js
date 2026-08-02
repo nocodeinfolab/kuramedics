@@ -182,6 +182,11 @@ export default class PatientFindCare extends Component {
                     `Your appointment request with ${this.completedBooking?.doctor_name || "the doctor"} has been sent.`
                 ),
                 h(
+                    "p",
+                    { class: "dashboard-muted", style: "margin: 0; font-size: 0.85rem; line-height: 1.5;" },
+                    "The doctor will review your request and confirm the time. Once confirmed, you'll be able to complete payment for your consultation."
+                ),
+                h(
                     "button",
                     {
                         class: "btn btn-primary",
