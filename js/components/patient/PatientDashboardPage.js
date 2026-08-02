@@ -130,6 +130,23 @@ export default class PatientDashboardPage extends Component {
         };
         this.update();
     }
+    openConversationInMessages(conversation) {
+        this.activeTab = "messages";
+        this.updatePage();
+
+        const messagesInstance = this._tabInstances.messages;
+        if (messagesInstance && typeof messagesInstance.openConversation === "function") {
+            messagesInstance.openConversation(conversation);
+        }
+
+        const buttons = this.el?.querySelectorAll(".patient-bottom-nav__item");
+        buttons?.forEach((button, index) => {
+            button.classList.toggle(
+                "patient-bottom-nav__item--active",
+                this.tabs[index].id === "messages"
+            );
+        });
+    }
     // ---------- Data loading ----------
 
     async loadPatient() {
@@ -452,7 +469,7 @@ export default class PatientDashboardPage extends Component {
     
         let instance;
         if (tabId === "care") {
-            instance = new PatientCare(this.patient);
+            instance = new PatientCare(this.patient, (conversation) => this.openConversationInMessages(conversation));
         } else if (tabId === "messages") {
             instance = new PatientMessaging(this.patient, this.socket, (count) => this.onMessagesRead(count));
         } else if (tabId === "find") {
