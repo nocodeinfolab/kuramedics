@@ -377,18 +377,31 @@ export default class PatientCare extends Component {
             );
         }
 
+        const isVideoConsultation = booking.consultation_type === "video_consultation";
+
         return h(
             "div",
-            { style: "display: flex; gap: 8px; margin-top: 10px;" },
+            { style: "display: flex; flex-direction: column; gap: 8px; margin-top: 10px;" },
+            isVideoConsultation
+                ? h(
+                      "p",
+                      { class: "dashboard-muted", style: "margin: 0; font-size: 0.8rem; line-height: 1.45;" },
+                      `Your doctor will start the video call at your scheduled time (${this.formatDateTime(booking.booking_date)}). You can message them beforehand with any questions.`
+                  )
+                : null,
             h(
-                "button",
-                {
-                    class: "btn btn-outline",
-                    style: `${btnStyle} border: 1px solid var(--color-primary, #0284c7); color: var(--color-primary, #0284c7); background: transparent; cursor: pointer; font-weight: 600;`,
-                    disabled: isMessaging,
-                    onclick: () => this.handleMessageDoctor(booking),
-                },
-                isMessaging ? "Opening..." : "Message"
+                "div",
+                { style: "display: flex; gap: 8px;" },
+                h(
+                    "button",
+                    {
+                        class: "btn btn-outline",
+                        style: `${btnStyle} border: 1px solid var(--color-primary, #0284c7); color: var(--color-primary, #0284c7); background: transparent; cursor: pointer; font-weight: 600;`,
+                        disabled: isMessaging,
+                        onclick: () => this.handleMessageDoctor(booking),
+                    },
+                    isMessaging ? "Opening..." : "Message"
+                )
             )
         );
     }
