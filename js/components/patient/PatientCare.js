@@ -384,7 +384,7 @@ export default class PatientCare extends Component {
                 "button",
                 {
                     class: "btn btn-outline",
-                    style: btnStyle,
+                    style: `${btnStyle} border: 1px solid var(--color-primary, #0284c7); color: var(--color-primary, #0284c7); background: transparent; cursor: pointer; font-weight: 600;`,
                     disabled: isMessaging,
                     onclick: () => this.handleMessageDoctor(booking),
                 },
