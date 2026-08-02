@@ -51,11 +51,6 @@ export default class PatientFindCare extends Component {
         this.updatePage();
     }
 
-    handleProceedToBooking(service) {
-        this.selectedService = service;
-        this.step = "booking";
-        this.updatePage();
-    }
 
     handleBackToDoctorProfile() {
         this.step = "doctor_profile";
