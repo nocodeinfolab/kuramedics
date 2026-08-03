@@ -257,6 +257,10 @@ export default class DoctorQueuePage extends Component {
             this.update();
         }
     }
+    handleStartCall(booking) {
+        // TODO: wire up LiveKit video/voice session once built.
+        console.log("Start call clicked for booking:", booking.id, booking.consultation_type);
+    }
 
     async handleArchive(booking) {
         this.actionLoadingId = booking.id;
@@ -801,6 +805,8 @@ export default class DoctorQueuePage extends Component {
         if (CONFIRMED_STATUSES.includes(booking.status)) {
             const isMessaging = this.messageLoadingId === booking.id;
             const isPaid = booking.payment_status === "paid";
+            const isCallType = booking.consultation_type === "video_consultation" || booking.consultation_type === "voice_consultation";
+            const callLabel = booking.consultation_type === "voice_consultation" ? "Voice Call" : "Video Call";
 
             buttons.push(
                 h(
@@ -824,7 +830,20 @@ export default class DoctorQueuePage extends Component {
                         onclick: () => this.openActionForm(booking.id, "clinical_notes"),
                     },
                     isPaid ? "Clinical Notes" : "🔒 Clinical Notes"
-                )
+                ),
+                isCallType
+                    ? h(
+                          "button",
+                          {
+                              class: "btn btn-primary",
+                              style: btnStyle,
+                              disabled: isProcessing || !isPaid,
+                              title: isPaid ? undefined : "Available once the patient completes payment",
+                              onclick: () => this.handleStartCall(booking),
+                          },
+                          isPaid ? `Start ${callLabel}` : `🔒 ${callLabel}`
+                      )
+                    : null
             );
         }
 
