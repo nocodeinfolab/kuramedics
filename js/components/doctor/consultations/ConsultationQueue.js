@@ -710,7 +710,7 @@ export default class DoctorQueuePage extends Component {
                 ? h(
                       "p",
                       { style: "margin: 8px 0 0; font-size: 0.76rem; color: #b45309;" },
-                      "Messaging and clinical notes unlock once the patient completes payment."
+                      "Messaging, clinical notes and call unlock once the patient completes payment."
                   )
                 : null,
             isExpanded ? this.renderActionForm(booking, isProcessing) : null
