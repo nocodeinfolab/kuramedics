@@ -279,7 +279,7 @@ export default class TriageForm extends Component {
                         disabled: !this.currentInput.trim(),
                         onclick: () => this.advanceStep(),
                     },
-                    isLastStep ? "Get my summary" : "Next"
+                    isLastStep ? "Continue" : "Next"
                 )
             )
         );
