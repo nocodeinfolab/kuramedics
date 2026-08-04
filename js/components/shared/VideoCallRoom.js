@@ -27,12 +27,20 @@ export default class VideoCallRoom extends Component {
     }
 
     async afterMount() {
+        await this.connectToCall();
+    }
+
+    async connectToCall() {
         if (typeof LivekitClient === "undefined") {
             this.status = "error";
             this.errorMessage = "Video calling failed to load. Please refresh and try again.";
             this.update();
             return;
         }
+
+        this.status = "connecting";
+        this.errorMessage = "";
+        this.update();
 
         try {
             const res = await api.post(`/video/bookings/${this.bookingId}/token`);
@@ -72,9 +80,17 @@ export default class VideoCallRoom extends Component {
         } catch (error) {
             console.error("Failed to join call:", error);
             this.status = "error";
-            this.errorMessage = error.message || "Failed to join the call.";
+            this.errorMessage = this.getFriendlyErrorMessage(error);
             this.update();
         }
+    }
+
+    getFriendlyErrorMessage(error) {
+        const raw = String(error?.message || "");
+        if (raw.includes("Failed to fetch") || raw.includes("NETWORK_CHANGED") || raw.includes("ERR_NETWORK")) {
+            return "Connection interrupted. Check your network and try again.";
+        }
+        return raw || "Failed to join the call.";
     }
 
     // ---------- Video tile management (direct DOM, not h()-tree) ----------
@@ -187,8 +203,16 @@ export default class VideoCallRoom extends Component {
             this.status === "error"
                 ? h(
                       "div",
-                      { style: "flex: 1; display: flex; align-items: center; justify-content: center; padding: 1.5rem;" },
-                      h("p", { style: "color: #fff; text-align: center; font-size: 0.9rem;" }, this.errorMessage)
+                      { style: "flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; padding: 1.5rem;" },
+                      h("p", { style: "color: #fff; text-align: center; font-size: 0.9rem;" }, this.errorMessage),
+                      h(
+                          "button",
+                          {
+                              style: "padding: 0.55rem 1.1rem; font-size: 0.85rem; border-radius: 8px; border: none; background: #0284c7; color: #fff; font-weight: 600; cursor: pointer;",
+                              onclick: () => this.connectToCall(),
+                          },
+                          "Try Again"
+                      )
                   )
                 : h("div", {
                       id: "video-call-grid",
