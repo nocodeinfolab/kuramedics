@@ -176,8 +176,10 @@ export default class PatientDashboardPage extends Component {
         const call = this.incomingCall;
         this.incomingCall = null;
         this.update();
-        // TODO: launch VideoCallRoom.js with call.booking_id once built.
-        console.log("Joining call for booking:", call?.booking_id);
+
+        new VideoCallRoom(call.booking_id, this.patient, () => {
+            // no-op on leave for now
+        }).mount(document.body);
     }
     openConversationInMessages(conversation) {
         this.activeTab = "messages";
