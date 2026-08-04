@@ -6,6 +6,7 @@ import api from "../../services/api.js";
 import PatientCare from "./PatientCare.js";
 import PatientMessaging from "./PatientMessaging.js";
 import PatientFindCare from "./PatientFindCare.js";
+import VideoCallRoom from "../shared/VideoCallRoom.js";
 const SOCKET_BASE_URL = "https://doctors-consultation-backend.onrender.com";
 
 const REQUIRED_TRIAGE_FIELDS = ["date_of_birth", "gender"];
