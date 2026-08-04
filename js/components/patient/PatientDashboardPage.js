@@ -69,6 +69,7 @@ export default class PatientDashboardPage extends Component {
         this.dashboardLoading = true;
         this.dashboardError = "";
 
+        this.incomingCall = null;
         this.activeTab = "home";
 
         this.tabs = [
@@ -102,6 +103,11 @@ export default class PatientDashboardPage extends Component {
             console.error("Chat socket connection error:", err.message);
         });
     
+        this.socket.on("call:started", (payload) => {
+            this.incomingCall = payload;
+            this.update();
+        });
+
         this.socket.on("message:new", (message) => {
             const isForOtherParticipant = message.sender_role !== "patient";
     
@@ -129,6 +135,49 @@ export default class PatientDashboardPage extends Component {
             unread_message_count: Math.max(0, current - count),
         };
         this.update();
+    }
+    renderIncomingCallBanner() {
+        const isVoice = this.incomingCall?.consultation_type === "voice_consultation";
+
+        return h(
+            "div",
+            {
+                style: "position: fixed; top: 0; left: 0; right: 0; z-index: 1000; background: #0284c7; color: #fff; padding: 0.85rem 1rem; display: flex; justify-content: space-between; align-items: center; gap: 12px;",
+            },
+            h(
+                "p",
+                { style: "margin: 0; font-size: 0.88rem; font-weight: 600;" },
+                `Your doctor is calling you now (${isVoice ? "voice" : "video"}).`
+            ),
+            h(
+                "div",
+                { style: "display: flex; gap: 8px; flex-shrink: 0;" },
+                h(
+                    "button",
+                    {
+                        style: "padding: 0.4rem 0.85rem; font-size: 0.8rem; border-radius: 6px; border: none; background: #fff; color: #0284c7; font-weight: 600; cursor: pointer;",
+                        onclick: () => this.joinIncomingCall(),
+                    },
+                    "Join"
+                ),
+                h(
+                    "button",
+                    {
+                        style: "padding: 0.4rem 0.85rem; font-size: 0.8rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.5); background: transparent; color: #fff; cursor: pointer;",
+                        onclick: () => { this.incomingCall = null; this.update(); },
+                    },
+                    "Dismiss"
+                )
+            )
+        );
+    }
+
+    joinIncomingCall() {
+        const call = this.incomingCall;
+        this.incomingCall = null;
+        this.update();
+        // TODO: launch VideoCallRoom.js with call.booking_id once built.
+        console.log("Joining call for booking:", call?.booking_id);
     }
     openConversationInMessages(conversation) {
         this.activeTab = "messages";
@@ -267,6 +316,7 @@ export default class PatientDashboardPage extends Component {
         return h(
             "div",
             { class: "patient-dashboard" },
+            this.incomingCall ? this.renderIncomingCallBanner() : null,
             h(
                 "main",
                 {
