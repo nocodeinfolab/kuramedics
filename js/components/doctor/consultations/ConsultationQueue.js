@@ -260,7 +260,7 @@ export default class DoctorQueuePage extends Component {
     }
     handleStartCall(booking) {
         new VideoCallRoom(booking.id, this.doctor, () => {
-            // no-op on leave for now
+            this.update();
         }).mount(document.body);
     }
 
