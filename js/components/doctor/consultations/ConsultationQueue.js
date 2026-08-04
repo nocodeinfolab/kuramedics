@@ -3,6 +3,7 @@
 import { Component } from "../../../core/component.js";
 import api from "../../../services/api.js";
 import { h, autoGrow } from "../../../utils/dom.js";
+import VideoCallRoom from "../../shared/VideoCallRoom.js";
 
 const PENDING_STATUSES = ["pending", "pending_confirmation", "reschedule_requested"];
 const CONFIRMED_STATUSES = ["confirmed"];
@@ -258,8 +259,9 @@ export default class DoctorQueuePage extends Component {
         }
     }
     handleStartCall(booking) {
-        // TODO: wire up LiveKit video/voice session once built.
-        console.log("Start call clicked for booking:", booking.id, booking.consultation_type);
+        new VideoCallRoom(booking.id, this.doctor, () => {
+            // no-op on leave for now
+        }).mount(document.body);
     }
 
     async handleArchive(booking) {
