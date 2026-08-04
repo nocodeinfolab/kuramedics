@@ -179,7 +179,7 @@ export default class PatientDashboardPage extends Component {
         this.update();
 
         new VideoCallRoom(call.booking_id, this.patient, () => {
-            // no-op on leave for now
+            this.updatePage();
         }).mount(document.body);
     }
     openConversationInMessages(conversation) {
