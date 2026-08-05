@@ -180,7 +180,7 @@ export default class PatientDashboardPage extends Component {
 
         new VideoCallRoom(call.booking_id, this.patient, () => {
             this.updatePage();
-        }).mount(document.body);
+        }).mount("#video-call-overlay-root");
     }
     openConversationInMessages(conversation) {
         this.activeTab = "messages";
