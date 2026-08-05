@@ -161,7 +161,7 @@ export default class VideoCallRoom extends Component {
             console.error("Error leaving call:", error);
         }
 
-        this.el?.remove();
+        this.unmount();
 
         if (typeof this.onLeave === "function") {
             this.onLeave();
