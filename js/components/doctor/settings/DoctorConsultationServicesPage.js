@@ -4,6 +4,7 @@ import doctorConsultationService from "../../../services/doctorConsultationServi
 
 const SERVICE_TYPE_OPTIONS = [
     { value: "video_consultation", label: "Video Consultation" },
+    { value: "voice_consultation", label: "Voice Consultation" },
     { value: "chat_consultation", label: "Chat Consultation" },
     { value: "home_visit", label: "Home Visit Consultation" },
     { value: "walk_in_clinic", label: "Walk-in Clinic Consultation" }
