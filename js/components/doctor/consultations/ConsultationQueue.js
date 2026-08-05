@@ -261,7 +261,7 @@ export default class DoctorQueuePage extends Component {
     handleStartCall(booking) {
         new VideoCallRoom(booking.id, this.doctor, () => {
             this.update();
-        }).mount(document.body);
+        }).mount("#video-call-overlay-root");
     }
 
     async handleArchive(booking) {
