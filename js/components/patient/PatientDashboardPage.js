@@ -178,7 +178,7 @@ export default class PatientDashboardPage extends Component {
         this.incomingCall = null;
         this.update();
 
-        new VideoCallRoom(call.booking_id, this.patient, () => {
+        new VideoCallRoom(call.booking_id, this.patient, call.consultation_type, () => {
             this.updatePage();
         }).mount("#video-call-overlay-root");
     }
