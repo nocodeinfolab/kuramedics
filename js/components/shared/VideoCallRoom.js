@@ -16,7 +16,7 @@ export default class VideoCallRoom extends Component {
         this.user = user ?? {};
         this.onLeave = onLeave;
 
-        this.status = "connecting"; // "connecting" | "connected" | "error"
+        this.status = "connecting"; // "connecting" | "connected" | "reconnecting" | "error"
         this.errorMessage = "";
 
         this.cameraEnabled = true;
@@ -38,6 +38,10 @@ export default class VideoCallRoom extends Component {
             return;
         }
 
+        // First-ever connect happens right after mount(), before any tiles
+        // exist, so a full render here is harmless. Retries after an error
+        // also need the full error->grid layout swap, so this stays a full
+        // update() rather than updateStatusLabel().
         this.status = "connecting";
         this.errorMessage = "";
         this.update();
@@ -49,6 +53,9 @@ export default class VideoCallRoom extends Component {
             this.room = new LivekitClient.Room({
                 adaptiveStream: true,
                 dynacast: true,
+                rtcConfig: {
+                    iceTransportPolicy: "relay",
+                },
             });
 
             this.room.on(LivekitClient.RoomEvent.TrackSubscribed, (track, publication, participant) => {
@@ -63,6 +70,16 @@ export default class VideoCallRoom extends Component {
                 this.removeTile(participant.identity);
             });
 
+            this.room.on(LivekitClient.RoomEvent.Reconnecting, () => {
+                this.status = "reconnecting";
+                this.updateStatusLabel();
+            });
+
+            this.room.on(LivekitClient.RoomEvent.Reconnected, () => {
+                this.status = "connected";
+                this.updateStatusLabel();
+            });
+
             this.room.on(LivekitClient.RoomEvent.Disconnected, () => {
                 this.status = "error";
                 this.errorMessage = "Call ended or connection lost.";
@@ -70,11 +87,22 @@ export default class VideoCallRoom extends Component {
             });
 
             await this.room.connect(session.url, session.token);
-            await this.room.localParticipant.setCameraEnabled(true);
-            await this.room.localParticipant.setMicrophoneEnabled(true);
 
+            try {
+                await this.room.localParticipant.setCameraEnabled(true);
+                await this.room.localParticipant.setMicrophoneEnabled(true);
+            } catch (publishError) {
+                console.error("Failed to publish local media:", publishError);
+            }
+
+            // This is the ONLY point after the grid first exists where we
+            // transition into "connected" — from here on, status changes
+            // must go through updateStatusLabel(), never update(), or any
+            // tile already attached (including a remote participant's,
+            // which can arrive before this line runs if they joined first)
+            // gets wiped out by the destructive re-render.
             this.status = "connected";
-            this.update();
+            this.updateStatusLabel();
 
             this.attachLocalVideo();
         } catch (error) {
@@ -91,6 +119,18 @@ export default class VideoCallRoom extends Component {
             return "Connection interrupted. Check your network and try again.";
         }
         return raw || "Failed to join the call.";
+    }
+
+    getStatusLabelText() {
+        if (this.status === "connecting") return "Connecting...";
+        if (this.status === "reconnecting") return "Reconnecting...";
+        if (this.status === "error") return "Call unavailable";
+        return "In call";
+    }
+
+    updateStatusLabel() {
+        const label = this.el?.querySelector("#video-call-status-label");
+        if (label) label.textContent = this.getStatusLabelText();
     }
 
     // ---------- Video tile management (direct DOM, not h()-tree) ----------
@@ -144,13 +184,13 @@ export default class VideoCallRoom extends Component {
 
     async toggleCamera() {
         this.cameraEnabled = !this.cameraEnabled;
-        await this.room?.localParticipant.setCameraEnabled(this.cameraEnabled);
+        await this.room?.localParticipant?.setCameraEnabled(this.cameraEnabled);
         this.updateControlsOnly();
     }
 
     async toggleMic() {
         this.micEnabled = !this.micEnabled;
-        await this.room?.localParticipant.setMicrophoneEnabled(this.micEnabled);
+        await this.room?.localParticipant?.setMicrophoneEnabled(this.micEnabled);
         this.updateControlsOnly();
     }
 
@@ -168,7 +208,7 @@ export default class VideoCallRoom extends Component {
         }
     }
 
-    // ---------- Partial re-render for controls, so the video grid is never touched ----------
+    // ---------- Partial re-renders that never touch the video grid ----------
 
     updateControlsOnly() {
         const controls = this.el?.querySelector("#video-call-controls");
@@ -188,8 +228,8 @@ export default class VideoCallRoom extends Component {
             h(
                 "div",
                 { style: "padding: 0.85rem 1rem; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0;" },
-                h("p", { style: "margin: 0; color: #fff; font-size: 0.88rem; font-weight: 600;" },
-                    this.status === "connecting" ? "Connecting..." : this.status === "error" ? "Call unavailable" : "In call"
+                h("p", { id: "video-call-status-label", style: "margin: 0; color: #fff; font-size: 0.88rem; font-weight: 600;" },
+                    this.getStatusLabelText()
                 ),
                 h(
                     "button",
@@ -218,7 +258,7 @@ export default class VideoCallRoom extends Component {
                       id: "video-call-grid",
                       style: "flex: 1; padding: 10px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; align-content: start; overflow-y: auto;",
                   }),
-            this.status === "connected"
+            this.status !== "error"
                 ? h(
                       "div",
                       { id: "video-call-controls", style: "padding: 1rem; display: flex; justify-content: center; gap: 12px; flex-shrink: 0;" },
