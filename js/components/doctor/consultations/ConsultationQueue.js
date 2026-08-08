@@ -259,7 +259,7 @@ export default class DoctorQueuePage extends Component {
         }
     }
     handleStartCall(booking) {
-        new VideoCallRoom(booking.id, this.doctor, () => {
+        new VideoCallRoom(booking.id, this.doctor, booking.consultation_type, () => {
             this.update();
         }).mount("#video-call-overlay-root");
     }
