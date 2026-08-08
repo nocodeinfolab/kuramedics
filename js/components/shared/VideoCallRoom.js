@@ -142,25 +142,40 @@ export default class VideoCallRoom extends Component {
     getOrCreateTile(identity, label) {
         if (this.tiles[identity]) return this.tiles[identity];
 
-        const grid = this.el?.querySelector("#video-call-grid");
-        if (!grid) return null;
+        const isLocal = identity === "local";
+        const container = isLocal
+            ? this.el?.querySelector("#video-call-local-tile")
+            : this.el?.querySelector("#video-call-remote-layer");
+
+        if (!container) return null;
+
+        if (!isLocal) {
+            // First real remote participant arriving — clear the waiting label.
+            const waitingLabel = this.el?.querySelector("#video-call-waiting-label");
+            waitingLabel?.remove();
+        }
 
         const tile = document.createElement("div");
-        tile.style.cssText = "position: relative; background: #1e1e1e; border-radius: 10px; overflow: hidden; min-height: 160px; display: flex; align-items: center; justify-content: center;";
+        tile.style.cssText = isLocal
+            ? "position: relative; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;"
+            : "position: relative; flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center;";
 
         if (this.isVoiceOnly) {
             const avatar = document.createElement("div");
             avatar.textContent = (label || "?").charAt(0).toUpperCase();
-            avatar.style.cssText = "width: 64px; height: 64px; border-radius: 50%; background: var(--color-primary, #0284c7); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 600;";
+            const size = isLocal ? 36 : 72;
+            avatar.style.cssText = `width: ${size}px; height: ${size}px; border-radius: 50%; background: var(--color-primary, #0284c7); color: #fff; display: flex; align-items: center; justify-content: center; font-size: ${size / 2.2}px; font-weight: 600;`;
             tile.appendChild(avatar);
         }
 
-        const labelEl = document.createElement("span");
-        labelEl.textContent = label;
-        labelEl.style.cssText = "position: absolute; bottom: 8px; left: 10px; color: #fff; font-size: 0.78rem; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 4px; z-index: 2;";
+        if (!isLocal) {
+            const labelEl = document.createElement("span");
+            labelEl.textContent = label;
+            labelEl.style.cssText = "position: absolute; bottom: 10px; left: 12px; color: #fff; font-size: 0.8rem; background: rgba(0,0,0,0.5); padding: 3px 9px; border-radius: 5px; z-index: 2;";
+            tile.appendChild(labelEl);
+        }
 
-        tile.appendChild(labelEl);
-        grid.appendChild(tile);
+        container.appendChild(tile);
         this.tiles[identity] = tile;
         return tile;
     }
@@ -198,6 +213,11 @@ export default class VideoCallRoom extends Component {
         if (tile) {
             tile.remove();
             delete this.tiles[identity];
+        }
+
+        const remoteLayer = this.el?.querySelector("#video-call-remote-layer");
+        if (identity !== "local" && remoteLayer && !remoteLayer.querySelector("[data-remote-tile]")) {
+            // No remote tiles left — could re-show waiting label here if desired.
         }
     }
 
@@ -275,10 +295,33 @@ export default class VideoCallRoom extends Component {
                           "Try Again"
                       )
                   )
-                : h("div", {
-                      id: "video-call-grid",
-                      style: "flex: 1; padding: 10px; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; align-content: start; overflow-y: auto;",
-                  }),
+                : h(
+                      "div",
+                      {
+                          id: "video-call-stage",
+                          style: "flex: 1; position: relative; overflow: hidden; background: #1e1e1e;",
+                      },
+                      h(
+                          "div",
+                          {
+                              id: "video-call-remote-layer",
+                              style: "position: absolute; inset: 0; display: flex; align-items: stretch; justify-content: center;",
+                          },
+                          h(
+                              "p",
+                              {
+                                  id: "video-call-waiting-label",
+                                  class: "dashboard-muted",
+                                  style: "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 0.88rem; margin: 0;",
+                              },
+                              "Waiting for the other participant to join..."
+                          )
+                      ),
+                      h("div", {
+                          id: "video-call-local-tile",
+                          style: "position: absolute; bottom: 16px; right: 16px; width: 96px; height: 132px; border-radius: 10px; overflow: hidden; border: 2px solid rgba(255,255,255,0.35); z-index: 10; background: #000; display: flex; align-items: center; justify-content: center;",
+                      })
+                  ),
             this.status !== "error"
                 ? h(
                       "div",
