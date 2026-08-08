@@ -10,10 +10,12 @@ export default class VideoCallRoom extends Component {
      * @param {object} user - current logged-in user (doctor or patient)
      * @param {() => void} onLeave - called after the call ends and cleanup completes
      */
-    constructor(bookingId, user, onLeave) {
+    constructor(bookingId, user, consultationType, onLeave) {
         super();
         this.bookingId = bookingId;
         this.user = user ?? {};
+        this.consultationType = consultationType;
+        this.isVoiceOnly = consultationType === "voice_consultation";
         this.onLeave = onLeave;
 
         this.status = "connecting"; // "connecting" | "connected" | "reconnecting" | "error"
@@ -89,7 +91,9 @@ export default class VideoCallRoom extends Component {
             await this.room.connect(session.url, session.token);
 
             try {
-                await this.room.localParticipant.setCameraEnabled(true);
+                if (!this.isVoiceOnly) {
+                    await this.room.localParticipant.setCameraEnabled(true);
+                }
                 await this.room.localParticipant.setMicrophoneEnabled(true);
             } catch (publishError) {
                 console.error("Failed to publish local media:", publishError);
@@ -144,6 +148,13 @@ export default class VideoCallRoom extends Component {
         const tile = document.createElement("div");
         tile.style.cssText = "position: relative; background: #1e1e1e; border-radius: 10px; overflow: hidden; min-height: 160px; display: flex; align-items: center; justify-content: center;";
 
+        if (this.isVoiceOnly) {
+            const avatar = document.createElement("div");
+            avatar.textContent = (label || "?").charAt(0).toUpperCase();
+            avatar.style.cssText = "width: 64px; height: 64px; border-radius: 50%; background: var(--color-primary, #0284c7); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 600;";
+            tile.appendChild(avatar);
+        }
+
         const labelEl = document.createElement("span");
         labelEl.textContent = label;
         labelEl.style.cssText = "position: absolute; bottom: 8px; left: 10px; color: #fff; font-size: 0.78rem; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 4px; z-index: 2;";
@@ -155,11 +166,21 @@ export default class VideoCallRoom extends Component {
     }
 
     attachTrack(track, identity, label) {
+        
+        if (this.isVoiceOnly && track.kind === "video") return;
+
         const tile = this.getOrCreateTile(identity, label);
         if (!tile) return;
 
         const el = track.attach();
-        el.style.cssText = "width: 100%; height: 100%; object-fit: cover;";
+
+        if (track.kind === "audio") {
+            
+            el.style.display = "none";
+        } else {
+            el.style.cssText = "width: 100%; height: 100%; object-fit: cover;";
+        }
+
         tile.appendChild(el);
     }
 
@@ -269,7 +290,7 @@ export default class VideoCallRoom extends Component {
     }
 
     renderControls() {
-        return [
+        const buttons = [
             h(
                 "button",
                 {
@@ -278,17 +299,23 @@ export default class VideoCallRoom extends Component {
                 },
                 this.micEnabled ? "Mute" : "Unmute"
             ),
-            h(
-                "button",
-                {
-                    style: `padding: 0.6rem 1rem; font-size: 0.85rem; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; background: ${this.cameraEnabled ? "#374151" : "#ef4444"}; color: #fff;`,
-                    onclick: () => this.toggleCamera(),
-                },
-                this.cameraEnabled ? "Camera Off" : "Camera On"
-            ),
         ];
-    }
 
+        if (!this.isVoiceOnly) {
+            buttons.push(
+                h(
+                    "button",
+                    {
+                        style: `padding: 0.6rem 1rem; font-size: 0.85rem; border-radius: 8px; border: none; cursor: pointer; font-weight: 600; background: ${this.cameraEnabled ? "#374151" : "#ef4444"}; color: #fff;`,
+                        onclick: () => this.toggleCamera(),
+                    },
+                    this.cameraEnabled ? "Camera Off" : "Camera On"
+                )
+            );
+        }
+
+        return buttons;
+    }
     update() {
         if (!this.el) return;
         const newTree = this.render();
