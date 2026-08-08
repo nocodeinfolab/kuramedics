@@ -72,14 +72,16 @@ export default class VideoCallRoom extends Component {
                 this.removeTile(participant.identity);
             });
 
-            this.room.on(LivekitClient.RoomEvent.Reconnecting, () => {
-                this.status = "reconnecting";
-                this.updateStatusLabel();
-            });
+            this.room.on(LivekitClient.RoomEvent.ConnectionStateChanged, (state) => {
+                console.log("LiveKit connection state changed:", state);
 
-            this.room.on(LivekitClient.RoomEvent.Reconnected, () => {
-                this.status = "connected";
-                this.updateStatusLabel();
+                if (state === LivekitClient.ConnectionState.Reconnecting) {
+                    this.status = "reconnecting";
+                    this.updateStatusLabel();
+                } else if (state === LivekitClient.ConnectionState.Connected && this.status === "reconnecting") {
+                    this.status = "connected";
+                    this.updateStatusLabel();
+                }
             });
 
             this.room.on(LivekitClient.RoomEvent.Disconnected, () => {
