@@ -71,6 +71,7 @@ export default class PatientDashboardPage extends Component {
         this.dashboardError = "";
 
         this.incomingCall = null;
+        this.dismissedCallBookingId = null;
         this.activeTab = "home";
 
         this.tabs = [
@@ -177,7 +178,11 @@ export default class PatientDashboardPage extends Component {
                     "button",
                     {
                         style: "padding: 0.4rem 0.85rem; font-size: 0.8rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.5); background: transparent; color: #fff; cursor: pointer;",
-                        onclick: () => { this.incomingCall = null; this.update(); },
+                        onclick: () => {
+                        this.dismissedCallBookingId = this.incomingCall?.booking_id || null;
+                        this.incomingCall = null;
+                        this.update();
+                    },
                     },
                     "Dismiss"
                 )
@@ -188,6 +193,7 @@ export default class PatientDashboardPage extends Component {
     joinIncomingCall() {
         const call = this.incomingCall;
         this.incomingCall = null;
+        this.dismissedCallBookingId = null;
         this.update();
 
         new VideoCallRoom(call.booking_id, this.patient, call.consultation_type, () => {
@@ -199,7 +205,12 @@ export default class PatientDashboardPage extends Component {
             const res = await api.get("/video/active-call");
             const activeCall = res.data || res;
 
-            if (activeCall && (!this.incomingCall || this.incomingCall.booking_id !== activeCall.booking_id)) {
+            if (!activeCall) return;
+
+            const alreadyShowing = this.incomingCall?.booking_id === activeCall.booking_id;
+            const alreadyDismissed = this.dismissedCallBookingId === activeCall.booking_id;
+
+            if (!alreadyShowing && !alreadyDismissed) {
                 this.incomingCall = activeCall;
                 this.update();
             }
