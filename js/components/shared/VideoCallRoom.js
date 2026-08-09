@@ -314,7 +314,7 @@ export default class VideoCallRoom extends Component {
                               {
                                   id: "video-call-waiting-label",
                                   class: "dashboard-muted",
-                                  style: "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: #fff; font-size: 0.88rem; margin: 0;",
+                                  style: "position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: 0.88rem; margin: 0;",
                               },
                               "Waiting for the other participant to join..."
                           )
