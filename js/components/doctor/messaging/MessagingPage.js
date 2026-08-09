@@ -42,7 +42,7 @@ export default class MessagingPage extends Component {
     }
 
     async afterMount() {
-        await this.loadConversations();
+        await this.loadConversations({});
     }
 
     beforeUnmount() {
@@ -54,20 +54,23 @@ export default class MessagingPage extends Component {
 
     // ---------- Data loading ----------
 
-    async loadConversations() {
-        this.loading = true;
-        this.errorMessage = "";
-        this.update();
+    async loadConversations({ silent = false } = {}) {
+        if (!silent) {
+            this.loading = true;
+            this.errorMessage = "";
+            this.update();
+        }
 
         try {
             const res = await api.get("/chat/conversations");
             const payload = res.data || res;
             this.conversations = Array.isArray(payload) ? payload : payload.rows || payload.data || [];
+            this._lastFetchedAt = Date.now();
         } catch (error) {
             console.error("Failed to load conversations:", error);
-            this.errorMessage = error.message || "Failed to load messages.";
+            if (!silent) this.errorMessage = error.message || "Failed to load messages.";
         } finally {
-            this.loading = false;
+            if (!silent) this.loading = false;
             this.update();
         }
     }
@@ -110,11 +113,18 @@ export default class MessagingPage extends Component {
         if (!message || !message.conversation_id) return;
 
         const isActiveThread = this.view === "thread" && this.activeConversationId === message.conversation_id;
+        const conversationExists = this.conversations.some(c => c.id === message.conversation_id);
 
         if (isActiveThread) {
             this.addMessageIfNew(message);
             api.patch(`/chat/conversations/${message.conversation_id}/read`, {}).catch(() => {});
             this.onMessagesRead(1);
+        }
+
+        if (!conversationExists) {
+            
+            this.loadConversations({ silent: true });
+            return;
         }
 
         this.conversations = this.conversations.map(c => {
@@ -132,6 +142,14 @@ export default class MessagingPage extends Component {
         });
 
         this.update();
+    }
+    
+    isStale(ttlMs = 30_000) {
+        return !this._lastFetchedAt || Date.now() - this._lastFetchedAt > ttlMs;
+    }
+
+    async loadData({ silent = false } = {}) {
+        await this.loadConversations({ silent });
     }
 
     // ---------- Thread navigation ----------
