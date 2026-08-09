@@ -378,15 +378,17 @@ export default class PatientCare extends Component {
         }
 
         const isVideoConsultation = booking.consultation_type === "video_consultation";
+        const isVoiceConsultation = booking.consultation_type === "voice_consultation";
+        const isCallConsultation = isVideoConsultation || isVoiceConsultation;
 
         return h(
             "div",
             { style: "display: flex; flex-direction: column; gap: 8px; margin-top: 10px;" },
-            isVideoConsultation
+            isCallConsultation
                 ? h(
                       "p",
                       { class: "dashboard-muted", style: "margin: 0; font-size: 0.8rem; line-height: 1.45;" },
-                      `Your doctor will start the video call at your scheduled time (${this.formatDateTime(booking.booking_date)}). You can message them beforehand with any questions.`
+                      `Your doctor will start the ${isVoiceConsultation ? "voice" : "video"} call at your scheduled time (${this.formatDateTime(booking.booking_date)}). You can message them beforehand with any questions.`
                   )
                 : null,
             h(
