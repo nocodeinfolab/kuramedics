@@ -179,10 +179,15 @@ export default class PatientDashboardPage extends Component {
                     {
                         style: "padding: 0.4rem 0.85rem; font-size: 0.8rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.5); background: transparent; color: #fff; cursor: pointer;",
                         onclick: () => {
-                        this.dismissedCallBookingId = this.incomingCall?.booking_id || null;
-                        this.incomingCall = null;
-                        this.update();
-                    },
+                            const bookingId = this.incomingCall?.booking_id;
+                            this.dismissedCallBookingId = bookingId || null;
+                            this.incomingCall = null;
+                            this.update();
+                
+                            if (bookingId) {
+                                api.post(`/video/bookings/${bookingId}/acknowledge-call`).catch(() => {});
+                            }
+                        }
                     },
                     "Dismiss"
                 )
@@ -195,6 +200,10 @@ export default class PatientDashboardPage extends Component {
         this.incomingCall = null;
         this.dismissedCallBookingId = null;
         this.update();
+
+        if (call?.booking_id) {
+            api.post(`/video/bookings/${call.booking_id}/acknowledge-call`).catch(() => {});
+        }
 
         new VideoCallRoom(call.booking_id, this.patient, call.consultation_type, () => {
             this.updatePage();
