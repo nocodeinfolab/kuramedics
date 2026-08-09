@@ -100,9 +100,20 @@ export default class PatientDashboardPage extends Component {
             reconnectionDelayMax: 10000,
         });
     
+        this.socket.on("connect", () => {
+            
+            this.checkForActiveCall();
+        });
+
         this.socket.on("connect_error", (err) => {
             console.error("Chat socket connection error:", err.message);
         });
+
+        
+        if (this._activeCallPollTimer) clearInterval(this._activeCallPollTimer);
+        this._activeCallPollTimer = setInterval(() => {
+            this.checkForActiveCall();
+        }, 30_000);
     
         this.socket.on("call:started", (payload) => {
             this.incomingCall = payload;
@@ -126,6 +137,7 @@ export default class PatientDashboardPage extends Component {
     
     unmount() {
         this.socket?.disconnect();
+        if (this._activeCallPollTimer) clearInterval(this._activeCallPollTimer);
         super.unmount?.();
     }
     
@@ -181,6 +193,19 @@ export default class PatientDashboardPage extends Component {
         new VideoCallRoom(call.booking_id, this.patient, call.consultation_type, () => {
             this.updatePage();
         }).mount("#video-call-overlay-root");
+    }
+    async checkForActiveCall() {
+        try {
+            const res = await api.get("/video/active-call");
+            const activeCall = res.data || res;
+
+            if (activeCall && (!this.incomingCall || this.incomingCall.booking_id !== activeCall.booking_id)) {
+                this.incomingCall = activeCall;
+                this.update();
+            }
+        } catch (error) {
+            console.error("Failed to check for active call:", error);
+        }
     }
     openConversationInMessages(conversation) {
         this.activeTab = "messages";
