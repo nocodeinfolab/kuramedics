@@ -6,6 +6,7 @@ import api from "../../services/api.js";
 import PatientCare from "./PatientCare.js";
 import PatientMessaging from "./PatientMessaging.js";
 import PatientFindCare from "./PatientFindCare.js";
+import PatientProfilePage from "./PatientProfilePage.js";
 import VideoCallRoom from "../shared/VideoCallRoom.js";
 const SOCKET_BASE_URL = "https://doctors-consultation-backend.onrender.com";
 
@@ -519,15 +520,18 @@ export default class PatientDashboardPage extends Component {
         switch (this.activeTab) {
             case "home":
                 return this.renderHomeTab();
-            case "profile":
-                return this.renderComingSoon("Profile", "Manage your contact details, emergency contact, and medical summary.");
             default:
                 return this.renderHomeTab();
         }
     }
 
+    handleProfileUpdated(updatedPatient) {
+        this.patient = updatedPatient;
+        this.update();
+    }
+
     mountCurrentPage(container) {
-        const cacheable = ["care", "messages", "find"]; // tabs whose state should survive tab switches
+        const cacheable = ["care", "messages", "find", "profile"];
     
         if (cacheable.includes(this.activeTab)) {
             this.ensureTabMounted(container, this.activeTab);
@@ -572,6 +576,8 @@ export default class PatientDashboardPage extends Component {
             instance = new PatientMessaging(this.patient, this.socket, (count) => this.onMessagesRead(count));
         } else if (tabId === "find") {
             instance = new PatientFindCare(this.patient);
+        } else if (tabId === "profile") {
+            instance = new PatientProfilePage(this.patient, (updatedPatient) => this.handleProfileUpdated(updatedPatient));
         }
 
         this._tabInstances[tabId] = instance;
