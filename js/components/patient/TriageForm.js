@@ -16,23 +16,11 @@ const URGENCY_COLORS = {
     high: "#ef4444",
 };
 
-const STEPS = [
-    {
-        key: "symptoms",
-        question: "What's going on? Describe how you're feeling in your own words.",
-        placeholder: "e.g. I've had a fever and sore throat...",
-    },
-    {
-        key: "duration",
-        question: "How long has this been going on?",
-        placeholder: "e.g. since yesterday, about 3 days, a week...",
-    },
-    {
-        key: "additional",
-        question: "Anything else your doctor should know? (severity, what makes it better or worse, relevant history — or just say \"nothing else\")",
-        placeholder: "e.g. it's getting worse at night, I'm also on blood pressure medication...",
-    },
-];
+const CHIEF_COMPLAINT_STEP = {
+    key: "chief_complaint",
+    question: "What's going on? Describe how you're feeling in your own words.",
+    placeholder: "e.g. I've had a fever and sore throat...",
+};
 
 export default class TriageForm extends Component {
     /**
@@ -46,13 +34,22 @@ export default class TriageForm extends Component {
         this.patient = patient ?? {};
         this.onContinue = onContinue;
 
-        this.stepIndex = 0; // index into STEPS
-        this.answers = { symptoms: "", duration: "", additional: "" };
+        // steps[0] is always the fixed chief-complaint question. Anything
+        // after that is populated dynamically once matchSymptom() returns.
+        this.steps = [CHIEF_COMPLAINT_STEP];
+        this.stepIndex = 0;
+        this.answers = {}; // key -> answer text, keyed by each step's `key`
         this.currentInput = "";
 
-        this.submitting = false;
+        this.matching = false; // fetching follow-up questions after step 1
+        this.submitting = false; // final AI call after all steps answered
         this.error = "";
         this.result = null;
+
+        // Set once matchSymptom() responds after the chief complaint.
+        this.matchedRedFlag = false;
+        this.matchedRedFlagMessage = "";
+        this.matchedSpecialization = null;
     }
 
     // ---------- Actions ----------
@@ -61,15 +58,22 @@ export default class TriageForm extends Component {
         this.currentInput = value;
     }
 
-    advanceStep() {
+    async advanceStep() {
         const trimmed = this.currentInput.trim();
         if (!trimmed) return;
 
-        const step = STEPS[this.stepIndex];
+        const step = this.steps[this.stepIndex];
         this.answers[step.key] = trimmed;
         this.currentInput = "";
 
-        if (this.stepIndex < STEPS.length - 1) {
+        const isChiefComplaintStep = this.stepIndex === 0;
+
+        if (isChiefComplaintStep) {
+            await this.fetchFollowUpQuestions(trimmed);
+            return;
+        }
+
+        if (this.stepIndex < this.steps.length - 1) {
             this.stepIndex += 1;
             this.update();
         } else {
@@ -77,21 +81,62 @@ export default class TriageForm extends Component {
         }
     }
 
+    async fetchFollowUpQuestions(chiefComplaintText) {
+        this.matching = true;
+        this.error = "";
+        this.update();
+
+        try {
+            const res = await api.post("/ai/match-symptom", { input: chiefComplaintText });
+            const match = res.data || res;
+
+            this.matchedRedFlag = !!match.red_flag;
+            this.matchedRedFlagMessage = match.red_flag_message || "";
+            this.matchedSpecialization = match.suggested_specialization || null;
+
+            if (this.matchedRedFlag) {
+                // Emergency-pattern match — skip clerking entirely and go
+                // straight to the final AI call so the red-flag result
+                // (and its message) surfaces as quickly as possible.
+                this.matching = false;
+                this.submitTriage();
+                return;
+            }
+
+            const followUps = Array.isArray(match.follow_up_questions) ? match.follow_up_questions : [];
+            this.steps = [CHIEF_COMPLAINT_STEP, ...followUps];
+            this.stepIndex = 1;
+            this.matching = false;
+            this.update();
+        } catch (error) {
+            console.error("Symptom match request failed:", error);
+            // Non-fatal — fall back to submitting directly with just the
+            // chief complaint rather than blocking the patient entirely.
+            this.matching = false;
+            this.submitTriage();
+        }
+    }
+
     goBackOneStep() {
         if (this.stepIndex === 0) return;
         this.stepIndex -= 1;
-        this.currentInput = this.answers[STEPS[this.stepIndex].key];
+        this.currentInput = this.answers[this.steps[this.stepIndex].key] || "";
         this.update();
     }
 
     buildCombinedInput() {
         const parts = [];
-        if (this.answers.symptoms) parts.push(this.answers.symptoms);
-        if (this.answers.duration) parts.push(`Duration: ${this.answers.duration}`);
-        if (this.answers.additional && !/^nothing else$/i.test(this.answers.additional.trim())) {
-            parts.push(`Additional details: ${this.answers.additional}`);
-        }
-        return parts.join(". ");
+
+        parts.push(this.answers.chief_complaint || "");
+
+        this.steps.slice(1).forEach(step => {
+            const answer = this.answers[step.key];
+            if (answer && !/^(nothing else|none|no)$/i.test(answer.trim())) {
+                parts.push(`${step.question} — ${answer}`);
+            }
+        });
+
+        return parts.filter(Boolean).join(". ");
     }
 
     async submitTriage() {
@@ -104,6 +149,14 @@ export default class TriageForm extends Component {
         try {
             const res = await api.post("/ai/reason-for-visit", { input: this.buildCombinedInput() });
             this.result = res.data || res;
+
+            // The knowledge-base red flag is the safety floor — if it fired,
+            // make sure the result reflects that even if the AI call's own
+            // read of urgency somehow differs.
+            if (this.matchedRedFlag && !this.result.red_flag) {
+                this.result.red_flag = true;
+                this.result.red_flag_message = this.result.red_flag_message || this.matchedRedFlagMessage;
+            }
         } catch (error) {
             console.error("Triage request failed:", error);
             this.error = error.message || "Something went wrong. Please try again.";
@@ -114,9 +167,13 @@ export default class TriageForm extends Component {
     }
 
     startOver() {
+        this.steps = [CHIEF_COMPLAINT_STEP];
         this.stepIndex = 0;
-        this.answers = { symptoms: "", duration: "", additional: "" };
+        this.answers = {};
         this.currentInput = "";
+        this.matchedRedFlag = false;
+        this.matchedRedFlagMessage = "";
+        this.matchedSpecialization = null;
         this.result = null;
         this.error = "";
         this.update();
@@ -158,11 +215,11 @@ export default class TriageForm extends Component {
     // ---------- Conversation view ----------
 
     renderConversation() {
-        if (this.submitting) {
+        if (this.matching || this.submitting) {
             return h(
                 "div",
                 { class: "dashboard-card text-center py-4" },
-                h("p", { class: "dashboard-muted" }, "Analyzing what you've told us...")
+                h("p", { class: "dashboard-muted" }, this.matching ? "One moment..." : "Analyzing what you've told us...")
             );
         }
 
@@ -183,7 +240,7 @@ export default class TriageForm extends Component {
                 h(
                     "div",
                     { style: "display: flex; flex-direction: column; gap: 10px;" },
-                    STEPS.slice(0, this.stepIndex).map(step => this.renderAnsweredExchange(step)),
+                    this.steps.slice(0, this.stepIndex).map(step => this.renderAnsweredExchange(step)),
                     this.renderCurrentQuestion()
                 )
             ),
@@ -202,10 +259,14 @@ export default class TriageForm extends Component {
     }
 
     renderStepProgress() {
+        // steps.length is only accurate once follow-ups have been fetched
+        // (stepIndex >= 1); before that, just show that we're on step 1.
+        const total = this.steps.length > 1 ? this.steps.length : null;
+
         return h(
             "p",
             { class: "dashboard-muted", style: "margin: 0; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.03em;" },
-            `Step ${this.stepIndex + 1} of ${STEPS.length}`
+            total ? `Step ${this.stepIndex + 1} of ${total}` : "Step 1"
         );
     }
 
@@ -231,8 +292,8 @@ export default class TriageForm extends Component {
     }
 
     renderCurrentQuestion() {
-        const step = STEPS[this.stepIndex];
-        const isLastStep = this.stepIndex === STEPS.length - 1;
+        const step = this.steps[this.stepIndex];
+        const isLastStep = this.stepIndex === this.steps.length - 1 && this.stepIndex > 0;
         const fieldInputStyle = "padding: 0.65rem 0.8rem; border: 1px solid var(--color-line); border-radius: 8px; width: 100%; font-size: 0.9rem; box-sizing: border-box; font-family: inherit; resize: vertical;";
 
         return h(
@@ -279,13 +340,13 @@ export default class TriageForm extends Component {
                         disabled: !this.currentInput.trim(),
                         onclick: () => this.advanceStep(),
                     },
-                    isLastStep ? "Continue" : "Next"
+                    this.stepIndex === 0 ? "Next" : isLastStep ? "Continue" : "Next"
                 )
             )
         );
     }
 
-    // ---------- Result view (unchanged from single-input version) ----------
+    // ---------- Result view (unchanged) ----------
 
     renderResult() {
         const result = this.result;
