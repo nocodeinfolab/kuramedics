@@ -338,7 +338,8 @@ export default class DoctorQueuePage extends Component {
                     raw_notes: draftData.raw_notes || "",
                     outcome_notes: draftData.outcome_notes || "",
                     plan_notes: draftData.plan_notes || "",
-                    follow_up_notes: draftData.follow_up_notes || ""
+                    follow_up_notes: draftData.follow_up_notes || "",
+                    medications: Array.isArray(draftData.medications) ? draftData.medications : []
                 };
             } catch (err) {
                 // Ignore 404s if no draft exists yet
@@ -367,13 +368,52 @@ export default class DoctorQueuePage extends Component {
             raw_notes: "",
             outcome_notes: "",
             plan_notes: "",
-            follow_up_notes: ""
+            follow_up_notes: "",
+            medications: []
         };
     
         draft[field] = value;
         this.clinicalNotesMap[bookingId] = draft;
     
         this.scheduleDraftSave(bookingId);
+    }
+
+    addMedicationRow(bookingId) {
+        const draft = this.clinicalNotesMap[bookingId] || {
+            raw_notes: "",
+            outcome_notes: "",
+            plan_notes: "",
+            follow_up_notes: "",
+            medications: []
+        };
+
+        draft.medications = [
+            ...(draft.medications || []),
+            { medication: "", dose: "", frequency: "", duration: "", instructions: "" }
+        ];
+        this.clinicalNotesMap[bookingId] = draft;
+        this.update();
+    }
+
+    updateMedicationField(bookingId, index, field, value) {
+        const draft = this.clinicalNotesMap[bookingId];
+        if (!draft || !draft.medications?.[index]) return;
+
+        draft.medications[index] = { ...draft.medications[index], [field]: value };
+        this.clinicalNotesMap[bookingId] = draft;
+
+        this.scheduleDraftSave(bookingId);
+    }
+
+    removeMedicationRow(bookingId, index) {
+        const draft = this.clinicalNotesMap[bookingId];
+        if (!draft) return;
+
+        draft.medications = (draft.medications || []).filter((_, i) => i !== index);
+        this.clinicalNotesMap[bookingId] = draft;
+
+        this.scheduleDraftSave(bookingId);
+        this.update();
     }
     scheduleDraftSave(bookingId) {
         clearTimeout(this.draftSaveTimers[bookingId]);
@@ -939,6 +979,8 @@ export default class DoctorQueuePage extends Component {
                         autoGrow(e.target);
                     }
                 }),
+
+                this.renderPrescriptionSection(booking, draft),
             
                 h("label", { style: fieldLabelStyle }, "Follow-up"),
                 h("textarea", {
@@ -1061,6 +1103,92 @@ export default class DoctorQueuePage extends Component {
                     "Cancel"
                 )
             )
+        );
+    }
+    renderPrescriptionSection(booking, draft) {
+        const medications = draft.medications || [];
+        const rowInputStyle = "padding: 0.4rem 0.5rem; border: 1px solid var(--color-line); border-radius: 5px; width: 100%; font-size: 0.82rem; box-sizing: border-box;";
+
+        return h(
+            "div",
+            { style: "margin: 4px 0 10px; padding: 0.7rem; background: rgba(2,132,199,0.03); border: 1px dashed var(--color-line); border-radius: 6px;" },
+            h(
+                "div",
+                { style: "display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;" },
+                h("span", { style: "font-size: 0.74rem; font-weight: 600; color: var(--color-text, #1e293b);" }, "Prescription"),
+                h(
+                    "button",
+                    {
+                        class: "btn btn-outline",
+                        style: "padding: 0.25rem 0.6rem; font-size: 0.72rem; border-radius: 5px;",
+                        onclick: () => this.addMedicationRow(booking.id),
+                    },
+                    "+ Add medication"
+                )
+            ),
+            medications.length === 0
+                ? h("p", { class: "dashboard-muted", style: "margin: 0; font-size: 0.76rem;" }, "No medications added.")
+                : medications.map((med, index) => this.renderMedicationRow(booking, index, med, rowInputStyle))
+        );
+    }
+
+    renderMedicationRow(booking, index, med, rowInputStyle) {
+        return h(
+            "div",
+            {
+                style: "display: flex; flex-direction: column; gap: 6px; padding: 8px; margin-bottom: 8px; background: #fff; border: 1px solid var(--color-line); border-radius: 6px;",
+            },
+            h(
+                "div",
+                { style: "display: flex; gap: 6px; align-items: center;" },
+                h("input", {
+                    type: "text",
+                    placeholder: "Medication name",
+                    value: med.medication,
+                    style: `${rowInputStyle} flex: 1; font-weight: 600;`,
+                    oninput: e => this.updateMedicationField(booking.id, index, "medication", e.target.value),
+                }),
+                h(
+                    "button",
+                    {
+                        style: "padding: 0.3rem 0.5rem; font-size: 0.7rem; border-radius: 5px; border: none; background: transparent; color: #ef4444; cursor: pointer; flex-shrink: 0;",
+                        onclick: () => this.removeMedicationRow(booking.id, index),
+                    },
+                    "Remove"
+                )
+            ),
+            h(
+                "div",
+                { style: "display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;" },
+                h("input", {
+                    type: "text",
+                    placeholder: "Dose (e.g. 500mg)",
+                    value: med.dose,
+                    style: rowInputStyle,
+                    oninput: e => this.updateMedicationField(booking.id, index, "dose", e.target.value),
+                }),
+                h("input", {
+                    type: "text",
+                    placeholder: "Frequency (e.g. 3x/day)",
+                    value: med.frequency,
+                    style: rowInputStyle,
+                    oninput: e => this.updateMedicationField(booking.id, index, "frequency", e.target.value),
+                }),
+                h("input", {
+                    type: "text",
+                    placeholder: "Duration (e.g. 5 days)",
+                    value: med.duration,
+                    style: rowInputStyle,
+                    oninput: e => this.updateMedicationField(booking.id, index, "duration", e.target.value),
+                })
+            ),
+            h("input", {
+                type: "text",
+                placeholder: "Instructions (optional — e.g. take with food)",
+                value: med.instructions,
+                style: rowInputStyle,
+                oninput: e => this.updateMedicationField(booking.id, index, "instructions", e.target.value),
+            })
         );
     }
 
