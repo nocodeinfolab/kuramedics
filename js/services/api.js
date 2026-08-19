@@ -245,6 +245,27 @@ class ApiService {
         return result;
 
     }
+        async getBlob(endpoint) {
+
+        const response = await this.request(endpoint);
+
+        if (!response.ok) {
+
+            let message = "Request failed.";
+            try {
+                const result = await response.json();
+                message = result.message || message;
+            } catch {
+                
+            }
+
+            throw new Error(message);
+
+        }
+
+        return response.blob();
+
+    }
 
     async post(endpoint, body) {
 
