@@ -1,33 +1,35 @@
-/**
- * Minimal hash-based router.
- *
- * We use `#/path` routing instead of the History API because it works from
- * a plain static file server with zero server-side config — important
- * while this is a no-build, static SPA. Swapping to History API routing
- * later (once there's a real server / CDN rewrite rule) only touches this
- * file.
- */
-const routes = new Map();
+const routes = [];
 let notFoundFactory = null;
 let currentPage = null;
 const APP_SELECTOR = "#app";
 
-/**
- * Register a route.
- * @param {string} path - e.g. "/", "/login/patient", "/doctor/dashboard"
- * @param {() => import("./component.js").Component} factory - returns a
- *   fresh component instance for this route.
- */
-export function registerRoute(path, factory) {
-  routes.set(normalize(path), factory);
+/** Converts path pattern like "/verify/prescription/:id" to Regex */
+function pathToRegex(path) {
+  return new RegExp(
+    "^" + path.replace(/:[^\s/]+/g, "([^/]+)") + "$"
+  );
 }
 
-/** Register the fallback shown for unknown routes. */
+/** Extracts param names like [ "id" ] from "/verify/prescription/:id" */
+function getParamNames(path) {
+  const matches = path.match(/:[^\s/]+/g);
+  return matches ? matches.map((param) => param.substring(1)) : [];
+}
+
+export function registerRoute(path, factory) {
+  const normalized = normalize(path);
+  routes.push({
+    path: normalized,
+    regex: pathToRegex(normalized),
+    paramNames: getParamNames(normalized),
+    factory,
+  });
+}
+
 export function registerNotFound(factory) {
   notFoundFactory = factory;
 }
 
-/** Programmatic navigation, e.g. from a button click handler. */
 export function navigate(path) {
   const target = normalize(path);
   if (window.location.hash.replace(/^#/, "") === target) {
@@ -48,17 +50,32 @@ function currentPath() {
 
 function resolve() {
   const path = currentPath();
-  const factory = routes.get(path) || notFoundFactory || routes.get("/");
+  let matchedFactory = null;
+  let params = {};
 
+  // Find matching route
+  for (const route of routes) {
+    const match = path.match(route.regex);
+    if (match) {
+      matchedFactory = route.factory;
+      // Extract key-value param pairs (e.g., { id: '123' })
+      route.paramNames.forEach((name, index) => {
+        params[name] = match[index + 1];
+      });
+      break;
+    }
+  }
+
+  const factory = matchedFactory || notFoundFactory;
   if (!factory) return;
 
   currentPage?.unmount();
-  currentPage = factory();
+  // Pass extracted params to factory function
+  currentPage = factory(params);
   currentPage.mount(APP_SELECTOR);
   window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
 }
 
-/** Boot the router: resolves the current URL and listens for changes. */
 export function startRouter() {
   window.addEventListener("hashchange", resolve);
   resolve();
