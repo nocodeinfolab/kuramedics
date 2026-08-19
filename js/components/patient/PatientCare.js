@@ -453,7 +453,7 @@ export default class PatientCare extends Component {
         );
     }
 
-    renderConsultationNotes(booking) {
+        renderConsultationNotes(booking) {
         const record = this.recordsByBookingId[booking.id];
 
         if (!record) {
@@ -465,6 +465,7 @@ export default class PatientCare extends Component {
         }
 
         const sections = this.parseDoctorNotes(record.doctor_notes);
+        const medications = Array.isArray(record.medications) ? record.medications : [];
 
         return h(
             "div",
@@ -489,9 +490,39 @@ export default class PatientCare extends Component {
                             { style: "margin: 0 0 8px; font-size: 0.88rem; line-height: 1.55;" },
                             paragraph
                         )
-                    )
+                    ),
+                    section.title === "Plan" && medications.length > 0
+                        ? this.renderMedicationsList(medications)
+                        : null
                 )
             )
+        );
+    }
+
+    renderMedicationsList(medications) {
+        return h(
+            "div",
+            { style: "margin-top: 4px; display: flex; flex-direction: column; gap: 8px;" },
+            h(
+                "p",
+                { class: "dashboard-muted", style: "margin: 0; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em;" },
+                "Prescription"
+            ),
+            medications.map(med => this.renderMedicationCard(med))
+        );
+    }
+
+    renderMedicationCard(med) {
+        const details = [med.dose, med.frequency, med.duration].filter(Boolean).join(" · ");
+
+        return h(
+            "div",
+            { style: "padding: 8px 10px; background: var(--color-bg-muted, #f1f5f9); border-radius: 6px;" },
+            h("p", { style: "margin: 0 0 2px; font-size: 0.86rem; font-weight: 600;" }, med.medication || "Unnamed medication"),
+            details ? h("p", { class: "dashboard-muted", style: "margin: 0; font-size: 0.78rem;" }, details) : null,
+            med.instructions
+                ? h("p", { style: "margin: 4px 0 0; font-size: 0.78rem; font-style: italic; line-height: 1.4;" }, med.instructions)
+                : null
         );
     }
 
