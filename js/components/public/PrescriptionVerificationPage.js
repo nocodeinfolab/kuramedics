@@ -39,7 +39,7 @@ export default class PrescriptionVerificationPage extends Component {
         return h(
             "main",
             { style: "max-width: 480px; margin: 0 auto; padding: 24px 16px; font-family: Inter, sans-serif;" },
-            h("h1", { style: "font-size: 1.3rem; margin-bottom: 4px;" }, "KuraMedics"),
+            h("h1", { style: "font-size: 1.3rem; margin-bottom: 4px;" }, "YerosCare"),
             h("p", { style: "color: #64748b; font-size: 0.85rem; margin-bottom: 24px;" }, "Prescription Verification"),
             this.loading
                 ? h("p", {}, "Verifying...")
@@ -69,7 +69,7 @@ export default class PrescriptionVerificationPage extends Component {
                 { style: "padding: 14px; border-radius: 8px; background: #f0fdf4; border: 1px solid #bbf7d0;" },
                 h("p", { style: "color: #16a34a; font-weight: 600; margin: 0;" }, "✓ Valid prescription"),
                 data.doctor_verified
-                    ? h("p", { style: "color: #16a34a; font-size: 0.8rem; margin-top: 4px;" }, "Issued by a verified KuraMedics doctor.")
+                    ? h("p", { style: "color: #16a34a; font-size: 0.8rem; margin-top: 4px;" }, "Issued by a verified YerosCare doctor.")
                     : h("p", { style: "color: #b45309; font-size: 0.8rem; margin-top: 4px;" }, "Note: this doctor's verification is not currently confirmed.")
             ),
             h(
