@@ -1157,9 +1157,10 @@ export default class DoctorQueuePage extends Component {
                     "Remove"
                 )
             ),
+            // Changed grid-template-columns from '1fr 1fr 1fr' to '1fr' to stack items vertically
             h(
                 "div",
-                { style: "display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 6px;" },
+                { style: "display: grid; grid-template-columns: 1fr; gap: 6px;" },
                 h("input", {
                     type: "text",
                     placeholder: "Dose (e.g. 500mg)",
