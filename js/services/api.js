@@ -37,7 +37,7 @@ class ApiService {
 
         this.csrfToken = null;
 
-        window.location.hash = "/#";
+        window.location.hash = "/";
 
     }
 
