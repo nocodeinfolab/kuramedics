@@ -82,8 +82,14 @@ export default class PatientProfilePage extends Component {
         }
     }
 
-    logout() {
-        api.clearSession();
+    async logout() {
+        try {
+            await api.post("/auth/logout", {});
+        } catch (error) {
+            console.error("Logout request failed:", error);
+        } finally {
+            api.clearSession();
+        }
     }
 
     // ---------- Render ----------
