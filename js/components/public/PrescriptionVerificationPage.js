@@ -2,8 +2,7 @@
 
 import { Component } from "../../core/component.js";
 import { h } from "../../utils/dom.js";
-
-const API_BASE_URL = "https://doctors-consultation-backend.onrender.com/api/v1";
+import apiService from "../../services/api.js";
 
 export default class PrescriptionVerificationPage extends Component {
     constructor(consultationId) {
@@ -16,8 +15,7 @@ export default class PrescriptionVerificationPage extends Component {
 
     async afterMount() {
         try {
-            const res = await fetch(`${API_BASE_URL}/verify/prescription/${this.consultationId}`);
-            const json = await res.json();
+            const json = await apiService.getPublic(`/prescriptions/verify/${this.consultationId}`);
             this.data = json.data || json;
         } catch (error) {
             console.error("Verification failed:", error);
