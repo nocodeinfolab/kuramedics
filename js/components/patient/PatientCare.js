@@ -492,21 +492,36 @@ export default class PatientCare extends Component {
                         )
                     ),
                     section.title === "Plan" && medications.length > 0
-                        ? this.renderMedicationsList(medications)
+                        ? this.renderMedicationsList(medications, booking)
                         : null
                 )
             )
         );
     }
 
-    renderMedicationsList(medications) {
+        renderMedicationsList(medications, booking) {
         return h(
             "div",
             { style: "margin-top: 4px; display: flex; flex-direction: column; gap: 8px;" },
             h(
-                "p",
-                { class: "dashboard-muted", style: "margin: 0; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em;" },
-                "Prescription"
+                "div",
+                { style: "display: flex; justify-content: space-between; align-items: center;" },
+                h(
+                    "p",
+                    { class: "dashboard-muted", style: "margin: 0; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em;" },
+                    "Prescription"
+                ),
+                h(
+                    "a",
+                    {
+                        href: `${api.baseURL || ""}/consultations/booking/${booking.id}/prescription-pdf`,
+                        target: "_blank",
+                        rel: "noopener",
+                        style: "font-size: 0.74rem; color: var(--color-primary, #0284c7); font-weight: 600; text-decoration: none;",
+                        onclick: e => { e.stopPropagation(); },
+                    },
+                    "Download PDF"
+                )
             ),
             medications.map(med => this.renderMedicationCard(med))
         );
