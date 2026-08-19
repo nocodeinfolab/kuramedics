@@ -1,11 +1,21 @@
 import { Component } from "../../../core/component.js";
 import { h } from "../../../utils/dom.js";
+import api from "../../../services/api.js";
 
 export default class SettingsPage extends Component {
     constructor(profile = {}, onNavigate = () => {}) {
         super();
         this.profile = profile;
         this.onNavigate = onNavigate;
+    }
+    async logout() {
+        try {
+            await api.post("/auth/logout", {});
+        } catch (error) {
+            console.error("Logout request failed:", error);
+        } finally {
+            api.clearSession();
+        }
     }
 
     render() {
@@ -201,6 +211,34 @@ export default class SettingsPage extends Component {
                 "span",
                 { class: "btn-link", style: "margin-top: var(--space-4); color: var(--color-primary); font-weight: bold;" },
                 "Security Settings →"
+            )
+        );
+    }
+    renderLogoutCard() {
+        return h(
+            "div",
+            {
+                class: "dashboard-card",
+                style: "display: flex; flex-direction: column; justify-content: space-between;"
+            },
+            h(
+                "div",
+                {},
+                h("h3", { style: "margin: 0 0 var(--space-2);" }, "Log out"),
+                h(
+                    "p",
+                    { class: "dashboard-muted", style: "margin: 0;" },
+                    "Sign out of your account on this device."
+                )
+            ),
+            h(
+                "button",
+                {
+                    class: "btn btn-outline",
+                    style: "margin-top: var(--space-4); padding: 0.55rem 1rem; font-size: 0.85rem; border-radius: 8px; color: #ef4444; border-color: #ef4444; width: fit-content;",
+                    onclick: () => this.logout()
+                },
+                "Log out"
             )
         );
     }
