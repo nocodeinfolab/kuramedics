@@ -11,16 +11,7 @@ class ApiService {
         this.csrfToken = null;
 
     }
-    async getPublic(endpoint) {
-        const response = await fetch(`${API_BASE_URL}${endpoint}`);
-        const result = await response.json();
     
-        if (!response.ok) {
-            throw new Error(result.message || "Public request failed.");
-        }
-    
-        return result;
-    }
 
     getAccessToken() {
 
