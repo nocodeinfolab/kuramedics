@@ -1,35 +1,33 @@
-const routes = [];
+/**
+ * Minimal hash-based router.
+ *
+ * We use `#/path` routing instead of the History API because it works from
+ * a plain static file server with zero server-side config — important
+ * while this is a no-build, static SPA. Swapping to History API routing
+ * later (once there's a real server / CDN rewrite rule) only touches this
+ * file.
+ */
+const routes = new Map();
 let notFoundFactory = null;
 let currentPage = null;
 const APP_SELECTOR = "#app";
 
-/** Converts path pattern like "/verify/prescription/:id" to Regex */
-function pathToRegex(path) {
-  return new RegExp(
-    "^" + path.replace(/:[^\s/]+/g, "([^/]+)") + "$"
-  );
-}
-
-/** Extracts param names like [ "id" ] from "/verify/prescription/:id" */
-function getParamNames(path) {
-  const matches = path.match(/:[^\s/]+/g);
-  return matches ? matches.map((param) => param.substring(1)) : [];
-}
-
+/**
+ * Register a route.
+ * @param {string} path - e.g. "/", "/login/patient", "/doctor/dashboard"
+ * @param {() => import("./component.js").Component} factory - returns a
+ *   fresh component instance for this route.
+ */
 export function registerRoute(path, factory) {
-  const normalized = normalize(path);
-  routes.push({
-    path: normalized,
-    regex: pathToRegex(normalized),
-    paramNames: getParamNames(normalized),
-    factory,
-  });
+  routes.set(normalize(path), factory);
 }
 
+/** Register the fallback shown for unknown routes. */
 export function registerNotFound(factory) {
   notFoundFactory = factory;
 }
 
+/** Programmatic navigation, e.g. from a button click handler. */
 export function navigate(path) {
   const target = normalize(path);
   if (window.location.hash.replace(/^#/, "") === target) {
@@ -50,32 +48,59 @@ function currentPath() {
 
 function resolve() {
   const path = currentPath();
-  let matchedFactory = null;
+
+  // Exact static match first (unchanged behaviour for every existing route).
+  let factory = routes.get(path);
   let params = {};
 
-  // Find matching route
-  for (const route of routes) {
-    const match = path.match(route.regex);
-    if (match) {
-      matchedFactory = route.factory;
-      // Extract key-value param pairs (e.g., { id: '123' })
-      route.paramNames.forEach((name, index) => {
-        params[name] = match[index + 1];
-      });
-      break;
+  // Fall back to dynamic-segment matching (e.g. "/verify/prescription/:id")
+  // only if no exact match was found.
+  if (!factory) {
+    for (const [pattern, registeredFactory] of routes.entries()) {
+      const match = matchDynamicRoute(pattern, path);
+      if (match) {
+        factory = registeredFactory;
+        params = match;
+        break;
+      }
     }
   }
 
-  const factory = matchedFactory || notFoundFactory;
+  factory = factory || notFoundFactory || routes.get("/");
   if (!factory) return;
 
   currentPage?.unmount();
-  // Pass extracted params to factory function
   currentPage = factory(params);
   currentPage.mount(APP_SELECTOR);
   window.scrollTo({ top: 0, behavior: "instant" in window ? "instant" : "auto" });
 }
 
+/**
+ * Matches a path against a route pattern containing ":param" segments.
+ * Returns an object of extracted params on match, or null otherwise.
+ * Only supports single-level ":name" segments — no wildcards, no regex.
+ */
+function matchDynamicRoute(pattern, path) {
+  const patternParts = pattern.split("/").filter(Boolean);
+  const pathParts = path.split("/").filter(Boolean);
+
+  if (patternParts.length !== pathParts.length) return null;
+
+  const params = {};
+  for (let i = 0; i < patternParts.length; i++) {
+    const patternPart = patternParts[i];
+    const pathPart = pathParts[i];
+
+    if (patternPart.startsWith(":")) {
+      params[patternPart.slice(1)] = decodeURIComponent(pathPart);
+    } else if (patternPart !== pathPart) {
+      return null;
+    }
+  }
+  return params;
+}
+
+/** Boot the router: resolves the current URL and listens for changes. */
 export function startRouter() {
   window.addEventListener("hashchange", resolve);
   resolve();
