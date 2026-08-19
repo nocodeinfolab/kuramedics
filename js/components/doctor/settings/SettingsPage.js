@@ -7,8 +7,15 @@ export default class SettingsPage extends Component {
         super();
         this.profile = profile;
         this.onNavigate = onNavigate;
+        this.loggingOut = false;
     }
+    
     async logout() {
+        if (this.loggingOut) return;
+    
+        this.loggingOut = true;
+        this.update();
+    
         try {
             await api.post("/auth/logout", {});
         } catch (error) {
@@ -33,7 +40,8 @@ export default class SettingsPage extends Component {
                 this.renderProfileCard(),
                 this.renderConsultationServicesCard(),
                 this.renderAccountCard(),
-                this.renderSecurityCard()
+                this.renderSecurityCard(),
+                this.renderLogoutCard()
             )
         );
     }
