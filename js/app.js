@@ -5,6 +5,7 @@ import { PatientLoginPage } from "./components/auth/PatientLoginPage.js";
 import { DoctorLoginPage } from "./components/auth/DoctorLoginPage.js";
 import DoctorDashboardPage from "./components/doctor/DoctorDashboardPage.js";
 import PatientDashboardPage from "./components/patient/PatientDashboardPage.js";
+import PrescriptionVerificationPage from "./components/public/PrescriptionVerificationPage.js";
 
 registerRoute("/", () => new LandingPage());
 
@@ -14,5 +15,6 @@ registerRoute("/doctor/login", () => new DoctorLoginPage());
 
 registerRoute("/doctor/dashboard", () => new DoctorDashboardPage());
 registerRoute("/patient/dashboard", () => new PatientDashboardPage());
+registerRoute("/verify/prescription/:id", (params) => new PrescriptionVerificationPage(params.id));
 
 startRouter();
