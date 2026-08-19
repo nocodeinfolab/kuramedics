@@ -120,6 +120,25 @@ export default class PatientCare extends Component {
         // TODO: wire up once payment endpoints are built.
         console.log("Pay now clicked for booking:", booking.id);
     }
+    async downloadPrescription(booking) {
+        try {
+            const blob = await api.getBlob(`/consultations/booking/${booking.id}/prescription-pdf`);
+            const url = URL.createObjectURL(blob);
+
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `prescription-${booking.id}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error("Failed to download prescription:", error);
+            this.errorMessage = error.message || "Failed to download prescription.";
+            this.update();
+        }
+    }
 
     // ---------- Derived data ----------
 
@@ -512,13 +531,13 @@ export default class PatientCare extends Component {
                     "Prescription"
                 ),
                 h(
-                    "a",
+                    "button",
                     {
-                        href: `${api.baseURL || ""}/consultations/booking/${booking.id}/prescription-pdf`,
-                        target: "_blank",
-                        rel: "noopener",
-                        style: "font-size: 0.74rem; color: var(--color-primary, #0284c7); font-weight: 600; text-decoration: none;",
-                        onclick: e => { e.stopPropagation(); },
+                        style: "font-size: 0.74rem; color: var(--color-primary, #0284c7); font-weight: 600; background: none; border: none; cursor: pointer; padding: 0;",
+                        onclick: e => {
+                            e.stopPropagation();
+                            this.downloadPrescription(booking);
+                        },
                     },
                     "Download PDF"
                 )
