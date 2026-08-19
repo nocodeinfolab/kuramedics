@@ -539,7 +539,7 @@ export default class PatientCare extends Component {
                             this.downloadPrescription(booking);
                         },
                     },
-                    "Download PDF"
+                    "Download prescription"
                 )
             ),
             medications.map(med => this.renderMedicationCard(med))
