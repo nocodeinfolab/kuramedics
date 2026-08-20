@@ -799,7 +799,7 @@ export default class DoctorQueuePage extends Component {
                           )
                       )
                   )
-                : null
+                : null,
             notes
                 ? h(
                       "p",
