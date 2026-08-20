@@ -135,7 +135,23 @@ export default class TriageForm extends Component {
         this.update();
     }
 
-    buildCombinedInput() {
+    buildPatientAnswersText() {
+        const parts = [];
+        parts.push(this.answers.chief_complaint || "");
+
+        this.steps.slice(1).forEach(step => {
+            const answer = this.answers[step.key];
+            if (answer && !/^(nothing else|none|no)$/i.test(answer.trim())) {
+                parts.push(answer);
+            }
+        });
+
+        return parts.filter(Boolean).join(". ");
+    }
+
+    /** Full Q&A transcript, including question wording — sent to the AI
+     *  only, for richer context, never used for keyword/red-flag scanning. */
+    buildTranscriptText() {
         const parts = [];
         parts.push(this.answers.chief_complaint || "");
 
@@ -157,7 +173,10 @@ export default class TriageForm extends Component {
         this.update();
 
         try {
-            const res = await api.post("/ai/reason-for-visit", { input: this.buildCombinedInput() });
+            const res = await api.post("/ai/reason-for-visit", {
+                input: this.buildPatientAnswersText(),
+                context: this.buildTranscriptText(),
+            });
             this.result = res.data || res;
 
             if (this.matchedRedFlag && !this.result.red_flag) {
