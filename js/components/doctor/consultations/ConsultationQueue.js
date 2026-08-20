@@ -509,10 +509,10 @@ export default class DoctorQueuePage extends Component {
             if (label === "Notes") {
                 notes = value;
             } else if (label === "Symptoms") {
-                // Split comma-separated symptoms into separate tags
+                // Split comma-separated symptoms into separate tags without adding a label prefix
                 value.split(",").forEach(sym => {
                     const trimmed = sym.trim();
-                    if (trimmed) tags.push({ label: "Symptom", value: trimmed });
+                    if (trimmed) tags.push({ label: null, value: trimmed });
                 });
             } else {
                 tags.push({ label, value });
@@ -784,6 +784,7 @@ export default class DoctorQueuePage extends Component {
                       type
                   )
                 : null,
+            
             tags.length > 0
                 ? h(
                       "div",
@@ -792,13 +793,13 @@ export default class DoctorQueuePage extends Component {
                           h(
                               "span",
                               {
-                                  style: "font-size: 0.76rem; line-height: 1.4; padding: 3px 9px; border-radius: 10px; background: var(--color-bg-muted, #f1f5f9); color: var(--color-ink-faint, #64748b); white-space: nowrap;",
+                                  style: "font-size: 0.76rem; line-height: 1.4; padding: 3px 9px; border-radius: 10px; background: var(--color-bg-muted, #f1f5f9); color: var(--color-ink-faint, #64748b); white-space: normal; word-break: break-word; max-width: 100%;",
                               },
-                              `${tag.label}: ${tag.value}`
+                              tag.label ? `${tag.label}: ${tag.value}` : tag.value
                           )
                       )
                   )
-                : null,
+                : null
             notes
                 ? h(
                       "p",
