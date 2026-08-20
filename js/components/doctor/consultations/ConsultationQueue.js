@@ -500,12 +500,20 @@ export default class DoctorQueuePage extends Component {
 
         const tags = [];
         let notes = "";
+        
         for (let i = 1; i < parts.length; i += 2) {
             const label = parts[i];
             const value = (parts[i + 1] || "").replace(/\|\s*$/, "").trim();
             if (!value) continue;
+            
             if (label === "Notes") {
                 notes = value;
+            } else if (label === "Symptoms") {
+                // Split comma-separated symptoms into separate tags
+                value.split(",").forEach(sym => {
+                    const trimmed = sym.trim();
+                    if (trimmed) tags.push({ label: "Symptom", value: trimmed });
+                });
             } else {
                 tags.push({ label, value });
             }
