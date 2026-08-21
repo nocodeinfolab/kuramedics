@@ -93,7 +93,7 @@ export default class PublicDoctorProfilePage extends Component {
         return h(
             "footer",
             { class: "landing__legal" },
-            h("p", {}, "Verified private care, one AI-guided step away")
+            h("p", {}, "Trusted care. Digitally delivered")
         );
     }
 
