@@ -260,6 +260,7 @@ export default class PatientDashboardPage extends Component {
 
             if (!this.needsOnboarding) {
                 await this.loadDashboardSummary();
+                this.consumePendingBooking();
             }
 
             if (this.needsOnboarding) {
@@ -283,6 +284,15 @@ export default class PatientDashboardPage extends Component {
                 this.updatePage();
             }
         }
+    }
+
+    consumePendingBooking() {
+        const pendingDoctorId = localStorage.getItem("pendingBookingDoctorId");
+        if (!pendingDoctorId) return;
+
+        localStorage.removeItem("pendingBookingDoctorId");
+        this.pendingBookingDoctorId = pendingDoctorId;
+        this.activeTab = "find";
     }
 
     // ---------- Onboarding ----------
