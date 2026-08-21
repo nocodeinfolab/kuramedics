@@ -51,15 +51,11 @@ export default class PublicDoctorProfilePage extends Component {
         const isLoggedIn = !!localStorage.getItem("accessToken");
 
         if (!isLoggedIn) {
-            // Stash the doctor ID so login/signup can resume straight into
-            // this doctor's booking flow instead of the generic dashboard.
             localStorage.setItem(PENDING_BOOKING_KEY, this.doctorId);
             window.location.hash = "/patient/login";
             return;
         }
 
-        // Already logged in — same stash-and-redirect mechanism, since
-        // PatientDashboardPage already knows how to consume it on mount.
         localStorage.setItem(PENDING_BOOKING_KEY, this.doctorId);
         window.location.hash = "/patient/dashboard";
     }
@@ -69,22 +65,31 @@ export default class PublicDoctorProfilePage extends Component {
     render() {
         return h(
             "main",
-            { style: "max-width: 520px; margin: 0 auto; padding: 24px 16px; font-family: Inter, sans-serif;" },
-            h("p", { style: "color: #0284c7; font-weight: 700; font-size: 1.1rem; margin: 0 0 4px;" }, "YerosCare"),
-            h("p", { style: "color: #64748b; font-size: 0.82rem; margin: 0 0 24px;" }, "Verified private care, one AI-guided step away"),
+            { class: "patient-dashboard__content" },
+            this.renderHeader(),
             this.loading
-                ? h("p", {}, "Loading doctor profile...")
+                ? h("p", { class: "dashboard-loading" }, "Loading doctor profile...")
                 : this.error
                 ? this.renderError()
                 : this.renderDoctor()
         );
     }
 
+    renderHeader() {
+        return h(
+            "header",
+            { class: "dashboard-header" },
+            h("p", { class: "dashboard-greeting" }, "YerosCare"),
+            h("h1", { class: "dashboard-title" }, "Doctor Profile"),
+            h("p", { class: "dashboard-subtitle" }, "Verified private care, one AI-guided step away")
+        );
+    }
+
     renderError() {
         return h(
             "div",
-            { style: "padding: 16px; border-radius: 8px; background: #fef2f2; border: 1px solid #fecaca;" },
-            h("p", { style: "color: #ef4444; margin: 0; font-weight: 600;" }, this.error)
+            { class: "dashboard-card text-center py-4" },
+            h("p", { class: "dashboard-muted", style: "color: #ef4444 !important;" }, this.error)
         );
     }
 
@@ -93,10 +98,10 @@ export default class PublicDoctorProfilePage extends Component {
 
         return h(
             "div",
-            { style: "display: flex; flex-direction: column; gap: 18px;" },
+            { class: "dashboard-page--enter", style: "display: flex; flex-direction: column; gap: var(--space-4);" },
             h(
                 "div",
-                { style: "display: flex; gap: 14px; align-items: center;" },
+                { class: "dashboard-card", style: "display: flex; gap: var(--space-4); align-items: center;" },
                 doctor.avatar_url
                     ? h("img", {
                           src: doctor.avatar_url,
@@ -106,56 +111,61 @@ export default class PublicDoctorProfilePage extends Component {
                     : h(
                           "div",
                           {
-                              style: "width: 72px; height: 72px; border-radius: 50%; background: #f1f5f9; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 600; color: #0284c7;",
+                              style: "width: 72px; height: 72px; border-radius: 50%; background: var(--color-primary-soft, #f1f5f9); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 600; color: var(--color-primary);",
                           },
                           (doctor.full_name || "?").charAt(0).toUpperCase()
                       ),
                 h(
                     "div",
                     {},
-                    h("h1", { style: "margin: 0 0 4px; font-size: 1.25rem;" }, `Dr. ${doctor.full_name}`),
+                    h("h2", { class: "dashboard-title", style: "color: var(--color-ink, inherit); margin-bottom: var(--space-1);" }, `Dr. ${doctor.full_name}`),
                     h(
                         "span",
                         {
-                            style: "display: inline-block; background: #0284c7; color: #fff; font-size: 0.72rem; padding: 3px 10px; border-radius: 5px;",
+                            style: "display: inline-block; background: var(--color-primary); color: var(--color-white); font-size: 0.72rem; padding: 3px 10px; border-radius: var(--radius-sm); font-weight: 600;",
                         },
                         doctor.specialization || "General Practice"
                     )
                 )
             ),
 
-            doctor.years_of_experience
-                ? h("p", { style: "margin: 0; color: #64748b; font-size: 0.88rem;" }, `${doctor.years_of_experience} years of experience`)
-                : null,
-
-            doctor.clinic_name
-                ? h("p", { style: "margin: 0; color: #64748b; font-size: 0.88rem;" }, doctor.clinic_name)
+            doctor.years_of_experience || doctor.clinic_name
+                ? h(
+                      "div",
+                      { class: "dashboard-card" },
+                      doctor.years_of_experience
+                          ? h("p", { class: "dashboard-muted", style: "margin: 0 0 var(--space-1);" }, `${doctor.years_of_experience} years of experience`)
+                          : null,
+                      doctor.clinic_name
+                          ? h("p", { class: "dashboard-muted", style: "margin: 0;" }, doctor.clinic_name)
+                          : null
+                  )
                 : null,
 
             doctor.bio
                 ? h(
                       "div",
-                      {},
-                      h("p", { style: "font-size: 0.75rem; color: #64748b; text-transform: uppercase; margin: 0 0 6px;" }, "About"),
-                      h("p", { style: "margin: 0; font-size: 0.9rem; line-height: 1.55;" }, doctor.bio)
+                      { class: "dashboard-card" },
+                      h("p", { class: "dashboard-greeting", style: "color: var(--color-ink-faint);" }, "About"),
+                      h("p", { style: "margin: 0; line-height: 1.55;" }, doctor.bio)
                   )
                 : null,
 
             doctor.services?.length
                 ? h(
                       "div",
-                      {},
-                      h("p", { style: "font-size: 0.75rem; color: #64748b; text-transform: uppercase; margin: 0 0 8px;" }, "Consultation options"),
+                      { class: "dashboard-card" },
+                      h("p", { class: "dashboard-greeting", style: "color: var(--color-ink-faint);" }, "Consultation options"),
                       h(
                           "div",
-                          { style: "display: flex; flex-direction: column; gap: 8px;" },
+                          { style: "display: flex; flex-direction: column; gap: var(--space-2);" },
                           doctor.services.map(service =>
                               h(
                                   "div",
-                                  { style: "padding: 10px 12px; background: #f8fafc; border-radius: 8px;" },
+                                  { style: "padding: var(--space-3); background: var(--color-bg-soft, #f8fafc); border-radius: var(--radius-md);" },
                                   h("p", { style: "margin: 0; font-weight: 600; font-size: 0.9rem;" }, service.display_name),
                                   service.first_time_price_amount
-                                      ? h("p", { style: "margin: 4px 0 0; font-size: 0.85rem; color: #64748b;" }, `₦${Number(service.first_time_price_amount).toLocaleString()}`)
+                                      ? h("p", { class: "dashboard-muted", style: "margin: 4px 0 0;" }, `₦${Number(service.first_time_price_amount).toLocaleString()}`)
                                       : null
                               )
                           )
@@ -166,7 +176,8 @@ export default class PublicDoctorProfilePage extends Component {
             h(
                 "button",
                 {
-                    style: "padding: 0.75rem 1rem; font-size: 0.95rem; font-weight: 600; border-radius: 8px; border: none; background: #0284c7; color: #fff; cursor: pointer;",
+                    class: "btn btn-primary",
+                    style: "width: 100%;",
                     onclick: () => this.handleBookClick(),
                 },
                 `Book Dr. ${doctor.full_name}`
