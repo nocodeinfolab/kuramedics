@@ -29,11 +29,11 @@ export default class DoctorCardPage extends Component {
     }
 
     get cardImageUrl() {
-        return `${API_BASE_URL}/directory/${this.doctorId}/card-image?v=${this.cacheBust}`;
+        return `${API_BASE_URL}/profilecard/${this.doctorId}/card-image?v=${this.cacheBust}`;
     }
 
     get shareUrl() {
-        return `${API_BASE_URL}/directory/${this.doctorId}/share`;
+        return `${API_BASE_URL}/profilecard/${this.doctorId}/share`;
     }
 
     // ---------- Actions ----------
