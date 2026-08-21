@@ -12,6 +12,7 @@ import SettingsPage from "./settings/SettingsPage.js";
 import DoctorProfilePage from "./settings/DoctorProfilePage.js";
 import DoctorConsultationServicesPage from "./settings/DoctorConsultationServicesPage.js";
 import DoctorSubscriptionPage from "./settings/DoctorSubscriptionPage.js";
+import DoctorCardPage from "./settings/DoctorCardPage.js";
 import api from "../../services/api.js";
 
 // Loaded via <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
@@ -455,12 +456,15 @@ export default class DoctorDashboardPage extends Component {
                         () => this.navigateSettings("menu")
                     ).mount(staticWrapper);
                 } else if (this.settingsView === "subscription") {
-
                     new DoctorSubscriptionPage(
                         this.doctor,
                         () => this.navigateSettings("menu")
                     ).mount(staticWrapper);
-
+                } else if (this.settingsView === "doctor-card") {
+                    new DoctorCardPage(
+                        this.doctor,
+                        () => this.navigateSettings("menu")
+                    ).mount(staticWrapper);
                 } else {
 
                     new SettingsPage(
