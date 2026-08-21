@@ -8,11 +8,12 @@ import DoctorProfile from "./DoctorProfile.js";
 import BookingForm from "./BookingForm.js";
 
 export default class PatientFindCare extends Component {
-    constructor(patient) {
+    constructor(patient, pendingDoctorId) {
         super();
         this.patient = patient ?? {};
+        this.pendingDoctorId = pendingDoctorId || null;
 
-        this.step = "triage"; // "triage" | "doctors" | "doctor_profile" | "booking" | "confirmation"
+        this.step = "triage";
 
         this.triageResult = null;
         this.selectedDoctor = null;
@@ -21,6 +22,11 @@ export default class PatientFindCare extends Component {
     }
 
     afterMount() {
+        if (this.pendingDoctorId) {
+            this.step = "doctor_profile";
+            this.selectedDoctor = { doctor_id: this.pendingDoctorId };
+            this.pendingDoctorId = null;
+        }
         this.updatePage();
     }
 
