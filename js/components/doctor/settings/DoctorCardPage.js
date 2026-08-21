@@ -142,7 +142,7 @@ export default class DoctorCardPage extends Component {
                     onclick: () => this.onBack?.(),
                 },
                 "← Back"
-            )
+            ),
             h(
                 "div",
                 {},
