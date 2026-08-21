@@ -18,6 +18,7 @@ export default class DoctorCardPage extends Component {
         this.copySuccess = false;
         this.downloading = false;
         this.downloadError = "";
+        this.sharing = false;
 
         // Cache-busting param so a freshly regenerated card (e.g. after a
         // profile edit) doesn't show a stale browser-cached image.
@@ -36,29 +37,64 @@ export default class DoctorCardPage extends Component {
         return `${API_BASE_URL}/profilecard/${this.doctorId}/share`;
     }
 
+    get cardFileName() {
+        return `dr-${(this.doctor.full_name || "yeroscare").toLowerCase().replace(/\s+/g, "-")}-card.png`;
+    }
+
     // ---------- Actions ----------
 
-    async shareCard() {
-        const shareData = {
-            title: `Dr. ${this.doctor.full_name || ""}`.trim(),
-            text: `Book a consultation with me on YerosCare.`,
-            url: this.shareUrl,
-        };
+    // Fetches the card PNG and wraps it in a File so it can be handed to
+    // navigator.share(). Returns null if the fetch fails for any reason —
+    // callers should treat that as "fall back to a link-only share".
+    async fetchCardImageFile() {
+        try {
+            const response = await fetch(this.cardImageUrl);
+            if (!response.ok) return null;
 
-        if (navigator.share) {
-            try {
-                await navigator.share(shareData);
-            } catch (error) {
-                // AbortError just means the user cancelled the share sheet — not a real error.
-                if (error.name !== "AbortError") {
-                    console.error("Share failed:", error);
-                }
-            }
+            const blob = await response.blob();
+            return new File([blob], this.cardFileName, { type: blob.type || "image/png" });
+        } catch (error) {
+            console.error("Failed to fetch card image for sharing:", error);
+            return null;
+        }
+    }
+
+    async shareCard() {
+        if (!navigator.share) {
+            // No native share support (e.g. some desktop browsers) — fall back to copy-link.
+            this.copyLink();
             return;
         }
 
-        // No native share support (e.g. some desktop browsers) — fall back to copy-link.
-        this.copyLink();
+        this.sharing = true;
+        this.update();
+
+        // The link is folded into the text rather than the separate `url`
+        // field: most share targets (WhatsApp included) drop `url` once
+        // `files` is present, but they always keep `text`.
+        const shareText = `Book a consultation with me on YerosCare.\n${this.shareUrl}`;
+        const shareTitle = `Dr. ${this.doctor.full_name || ""}`.trim();
+
+        try {
+            const file = await this.fetchCardImageFile();
+
+            if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+                // Image + link together — the app attaches the card itself
+                // instead of just unfurling the URL.
+                await navigator.share({ title: shareTitle, text: shareText, files: [file] });
+            } else {
+                // Image sharing unsupported on this device/browser — share the link instead.
+                await navigator.share({ title: shareTitle, text: shareText, url: this.shareUrl });
+            }
+        } catch (error) {
+            // AbortError just means the user cancelled the share sheet — not a real error.
+            if (error.name !== "AbortError") {
+                console.error("Share failed:", error);
+            }
+        } finally {
+            this.sharing = false;
+            this.update();
+        }
     }
 
     async copyLink() {
@@ -98,7 +134,7 @@ export default class DoctorCardPage extends Component {
 
             const link = document.createElement("a");
             link.href = url;
-            link.download = `dr-${(this.doctor.full_name || "YerosCare").toLowerCase().replace(/\s+/g, "-")}-card.png`;
+            link.download = this.cardFileName;
             document.body.appendChild(link);
             link.click();
             link.remove();
@@ -184,9 +220,10 @@ export default class DoctorCardPage extends Component {
                     {
                         class: "btn btn-primary",
                         style: "padding: 0.65rem 1rem; font-size: 0.9rem; border-radius: 8px;",
+                        disabled: this.sharing,
                         onclick: () => this.shareCard(),
                     },
-                    "Share Card"
+                    this.sharing ? "Preparing..." : "Share Card"
                 ),
                 h(
                     "button",
