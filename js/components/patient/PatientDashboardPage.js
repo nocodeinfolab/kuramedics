@@ -585,7 +585,8 @@ export default class PatientDashboardPage extends Component {
         } else if (tabId === "messages") {
             instance = new PatientMessaging(this.patient, this.socket, (count) => this.onMessagesRead(count));
         } else if (tabId === "find") {
-            instance = new PatientFindCare(this.patient);
+            instance = new PatientFindCare(this.patient, this.pendingBookingDoctorId);
+            this.pendingBookingDoctorId = null;
         } else if (tabId === "profile") {
             instance = new PatientProfilePage(this.patient, (updatedPatient) => this.handleProfileUpdated(updatedPatient));
         }
