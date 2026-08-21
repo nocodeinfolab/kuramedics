@@ -138,11 +138,11 @@ export default class DoctorCardPage extends Component {
                 "button",
                 {
                     class: "btn btn-outline",
-                    style: "padding: 0.4rem 0.6rem; font-size: 0.8rem; border-radius: 6px; flex-shrink: 0;",
+                    style: "padding: 0.4rem 0.6rem; font-size: 0.8rem; border-radius: 6px; flex-shrink: 0; color: white;",
                     onclick: () => this.onBack?.(),
                 },
                 "← Back"
-            ),
+            )
             h(
                 "div",
                 {},
