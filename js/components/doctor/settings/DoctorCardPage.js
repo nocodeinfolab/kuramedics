@@ -41,7 +41,7 @@ export default class DoctorCardPage extends Component {
     async shareCard() {
         const shareData = {
             title: `Dr. ${this.doctor.full_name || ""}`.trim(),
-            text: `Book a consultation with me on KuraMedics.`,
+            text: `Book a consultation with me on YerosCare.`,
             url: this.shareUrl,
         };
 
@@ -98,7 +98,7 @@ export default class DoctorCardPage extends Component {
 
             const link = document.createElement("a");
             link.href = url;
-            link.download = `dr-${(this.doctor.full_name || "kuramedics").toLowerCase().replace(/\s+/g, "-")}-card.png`;
+            link.download = `dr-${(this.doctor.full_name || "YerosCare").toLowerCase().replace(/\s+/g, "-")}-card.png`;
             document.body.appendChild(link);
             link.click();
             link.remove();
@@ -163,7 +163,7 @@ export default class DoctorCardPage extends Component {
                 h(
                     "p",
                     { class: "dashboard-muted", style: "margin: 0 0 12px; font-size: 0.86rem; line-height: 1.5;" },
-                    "Share this card with patients on WhatsApp or anywhere else. Tapping it takes them straight to your booking page — even if they don't have the KuraMedics app yet."
+                    "Share this card with patients on WhatsApp or anywhere else. Tapping it takes them straight to your booking page — even if they don't have the YerosCare app yet."
                 ),
                 this.renderCardPreview()
             ),
