@@ -7,7 +7,6 @@ import DashboardHome from "./DashboardHome.js";
 import ConsultationQueue from "./consultations/ConsultationQueue.js";
 import PatientRecords from "./patients/PatientRecords.js";
 import MessagingPage from "./messaging/MessagingPage.js";
-import FinancialSummary from "./finance/FinancialSummary.js";
 import SettingsPage from "./settings/SettingsPage.js";
 import DoctorProfilePage from "./settings/DoctorProfilePage.js";
 import DoctorConsultationServicesPage from "./settings/DoctorConsultationServicesPage.js";
@@ -61,11 +60,6 @@ export default class DoctorDashboardPage extends Component {
                 id: "messages",
                 label: "Messages",
                 icon: "chat"
-            },
-            {
-                id: "finance",
-                label: "Finance",
-                icon: "wallet"
             },
             {
                 id: "settings",
@@ -437,10 +431,6 @@ export default class DoctorDashboardPage extends Component {
                 new PatientRecords().mount(staticWrapper);
                 break;
 
-            case "finance":
-                new FinancialSummary().mount(staticWrapper);
-                break;
-
             case "settings":
                 if (this.settingsView === "profile") {
 
@@ -465,6 +455,8 @@ export default class DoctorDashboardPage extends Component {
                         this.doctor,
                         () => this.navigateSettings("menu")
                     ).mount(staticWrapper);
+                } else if (this.settingsView === "finance") {
+                    staticWrapper.replaceChildren(this.renderFinanceComingSoon());
                 } else {
 
                     new SettingsPage(
@@ -487,6 +479,32 @@ export default class DoctorDashboardPage extends Component {
         this.settingsView = view;
         this.updatePage();
 
+    }
+    renderFinanceComingSoon() {
+        return h(
+            "div",
+            { class: "dashboard-page" },
+            h(
+                "section",
+                { class: "dashboard-header" },
+                h(
+                    "button",
+                    {
+                        class: "btn btn-outline",
+                        style: "padding: 0.4rem 0.6rem; font-size: 0.8rem; border-radius: 6px; margin-bottom: 10px;",
+                        onclick: () => this.navigateSettings("menu"),
+                    },
+                    "← Back"
+                ),
+                h("h1", { class: "dashboard-title" }, "Finance")
+            ),
+            h(
+                "div",
+                { class: "dashboard-card text-center py-4" },
+                h("p", { class: "dashboard-muted" }, "Your earnings, payouts, and billing history."),
+                h("p", { class: "dashboard-muted", style: "margin-top: 6px; font-size: 0.8rem;" }, "Coming soon.")
+            )
+        );
     }
 
     renderBottomNavigation() {
