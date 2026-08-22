@@ -40,6 +40,7 @@ export default class SettingsPage extends Component {
                 this.renderProfileCard(),
                 this.renderConsultationServicesCard(),
                 this.renderDoctorCardCard(),
+                this.renderFinanceCard(),
                 this.renderAccountCard(),
                 this.renderSecurityCard(),
                 this.renderLogoutCard()
@@ -193,6 +194,31 @@ export default class SettingsPage extends Component {
                 "span",
                 { class: "btn-link", style: "margin-top: var(--space-4); color: var(--color-primary); font-weight: bold;" },
                 "View Card →"
+            )
+        );
+    }
+    renderFinanceCard() {
+        return h(
+            "div",
+            {
+                class: "dashboard-card settings-menu-card settings-card--clickable",
+                style: "cursor: pointer; display: flex; flex-direction: column; justify-content: space-between;",
+                onclick: () => this.onNavigate("finance")
+            },
+            h(
+                "div",
+                {},
+                h("h3", { style: "margin: 0 0 var(--space-2);" }, "Finance"),
+                h(
+                    "p",
+                    { class: "dashboard-muted", style: "margin: 0;" },
+                    "View your earnings, payouts, and billing history."
+                )
+            ),
+            h(
+                "span",
+                { class: "btn-link", style: "margin-top: var(--space-4); color: var(--color-primary); font-weight: bold;" },
+                "View Finance →"
             )
         );
     }
