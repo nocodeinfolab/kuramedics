@@ -1,7 +1,23 @@
 // js/components/auth/GoogleAuth.js
 
-import { Capacitor } from "@capacitor/core";
-import { GoogleAuth as NativeGoogleAuth } from "@capacitor/google-auth";
+// No bundler in this project, so we deliberately do NOT `import` from
+// "@capacitor/core" or "@capacitor/google-auth" — bare npm specifiers can't
+// be resolved by a browser without a bundler/import map, and doing so broke
+// the plain web deployment entirely (Cloudflare Pages has no Capacitor
+// runtime, so the import itself failed to resolve).
+//
+// Instead we use the global `window.Capacitor` object that Capacitor's
+// native runtime auto-injects into the WebView. It exposes
+// `Capacitor.isNativePlatform()` and every registered native plugin under
+// `Capacitor.Plugins.<PluginName>` — this is Capacitor's documented,
+// supported path for apps that don't use a bundler. On the web deployment,
+// `window.Capacitor` simply doesn't exist, so every reference below safely
+// falls back via optional chaining.
+//
+// Note: @capacitor/google-auth still needs to be an npm dependency
+// (`npm install @capacitor/google-auth`) so `npx cap sync android` picks it
+// up and registers the native plugin during the build — it's just never
+// imported into browser-loaded JS.
 
 const API_BASE_URL =
     "https://doctors-consultation-backend.onrender.com/api/v1";
@@ -11,6 +27,14 @@ const API_BASE_URL =
 // verifiable by the same backend endpoint that already validates GIS tokens.
 const WEB_CLIENT_ID =
     "249309356521-ajkp64pp89gru2pb1qqti3gahbe2ffcc.apps.googleusercontent.com";
+
+function isNativePlatform() {
+    return window.Capacitor?.isNativePlatform?.() ?? false;
+}
+
+function getNativeGoogleAuthPlugin() {
+    return window.Capacitor?.Plugins?.GoogleAuth ?? null;
+}
 
 class GoogleAuth {
 
@@ -26,7 +50,7 @@ class GoogleAuth {
         console.log("----------------------------------------");
         console.log("GoogleAuth: Initializing Google Sign-In");
 
-        if (Capacitor.isNativePlatform()) {
+        if (isNativePlatform()) {
 
             this.renderNativeButton(elementId, role, onSuccess, onError);
             return;
@@ -93,7 +117,13 @@ class GoogleAuth {
 
         if (this.nativeInitialized) return;
 
-        await NativeGoogleAuth.initialize({
+        const plugin = getNativeGoogleAuthPlugin();
+
+        if (!plugin) {
+            throw new Error("Native Google Sign-In plugin is not available.");
+        }
+
+        await plugin.initialize({
             clientId: WEB_CLIENT_ID,
             scopes: ["profile", "email"],
             grantOfflineAccess: false
@@ -142,9 +172,15 @@ class GoogleAuth {
 
             await this.ensureNativeInitialized();
 
+            const plugin = getNativeGoogleAuthPlugin();
+
+            if (!plugin) {
+                throw new Error("Native Google Sign-In plugin is not available.");
+            }
+
             console.log("Opening native Google Sign-In...");
 
-            const user = await NativeGoogleAuth.signIn();
+            const user = await plugin.signIn();
             const idToken = user?.authentication?.idToken;
 
             if (!idToken) {
@@ -248,10 +284,15 @@ class GoogleAuth {
         localStorage.removeItem("accessToken");
         localStorage.removeItem("user");
 
-        if (Capacitor.isNativePlatform() && this.nativeInitialized) {
-            NativeGoogleAuth.signOut().catch(() => {});
+        if (isNativePlatform() && this.nativeInitialized) {
+
+            const plugin = getNativeGoogleAuthPlugin();
+            plugin?.signOut().catch(() => {});
+
         } else if (window.google?.accounts?.id) {
+
             google.accounts.id.disableAutoSelect();
+
         }
 
         console.log("Local session cleared.");
