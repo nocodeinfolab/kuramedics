@@ -10,6 +10,7 @@ import MessagingPage from "./messaging/MessagingPage.js";
 import SettingsPage from "./settings/SettingsPage.js";
 import DoctorProfilePage from "./settings/DoctorProfilePage.js";
 import DoctorConsultationServicesPage from "./settings/DoctorConsultationServicesPage.js";
+import DoctorFinancePage from "./settings/DoctorFinancePage.js";
 import DoctorSubscriptionPage from "./settings/DoctorSubscriptionPage.js";
 import DoctorCardPage from "./settings/DoctorCardPage.js";
 import api from "../../services/api.js";
@@ -484,7 +485,8 @@ export default class DoctorDashboardPage extends Component {
                     this._currentStaticInstance = new DoctorCardPage(this.doctor, () => this.navigateSettings("menu"));
                     this._currentStaticInstance.mount(staticWrapper);
                 } else if (this.settingsView === "finance") {
-                    staticWrapper.replaceChildren(this.renderFinanceComingSoon());
+                    this._currentStaticInstance = new DoctorFinancePage(this.doctor, () => this.navigateSettings("menu"));
+                    this._currentStaticInstance.mount(staticWrapper);
                 } else {
                     this._currentStaticInstance = new SettingsPage(this.doctor, view => this.navigateSettings(view));
                     this._currentStaticInstance.mount(staticWrapper);
@@ -505,33 +507,7 @@ export default class DoctorDashboardPage extends Component {
         this.updatePage();
 
     }
-    renderFinanceComingSoon() {
-        return h(
-            "div",
-            { class: "dashboard-page" },
-            h(
-                "section",
-                { class: "dashboard-header" },
-                h(
-                    "button",
-                    {
-                        class: "btn btn-outline",
-                        style: "padding: 0.4rem 0.6rem; font-size: 0.8rem; border-radius: 6px; margin-bottom: 10px;",
-                        onclick: () => this.navigateSettings("menu"),
-                    },
-                    "← Back"
-                ),
-                h("h1", { class: "dashboard-title" }, "Finance")
-            ),
-            h(
-                "div",
-                { class: "dashboard-card text-center py-4" },
-                h("p", { class: "dashboard-muted" }, "Your earnings, payouts, and billing history."),
-                h("p", { class: "dashboard-muted", style: "margin-top: 6px; font-size: 0.8rem;" }, "Coming soon.")
-            )
-        );
-    }
-
+    
     renderBottomNavigation() {
 
         return h(
