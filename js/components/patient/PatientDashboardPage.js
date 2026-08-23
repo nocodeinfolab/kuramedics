@@ -113,12 +113,20 @@ export default class PatientDashboardPage extends Component {
                 : payment.status === "failed"
                     ? { type: "error", text: "Payment could not be confirmed. Please try again." }
                     : { type: "info", text: "Your payment is still processing. This will update shortly." };
+        
         } catch (error) {
             console.error("Failed to verify payment on return:", error);
             this.paymentReturnMessage = { type: "error", text: "We couldn't confirm your payment status. Please refresh in a moment." };
         } finally {
             window.history.replaceState({}, document.title, `${window.location.pathname}#/patient/dashboard`);
             this.update();
+
+            if (this.paymentReturnMessage) {
+                this._paymentBannerTimer = setTimeout(() => {
+                    this.paymentReturnMessage = null;
+                    this.update();
+                }, 6000);
+            }
         }
     }
     
@@ -171,6 +179,7 @@ export default class PatientDashboardPage extends Component {
     unmount() {
         this.socket?.disconnect();
         if (this._activeCallPollTimer) clearInterval(this._activeCallPollTimer);
+        if (this._paymentBannerTimer) clearTimeout(this._paymentBannerTimer);
         super.unmount?.();
     }
     
