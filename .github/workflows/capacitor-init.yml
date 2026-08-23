@@ -29,6 +29,9 @@ jobs:
       - name: Capacitor init
         run: npx cap init YerosCare com.yeroscare.app --web-dir=.
 
+      - name: Install Android platform package
+        run: npm install @capacitor/android
+
       - name: Add Android platform
         run: npx cap add android
 
