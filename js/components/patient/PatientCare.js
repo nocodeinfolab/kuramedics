@@ -39,37 +39,10 @@ export default class PatientCare extends Component {
     }
 
     async afterMount() {
-        await this.checkForPaymentReturn();
         await this.loadData();
     }
     
-    async checkForPaymentReturn() {
-        const params = new URLSearchParams(window.location.search);
-        const reference = params.get("reference") || params.get("trxref");
     
-        if (!reference) {
-            return;
-        }
-    
-        try {
-            const res = await api.get(`/payments/verify/${encodeURIComponent(reference)}`);
-            const payment = res.data || res;
-    
-            if (payment.status === "paid") {
-                this.paymentReturnMessage = { type: "success", text: "Payment confirmed! You can now message your doctor." };
-            } else if (payment.status === "failed") {
-                this.paymentReturnMessage = { type: "error", text: "Payment could not be confirmed. Please try again or contact support." };
-            } else {
-                this.paymentReturnMessage = { type: "info", text: "Your payment is still being processed. This page will update shortly." };
-            }
-        } catch (error) {
-            console.error("Failed to verify payment on return:", error);
-            this.paymentReturnMessage = { type: "error", text: "We couldn't confirm your payment status. Please refresh in a moment." };
-        } finally {
-            const cleanUrl = window.location.pathname;
-            window.history.replaceState({}, document.title, cleanUrl);
-        }
-    }
     // ---------- Data loading ----------
 
     async loadData({ silent = false } = {}) {
@@ -290,35 +263,13 @@ export default class PatientCare extends Component {
     }
 
     renderAlerts() {
-        const alerts = [];
-    
-        if (this.errorMessage) {
-            alerts.push(
-                h(
-                    "div",
-                    { class: "dashboard-card", style: "border-left: 4px solid #ef4444; margin-bottom: var(--space-3);" },
-                    h("p", { style: "color: #ef4444; margin: 0;" }, this.errorMessage)
-                )
-            );
-        }
-    
-        if (this.paymentReturnMessage) {
-            const colors = { success: "#10b981", error: "#ef4444", info: "#0284c7" };
-            alerts.push(
-                h(
-                    "div",
-                    {
-                        class: "dashboard-card",
-                        style: `border-left: 4px solid ${colors[this.paymentReturnMessage.type]}; margin-bottom: var(--space-3);`,
-                    },
-                    h("p", { style: `color: ${colors[this.paymentReturnMessage.type]}; margin: 0;` }, this.paymentReturnMessage.text)
-                )
-            );
-        }
-    
-        return alerts.length > 0 ? alerts : null;
+        if (!this.errorMessage) return null;
+        return h(
+            "div",
+            { class: "dashboard-card", style: "border-left: 4px solid #ef4444; margin-bottom: var(--space-3);" },
+            h("p", { style: "color: #ef4444; margin: 0;" }, this.errorMessage)
+        );
     }
-
     renderContent() {
         return h(
             "div",
@@ -443,6 +394,7 @@ export default class PatientCare extends Component {
     renderConfirmedActions(booking) {
         const isPaid = booking.payment_status === "paid";
         const isMessaging = this.messageLoadingId === booking.id;
+        const isPaying = this.payingBookingId === booking.id;
         const btnStyle = "padding: 0.4rem 0.75rem; font-size: 0.8rem; border-radius: 6px; line-height: 1.4;";
 
         if (!isPaid) {
@@ -502,7 +454,6 @@ export default class PatientCare extends Component {
             )
         );
     }
-
     renderRescheduleComparison(booking) {
         return h(
             "div",
