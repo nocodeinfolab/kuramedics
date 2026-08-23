@@ -40,6 +40,7 @@ export default class DoctorDashboardPage extends Component {
         this._currentStaticInstance = null;
         this._tabWrappers = {};
         this.pendingConversation = null;
+        this._doctorPollTimer = null;
 
         this.tabs = [
             {
@@ -116,6 +117,16 @@ export default class DoctorDashboardPage extends Component {
         this.connectSocket();
         this.loadUnreadMessageCount();
 
+        this._doctorPollTimer = setInterval(() => {
+            if (this.isAppVisible()) {
+                this.loadDoctor({ silent: true });
+            }
+        }, 60000);
+
+    }
+
+    isAppVisible() {
+        return document.visibilityState === "visible";
     }
 
     async checkForPaymentReturn() {
@@ -201,6 +212,7 @@ export default class DoctorDashboardPage extends Component {
         this._tabInstances?.messages?.unmount?.();
         this._currentStaticInstance?.unmount?.();
         if (this._paymentBannerTimer) clearTimeout(this._paymentBannerTimer);
+        if (this._doctorPollTimer) clearInterval(this._doctorPollTimer);
 
     }
     // ---------- Realtime (WebSocket) ----------
@@ -274,113 +286,71 @@ export default class DoctorDashboardPage extends Component {
         }
     }
 
-    async loadDoctor() {
+    async loadDoctor({ silent = false } = {}) {
 
-        console.log("----------------------------------------");
-        console.log("loadDoctor() called");
-        console.log("Time:", new Date().toISOString());
+        if (!silent) {
+            console.log("----------------------------------------");
+            console.log("loadDoctor() called");
+            console.log("Time:", new Date().toISOString());
+        }
 
         try {
 
             const token = localStorage.getItem("accessToken");
 
-            console.log("Access Token Exists:", !!token);
-
             if (!token) {
-
-                console.warn("No access token found.");
-
+                if (!silent) console.warn("No access token found.");
                 window.location.hash = "/doctor/login";
                 return;
-
             }
-
-            console.log("Token (first 40 chars):");
-            console.log(token.substring(0, 40) + "...");
-
-            try {
-
-                const payload = JSON.parse(
-                    atob(token.split(".")[1])
-                );
-
-                console.log("Decoded JWT Payload:");
-                console.table(payload);
-
-                console.log(
-                    "Issued At:",
-                    new Date(payload.iat * 1000).toLocaleString()
-                );
-
-                console.log(
-                    "Expires At:",
-                    new Date(payload.exp * 1000).toLocaleString()
-                );
-
-                console.log(
-                    "Current Time:",
-                    new Date().toLocaleString()
-                );
-
-                console.log(
-                    "Seconds Until Expiry:",
-                    payload.exp - Math.floor(Date.now() / 1000)
-                );
-
-            } catch (err) {
-
-                console.error("Could not decode JWT:", err);
-
-            }
-
-            console.log("Sending request to:");
-            console.log(`/doctor-profile/me`);
 
             const result = await api.get("/doctor-profile/me");
+            const freshDoctor = result.data.user || result.data;
 
-            console.log("Doctor profile API response:");
-            console.log(result);
+            const hasChanged = JSON.stringify(freshDoctor) !== JSON.stringify(this.doctor);
+            this.doctor = freshDoctor;
 
-            console.log("Doctor profile loaded successfully.");
+            if (!silent) {
+                console.log("Doctor profile loaded successfully.");
+                console.table(this.doctor);
+            }
 
-            this.doctor = result.data.user || result.data;
-
-            console.log("Doctor:");
-            console.table(this.doctor);
+            // On a silent background poll, only actually re-render if
+            // something meaningful changed — avoids stomping on whatever
+            // the doctor is mid-interacting with (e.g. typing in a form
+            // on Settings) every 60 seconds for no reason.
+            if (silent && hasChanged && this.activeTab === "home") {
+                this.updatePage();
+            }
 
         } catch (error) {
 
-            console.error("----------------------------------------");
-            console.error("Doctor profile request failed.");
-            console.error(error);
+            if (!silent) {
+                console.error("----------------------------------------");
+                console.error("Doctor profile request failed.");
+                console.error(error);
+            }
 
-            const cachedUser = localStorage.getItem("user");
-
-            console.log("Cached User Exists:", !!cachedUser);
-
-            if (cachedUser) {
-
-                console.log("Using cached user.");
-
-                this.doctor = JSON.parse(cachedUser);
-
-                console.table(this.doctor);
-
+            if (!silent) {
+                const cachedUser = localStorage.getItem("user");
+                if (cachedUser) {
+                    console.log("Using cached user.");
+                    this.doctor = JSON.parse(cachedUser);
+                }
             }
 
         } finally {
 
-            console.log("Loading complete.");
-            console.log("----------------------------------------");
-
-            this.loading = false;
-
-            this.updatePage();
+            if (!silent) {
+                console.log("Loading complete.");
+                console.log("----------------------------------------");
+                this.loading = false;
+                this.updatePage();
+            }
 
         }
 
     }
-
     /**
      * Mounts the component for whichever tab/settings-view is currently
      * active into `container`.
