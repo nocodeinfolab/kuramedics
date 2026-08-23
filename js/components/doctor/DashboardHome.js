@@ -206,7 +206,7 @@ export default class DashboardHome extends Component {
                 {
                     class: "btn btn-outline",
                     style: "margin-top: var(--space-3); padding: 0.4rem 0.9rem; font-size: var(--step-small);",
-                    onclick: () => this.onNavigate("subscription")
+                    onclick: () => this.onNavigate("settings", "subscription")
                 },
                 "Manage Subscription"
             )
