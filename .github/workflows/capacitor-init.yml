@@ -1,0 +1,38 @@
+name: Capacitor Init (run once)
+
+# Manual trigger only — this scaffolds Capacitor + Android into the repo.
+# Run it once from the Actions tab, then you can leave this file in place
+# (it's harmless to leave; it just won't do anything unless triggered again).
+on:
+  workflow_dispatch:
+
+jobs:
+  init:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Init npm project (if not already present)
+        run: |
+          if [ ! -f package.json ]; then npm init -y; fi
+
+      - name: Install Capacitor
+        run: npm install @capacitor/core @capacitor/cli
+
+      - name: Capacitor init
+        run: npx cap init YerosCare com.yeroscare.app --web-dir=.
+
+      - name: Add Android platform
+        run: npx cap add android
+
+      - name: Commit generated files back to the repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Scaffold Capacitor + Android platform (App ID: com.yeroscare.app)"
+          git push
