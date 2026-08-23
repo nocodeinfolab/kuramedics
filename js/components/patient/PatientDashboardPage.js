@@ -87,8 +87,40 @@ export default class PatientDashboardPage extends Component {
     }
 
     afterMount() {
+        this.checkForPaymentReturn();
         this.loadPatient();
         this.connectSocket();
+    }
+    
+    async checkForPaymentReturn() {
+        const hash = window.location.hash || "";
+        const queryIndex = hash.indexOf("?");
+        const queryString = queryIndex >= 0 ? hash.slice(queryIndex + 1) : "";
+        const params = new URLSearchParams(queryString);
+        const reference = params.get("reference") || params.get("trxref");
+    
+        if (!reference) {
+            return;
+        }
+    
+        this.activeTab = "care";
+    
+        try {
+            const res = await api.get(`/payments/verify/${encodeURIComponent(reference)}`);
+            const payment = res.data || res;
+    
+            this.paymentReturnMessage = payment.status === "paid"
+                ? { type: "success", text: "Payment confirmed! You can now message your doctor." }
+                : payment.status === "failed"
+                    ? { type: "error", text: "Payment could not be confirmed. Please try again." }
+                    : { type: "info", text: "Your payment is still processing. This will update shortly." };
+        } catch (error) {
+            console.error("Failed to verify payment on return:", error);
+            this.paymentReturnMessage = { type: "error", text: "We couldn't confirm your payment status. Please refresh in a moment." };
+        } finally {
+            window.history.replaceState({}, document.title, `${window.location.pathname}#/patient/dashboard`);
+            this.update();
+        }
     }
     
     connectSocket() {
@@ -376,14 +408,21 @@ export default class PatientDashboardPage extends Component {
             "div",
             { class: "patient-dashboard" },
             this.incomingCall ? this.renderIncomingCallBanner() : null,
+            this.renderPaymentReturnBanner(),
             h(
                 "main",
-                {
-                    id: "patient-dashboard-content",
-                    class: "patient-dashboard__content",
-                }
+                { id: "patient-dashboard-content", class: "patient-dashboard__content" }
             ),
             this.renderBottomNavigation()
+        );
+    }
+    renderPaymentReturnBanner() {
+        if (!this.paymentReturnMessage) return null;
+        const colors = { success: "#10b981", error: "#ef4444", info: "#0284c7" };
+        return h(
+            "div",
+            { style: `padding: 0.75rem 1rem; background: ${colors[this.paymentReturnMessage.type]}; color: #fff; text-align: center; font-size: 0.85rem;` },
+            this.paymentReturnMessage.text
         );
     }
 
