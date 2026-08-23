@@ -131,6 +131,7 @@ export default class DashboardHome extends Component {
             { class: "doctor-home" },
             this.renderHero(),
             this.renderStatusBanner(),
+            this.renderServicesSetupBanner(),
             this.renderStatistics(),
             this.renderSubscription(),
             this.renderVerification(),
@@ -215,6 +216,46 @@ export default class DashboardHome extends Component {
                 { style: "font-weight: 600; color: var(--color-primary); font-size: 0.9rem; white-space: nowrap;" },
                 "Open Settings →"
             )
+        );
+    }
+    renderServicesSetupBanner() {
+        const verificationStatus = (this.doctor?.verification_status || this.doctor?.status || "").toLowerCase();
+        const isVerified = verificationStatus === "verified" || verificationStatus === "approved";
+        const hasServices = Boolean(this.doctor?.has_enabled_consultation_service);
+
+        if (!isVerified || hasServices) {
+            return null;
+        }
+
+        return h(
+            "div",
+            {
+                class: "dashboard-card alert-banner",
+                style: `
+                    margin-top: var(--space-4);
+                    background: rgba(2, 132, 199, 0.06);
+                    border: 1px solid rgba(2, 132, 199, 0.25);
+                    border-left: 4px solid #0284c7;
+                    cursor: pointer;
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    gap: var(--space-3);
+                `,
+                onclick: () => this.onNavigate("settings", "consultation-services"),
+            },
+            h(
+                "div",
+                { style: "display: flex; align-items: center; gap: var(--space-3);" },
+                h("span", { style: "font-size: 1.5rem;" }, "🩺"),
+                h(
+                    "div",
+                    {},
+                    h("h4", { style: "margin: 0 0 var(--space-1); color: var(--color-ink); font-weight: 600;" }, "Set up your consultation services"),
+                    h("p", { class: "dashboard-muted", style: "margin: 0; font-size: var(--step-small);" }, "Add pricing and enable at least one consultation type so patients can book you.")
+                )
+            ),
+            h("span", { style: "font-weight: 600; color: var(--color-primary); font-size: 0.9rem; white-space: nowrap;" }, "Set Up →")
         );
     }
 
