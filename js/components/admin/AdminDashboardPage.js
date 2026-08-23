@@ -1,24 +1,42 @@
 import { Component } from "../../core/component.js";
 import { h } from "../../utils/dom.js";
-import api from "../../services/api.js";
+import AdminOverview from "./AdminOverview.js";
+import AdminVerifications from "./AdminVerifications.js";
+import AdminUsers from "./AdminUsers.js";
+import AdminSubscriptionSettings from "./AdminSubscriptionSettings.js";
+
+const Icons = {
+    grid: () => h("svg", { width: "18", height: "18", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" },
+        h("rect", { x: "3", y: "3", width: "7", height: "7" }), h("rect", { x: "14", y: "3", width: "7", height: "7" }),
+        h("rect", { x: "14", y: "14", width: "7", height: "7" }), h("rect", { x: "3", y: "14", width: "7", height: "7" })),
+    shield: () => h("svg", { width: "18", height: "18", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" },
+        h("path", { d: "M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11z" })),
+    people: () => h("svg", { width: "18", height: "18", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" },
+        h("path", { d: "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" }), h("circle", { cx: "9", cy: "7", r: "4" }),
+        h("path", { d: "M23 21v-2a4 4 0 0 0-3-3.87" }), h("path", { d: "M16 3.13a4 4 0 0 1 0 7.75" })),
+    settings: () => h("svg", { width: "18", height: "18", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" },
+        h("circle", { cx: "12", cy: "12", r: "3" }),
+        h("path", { d: "M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" })),
+    logout: () => h("svg", { width: "18", height: "18", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" },
+        h("path", { d: "M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" }), h("polyline", { points: "16 17 21 12 16 7" }), h("line", { x1: "21", y1: "12", x2: "9", y2: "12" })),
+};
 
 export default class AdminDashboardPage extends Component {
     constructor() {
         super();
-
-        this.activeTab = "verifications";
+        this.activeSection = "overview";
         this.loading = true;
         this.admin = null;
         this.accessDenied = false;
+        this.pendingCount = 0;
+        this._sectionInstances = {};
+        this._sectionWrappers = {};
 
-        this.queue = [];
-        this.queueLoading = true;
-        this.reviewingId = null;
-        this.errorMessage = "";
-        this.successMessage = "";
-
-        this.tabs = [
-            { id: "verifications", label: "Verifications" },
+        this.sections = [
+            { id: "overview", label: "Overview", icon: Icons.grid },
+            { id: "verifications", label: "Verifications", icon: Icons.shield, badgeKey: "pendingCount" },
+            { id: "users", label: "Users", icon: Icons.people },
+            { id: "subscription", label: "Subscription Settings", icon: Icons.settings },
         ];
     }
 
@@ -53,56 +71,19 @@ export default class AdminDashboardPage extends Component {
         this.admin = user;
         this.loading = false;
         this.update();
-        this.loadVerificationQueue();
+        this.updateContent();
     }
 
-    async loadVerificationQueue() {
-        this.queueLoading = true;
-        this.errorMessage = "";
-        this.update();
-
-        try {
-            const res = await api.get("/admin/doctor-verifications");
-            const payload = res.data || res;
-            this.queue = payload.items || payload.rows || payload.data || [];
-        } catch (error) {
-            console.error("Failed to load verification queue:", error);
-            this.errorMessage = error.message || "Failed to load verification queue.";
-        } finally {
-            this.queueLoading = false;
-            this.update();
-        }
+    setSection(sectionId) {
+        if (this.activeSection === sectionId) return;
+        this.activeSection = sectionId;
+        this.updateContent();
+        this.updateSidebarActiveState();
     }
 
-    async handleReview(doctorId, action) {
-        let notes = "";
-        if (["reject", "request_correction", "suspend"].includes(action)) {
-            notes = window.prompt("Please provide a reason (required for this action):") || "";
-            if (!notes.trim()) {
-                this.errorMessage = "Review notes are required for this action.";
-                this.update();
-                return;
-            }
-        }
-
-        this.reviewingId = doctorId;
-        this.errorMessage = "";
-        this.successMessage = "";
-        this.update();
-
-        try {
-            const res = await api.patch(`/admin/doctor-verifications/${doctorId}`, { action, notes });
-            const updated = res.data || res;
-
-            this.successMessage = `Doctor verification updated to "${updated.verification_status || action}".`;
-            await this.loadVerificationQueue();
-        } catch (error) {
-            console.error("Failed to review doctor verification:", error);
-            this.errorMessage = error.message || "Failed to update verification status.";
-        } finally {
-            this.reviewingId = null;
-            this.update();
-        }
+    onPendingCountChanged(count) {
+        this.pendingCount = count;
+        this.updateSidebarActiveState();
     }
 
     logout() {
@@ -112,181 +93,129 @@ export default class AdminDashboardPage extends Component {
         window.location.hash = "/admin/login";
     }
 
-    formatDate(dateString) {
-        if (!dateString) return "N/A";
-        return new Date(dateString).toLocaleDateString(undefined, {
-            year: "numeric",
-            month: "short",
-            day: "numeric",
-        });
-    }
-
     render() {
         if (this.loading) {
-            return h("div", { class: "dashboard-loading" }, "Loading admin dashboard...");
+            return h("div", { class: "admin-loading" }, "Loading admin dashboard...");
         }
 
         if (this.accessDenied) {
             return h(
                 "div",
-                { class: "dashboard-page", style: "max-width: 480px; margin: 60px auto; padding: var(--space-3); text-align: center;" },
-                h("h1", { class: "dashboard-title", style: "color: var(--color-ink);" }, "Access Denied"),
-                h("p", { class: "dashboard-muted" }, "This account does not have admin access."),
-                h(
-                    "button",
-                    { class: "btn btn-primary", style: "margin-top: var(--space-4);", onclick: () => { window.location.hash = "/"; } },
-                    "Return Home"
-                )
+                { style: "max-width: 480px; margin: 60px auto; padding: var(--space-5); text-align: center;" },
+                h("h1", { class: "admin-header__title" }, "Access Denied"),
+                h("p", { class: "admin-muted" }, "This account does not have admin access."),
+                h("button", { class: "btn btn-primary", style: "margin-top: var(--space-4);", onclick: () => { window.location.hash = "/"; } }, "Return Home")
             );
         }
 
         return h(
             "div",
-            { class: "dashboard-page", style: "max-width: 900px; margin: 0 auto; padding: var(--space-5);" },
-            this.renderHeader(),
-            this.renderAlerts(),
-            this.renderVerificationQueue()
+            { class: "admin-dashboard" },
+            this.renderSidebar(),
+            h("main", { id: "admin-dashboard-content", class: "admin-dashboard__content" })
         );
     }
 
-    renderHeader() {
+    renderSidebar() {
         return h(
-            "section",
-            { class: "dashboard-header", style: "display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;" },
+            "nav",
+            { class: "admin-sidebar" },
             h(
                 "div",
-                {},
-                h("p", { class: "dashboard-greeting" }, "Admin"),
-                h("h1", { class: "dashboard-title" }, "Doctor Verifications")
+                { class: "admin-sidebar__brand" },
+                h("span", { class: "admin-sidebar__brand-mark" }),
+                h("span", { class: "admin-sidebar__brand-name" }, "KuraMedics Admin")
             ),
             h(
-                "button",
-                {
-                    class: "btn btn-outline",
-                    style: "color: var(--color-white); border-color: rgba(255,255,255,0.4);",
-                    onclick: () => this.logout(),
-                },
-                "Log Out"
+                "div",
+                { class: "admin-sidebar__nav" },
+                this.sections.map(section =>
+                    h(
+                        "button",
+                        {
+                            class: `admin-sidebar__item ${this.activeSection === section.id ? "admin-sidebar__item--active" : ""}`,
+                            "data-section": section.id,
+                            onclick: () => this.setSection(section.id),
+                        },
+                        h("span", { class: "admin-sidebar__icon" }, section.icon()),
+                        h("span", {}, section.label),
+                        section.badgeKey && this[section.badgeKey] > 0
+                            ? h("span", { class: "admin-sidebar__badge" }, String(this[section.badgeKey]))
+                            : null
+                    )
+                )
+            ),
+            h(
+                "div",
+                { class: "admin-sidebar__footer" },
+                h("button", { class: "admin-sidebar__logout", onclick: () => this.logout() }, Icons.logout(), h("span", {}, "Log Out"))
             )
         );
     }
 
-    renderAlerts() {
-        const alerts = [];
-        if (this.errorMessage) {
-            alerts.push(
-                h("div", { class: "dashboard-card", style: "border-left: 4px solid #ef4444; margin-bottom: var(--space-3);" },
-                    h("p", { style: "color: #ef4444; margin: 0;" }, this.errorMessage))
-            );
-        }
-        if (this.successMessage) {
-            alerts.push(
-                h("div", { class: "dashboard-card", style: "border-left: 4px solid #10b981; margin-bottom: var(--space-3);" },
-                    h("p", { style: "color: #10b981; margin: 0;" }, this.successMessage))
-            );
-        }
-        return alerts;
-    }
-
-    renderVerificationQueue() {
-        if (this.queueLoading) {
-            return h("div", { class: "dashboard-card text-center py-4" },
-                h("p", { class: "dashboard-muted" }, "Loading verification queue..."));
-        }
-
-        const pending = this.queue.filter(d => d.verification_status === "pending_review");
-        const others = this.queue.filter(d => d.verification_status !== "pending_review");
-
-        return h(
-            "div",
-            { class: "services-list" },
-            h("h3", { style: "margin: 0 0 var(--space-2);" }, `Pending Review (${pending.length})`),
-            pending.length === 0
-                ? h("div", { class: "dashboard-card" }, h("p", { class: "dashboard-muted" }, "No doctors awaiting review."))
-                : pending.map(d => this.renderDoctorRow(d)),
-
-            others.length > 0
-                ? h("h3", { style: "margin: var(--space-5) 0 var(--space-2);" }, "Other Doctors")
-                : null,
-            ...others.map(d => this.renderDoctorRow(d))
-        );
-    }
-
-    renderDoctorRow(doctor) {
-        const isReviewing = this.reviewingId === doctor.user_id;
-        const statusColors = {
-            unsubmitted: "var(--color-ink-faint)",
-            pending_review: "#f59e0b",
-            verified: "#10b981",
-            rejected: "#ef4444",
-            suspended: "#ef4444",
-        };
-
-        return h(
-            "div",
-            { class: "dashboard-card service-item-card" },
-            h(
-                "div",
-                { style: "display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-3);" },
-                h(
-                    "div",
-                    { style: "min-width: 0;" },
-                    h("h3", { style: "margin: 0 0 4px;" }, doctor.full_name || "Unnamed Doctor"),
-                    h("p", { class: "dashboard-muted", style: "margin: 0; font-size: 0.85rem;" }, doctor.email),
-                    h("p", { class: "dashboard-muted", style: "margin: 4px 0 0; font-size: 0.8rem;" },
-                        `${doctor.specialization || "General Practice"} · MDCN: ${doctor.mdcn_registration_number || "Not provided"}`),
-                    h("p", { class: "dashboard-muted", style: "margin: 4px 0 0; font-size: 0.78rem;" },
-                        `Submitted: ${this.formatDate(doctor.verification_submitted_at)}`)
-                ),
-                h(
-                    "span",
-                    {
-                        class: "dashboard-badge",
-                        style: `background: ${statusColors[doctor.verification_status] || "var(--color-ink-faint)"}; white-space: nowrap;`,
-                    },
-                    (doctor.verification_status || "unsubmitted").replace("_", " ")
-                )
-            ),
-            doctor.verification_notes
-                ? h("p", { class: "dashboard-muted", style: "margin-top: 8px; font-size: 0.8rem; font-style: italic;" },
-                    `Notes: ${doctor.verification_notes}`)
-                : null,
-            h(
-                "div",
-                { style: "display: flex; gap: 8px; margin-top: var(--space-3); flex-wrap: wrap;" },
-                h("button", {
-                    class: "btn btn-primary",
-                    style: "padding: 0.4rem 0.8rem; font-size: 0.8rem;",
-                    disabled: isReviewing,
-                    onclick: () => this.handleReview(doctor.user_id, "approve"),
-                }, isReviewing ? "..." : "Approve"),
-                h("button", {
-                    class: "btn btn-outline",
-                    style: "padding: 0.4rem 0.8rem; font-size: 0.8rem;",
-                    disabled: isReviewing,
-                    onclick: () => this.handleReview(doctor.user_id, "reject"),
-                }, "Reject"),
-                h("button", {
-                    class: "btn btn-outline",
-                    style: "padding: 0.4rem 0.8rem; font-size: 0.8rem;",
-                    disabled: isReviewing,
-                    onclick: () => this.handleReview(doctor.user_id, "request_correction"),
-                }, "Request Correction"),
-                doctor.verification_status === "verified"
-                    ? h("button", {
-                        class: "btn btn-outline",
-                        style: "padding: 0.4rem 0.8rem; font-size: 0.8rem; color: #ef4444; border-color: #ef4444;",
-                        disabled: isReviewing,
-                        onclick: () => this.handleReview(doctor.user_id, "suspend"),
-                    }, "Suspend")
-                    : null
-            )
-        );
-    }
-
-    update() {
+    updateSidebarActiveState() {
         if (!this.el) return;
-        const newTree = this.render();
-        this.el.replaceChildren(...(Array.isArray(newTree) ? newTree : [newTree]).flat());
+        this.el.querySelectorAll("[data-section]").forEach(btn => {
+            const isActive = btn.dataset.section === this.activeSection;
+            btn.classList.toggle("admin-sidebar__item--active", isActive);
+        });
+
+        const verificationsBtn = this.el.querySelector('[data-section="verifications"]');
+        if (verificationsBtn) {
+            let badge = verificationsBtn.querySelector(".admin-sidebar__badge");
+            if (this.pendingCount > 0) {
+                if (!badge) {
+                    badge = document.createElement("span");
+                    badge.className = "admin-sidebar__badge";
+                    verificationsBtn.appendChild(badge);
+                }
+                badge.textContent = String(this.pendingCount);
+            } else if (badge) {
+                badge.remove();
+            }
+        }
+    }
+
+    updateContent() {
+        if (!this.el) return;
+        const container = this.el.querySelector("#admin-dashboard-content");
+        if (!container) return;
+
+        Object.entries(this._sectionWrappers).forEach(([id, wrapper]) => {
+            wrapper.style.display = id === this.activeSection ? "" : "none";
+        });
+
+        if (this._sectionInstances[this.activeSection]) {
+            const wrapper = this._sectionWrappers[this.activeSection];
+            if (wrapper && wrapper.parentNode !== container) {
+                container.appendChild(wrapper);
+            }
+            return;
+        }
+
+        const wrapper = document.createElement("div");
+        container.appendChild(wrapper);
+        this._sectionWrappers[this.activeSection] = wrapper;
+
+        let instance;
+        switch (this.activeSection) {
+            case "overview":
+                instance = new AdminOverview();
+                break;
+            case "verifications":
+                instance = new AdminVerifications((count) => this.onPendingCountChanged(count));
+                break;
+            case "users":
+                instance = new AdminUsers();
+                break;
+            case "subscription":
+                instance = new AdminSubscriptionSettings();
+                break;
+            default:
+                instance = new AdminOverview();
+        }
+
+        this._sectionInstances[this.activeSection] = instance;
+        instance.mount(wrapper);
     }
 }
