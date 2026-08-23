@@ -22,6 +22,15 @@ allprojects {
         google()
         mavenCentral()
     }
+
+    // Fix: kotlin-stdlib (1.8+) already includes everything kotlin-stdlib-jdk7/jdk8
+    // used to provide separately. Some transitive Cordova/Capacitor plugin still
+    // pulls in the old jdk7/jdk8 artifacts, causing duplicate class errors at
+    // compile time. Excluding them here keeps a single, modern kotlin-stdlib.
+    configurations.all {
+        exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk7'
+        exclude group: 'org.jetbrains.kotlin', module: 'kotlin-stdlib-jdk8'
+    }
 }
 
 task clean(type: Delete) {
