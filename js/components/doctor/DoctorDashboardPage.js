@@ -37,6 +37,7 @@ export default class DoctorDashboardPage extends Component {
         this._recentlySeenMessageIds = new Set();
 
         this._tabInstances = {};
+        this._currentStaticInstance = null;
         this._tabWrappers = {};
         this.pendingConversation = null;
 
@@ -198,10 +199,10 @@ export default class DoctorDashboardPage extends Component {
 
         this.socket?.disconnect();
         this._tabInstances?.messages?.unmount?.();
+        this._currentStaticInstance?.unmount?.();
         if (this._paymentBannerTimer) clearTimeout(this._paymentBannerTimer);
 
     }
-
     // ---------- Realtime (WebSocket) ----------
 
     connectSocket() {
@@ -467,6 +468,11 @@ export default class DoctorDashboardPage extends Component {
 
     mountStaticTab(staticWrapper) {
 
+        if (this._currentStaticInstance) {
+            this._currentStaticInstance.unmount();
+            this._currentStaticInstance = null;
+        }
+
         const navigateToTab = (tabId, settingsView = "menu") => {
             this.activeTab = tabId;
             this.settingsView = settingsView;
@@ -476,59 +482,48 @@ export default class DoctorDashboardPage extends Component {
         switch (this.activeTab) {
 
             case "home":
-                new DashboardHome(this.doctor, (tabId, settingsView) => navigateToTab(tabId, settingsView)).mount(staticWrapper);
+                this._currentStaticInstance = new DashboardHome(this.doctor, (tabId, settingsView) => navigateToTab(tabId, settingsView));
+                this._currentStaticInstance.mount(staticWrapper);
                 break;
 
             case "consultations":
-                new ConsultationQueue(this.doctor, (conversation) => {
+                this._currentStaticInstance = new ConsultationQueue(this.doctor, (conversation) => {
                     this.activeTab = "messages";
                     this.pendingConversation = conversation;
                     this.updatePage();
-                }).mount(staticWrapper);
+                });
+                this._currentStaticInstance.mount(staticWrapper);
                 break;
 
             case "patients":
-                new PatientRecords().mount(staticWrapper);
+                this._currentStaticInstance = new PatientRecords();
+                this._currentStaticInstance.mount(staticWrapper);
                 break;
 
             case "settings":
                 if (this.settingsView === "profile") {
-
-                    new DoctorProfilePage(
-                        this.doctor,
-                        () => this.navigateSettings("menu")
-                    ).mount(staticWrapper);
-
+                    this._currentStaticInstance = new DoctorProfilePage(this.doctor, () => this.navigateSettings("menu"));
+                    this._currentStaticInstance.mount(staticWrapper);
                 } else if (this.settingsView === "consultation-services") {
-
-                    new DoctorConsultationServicesPage(
-                        this.doctor,
-                        () => this.navigateSettings("menu")
-                    ).mount(staticWrapper);
+                    this._currentStaticInstance = new DoctorConsultationServicesPage(this.doctor, () => this.navigateSettings("menu"));
+                    this._currentStaticInstance.mount(staticWrapper);
                 } else if (this.settingsView === "subscription") {
-                    new DoctorSubscriptionPage(
-                        this.doctor,
-                        () => this.navigateSettings("menu")
-                    ).mount(staticWrapper);
+                    this._currentStaticInstance = new DoctorSubscriptionPage(this.doctor, () => this.navigateSettings("menu"));
+                    this._currentStaticInstance.mount(staticWrapper);
                 } else if (this.settingsView === "doctor-card") {
-                    new DoctorCardPage(
-                        this.doctor,
-                        () => this.navigateSettings("menu")
-                    ).mount(staticWrapper);
+                    this._currentStaticInstance = new DoctorCardPage(this.doctor, () => this.navigateSettings("menu"));
+                    this._currentStaticInstance.mount(staticWrapper);
                 } else if (this.settingsView === "finance") {
                     staticWrapper.replaceChildren(this.renderFinanceComingSoon());
                 } else {
-
-                    new SettingsPage(
-                        this.doctor,
-                        view => this.navigateSettings(view)
-                    ).mount(staticWrapper);
-
+                    this._currentStaticInstance = new SettingsPage(this.doctor, view => this.navigateSettings(view));
+                    this._currentStaticInstance.mount(staticWrapper);
                 }
                 break;
 
             default:
-                new DashboardHome(this.doctor, (tabId) => navigateToTab(tabId)).mount(staticWrapper);
+                this._currentStaticInstance = new DashboardHome(this.doctor, (tabId, settingsView) => navigateToTab(tabId, settingsView));
+                this._currentStaticInstance.mount(staticWrapper);
 
         }
 
