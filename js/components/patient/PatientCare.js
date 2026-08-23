@@ -152,7 +152,7 @@ export default class PatientCare extends Component {
         try {
             const res = await api.post("/payments", {
                 booking_id: booking.id,
-                return_path: "/patient/care",
+                return_path: "/#/patient/dashboard",
             });
             const payment = res.data || res;
     
