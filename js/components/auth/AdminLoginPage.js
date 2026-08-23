@@ -30,7 +30,6 @@ export class AdminLoginPage extends Component {
 
             localStorage.setItem("accessToken", data.accessToken);
             localStorage.setItem("user", JSON.stringify(data.user));
-
             window.location.hash = "/admin/dashboard";
         } catch (error) {
             console.error("Admin login failed:", error);
@@ -55,35 +54,38 @@ export class AdminLoginPage extends Component {
                     h("p", { class: "auth-subtitle" }, "Restricted access. Authorized personnel only.")
                 ),
                 this.errorMessage
-                    ? h("p", { style: "color: #ef4444; font-size: 0.85rem; margin: 0 0 12px;" }, this.errorMessage)
+                    ? h("div", { class: "admin-alert admin-alert--error" }, this.errorMessage)
                     : null,
                 h(
                     "form",
-                    { onsubmit: (e) => this.handleSubmit(e), style: "display: flex; flex-direction: column; gap: 12px;" },
-                    h("input", {
-                        type: "email",
-                        placeholder: "Email",
-                        required: true,
-                        value: this.email,
-                        oninput: (e) => { this.email = e.target.value; },
-                        style: "padding: 0.7rem 0.85rem; border: 1px solid var(--color-line); border-radius: 8px; font-size: 0.9rem;",
-                    }),
-                    h("input", {
-                        type: "password",
-                        placeholder: "Password",
-                        required: true,
-                        value: this.password,
-                        oninput: (e) => { this.password = e.target.value; },
-                        style: "padding: 0.7rem 0.85rem; border: 1px solid var(--color-line); border-radius: 8px; font-size: 0.9rem;",
-                    }),
+                    { onsubmit: (e) => this.handleSubmit(e), style: "display: flex; flex-direction: column; gap: var(--space-4);" },
+                    h(
+                        "div",
+                        { class: "admin-form-group" },
+                        h("label", { class: "admin-form-label" }, "Email"),
+                        h("input", {
+                            type: "email",
+                            class: "admin-form-input",
+                            required: true,
+                            value: this.email,
+                            oninput: (e) => { this.email = e.target.value; },
+                        })
+                    ),
+                    h(
+                        "div",
+                        { class: "admin-form-group" },
+                        h("label", { class: "admin-form-label" }, "Password"),
+                        h("input", {
+                            type: "password",
+                            class: "admin-form-input",
+                            required: true,
+                            value: this.password,
+                            oninput: (e) => { this.password = e.target.value; },
+                        })
+                    ),
                     h(
                         "button",
-                        {
-                            type: "submit",
-                            class: "btn btn-primary",
-                            disabled: this.loading,
-                            style: "padding: 0.7rem; border-radius: 8px; margin-top: 4px;",
-                        },
+                        { type: "submit", class: "btn btn-primary btn-block", disabled: this.loading },
                         this.loading ? "Signing in..." : "Sign In"
                     )
                 )
