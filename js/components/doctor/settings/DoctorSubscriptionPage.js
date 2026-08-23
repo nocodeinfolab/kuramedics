@@ -269,11 +269,13 @@ export default class DoctorSubscriptionPage extends Component {
     renderAvailablePlansCard() {
         const plans = this.summary?.available_plans || [];
         const currentPlanCode = this.summary?.plan_code || "starter";
+        const subscriptionStatus = this.summary?.status || "active";
+        const isRenewalDue = ["past_due", "suspended"].includes(subscriptionStatus);
 
         return h(
             "div",
             { class: "dashboard-card" },
-            h("h3", { style: "margin: 0 0 var(--space-3);" }, "Available Plans & s"),
+            h("h3", { style: "margin: 0 0 var(--space-3);" }, "Available Plans & Pricing"),
             plans.length === 0
                 ? h("p", { class: "dashboard-muted" }, "No plans available at this time.")
                 : h(
@@ -282,6 +284,7 @@ export default class DoctorSubscriptionPage extends Component {
                       plans.map(plan => {
                           const isCurrent = plan.code === currentPlanCode;
                           const isProcessing = this.renewingPlanCode === plan.code;
+                          const isDisabled = isProcessing || (isCurrent && !isRenewalDue);
 
                           return h(
                               "div",
@@ -307,13 +310,24 @@ export default class DoctorSubscriptionPage extends Component {
                                       {
                                           class: `btn ${isCurrent ? "btn-outline" : "btn-primary"}`,
                                           style: "padding: 0.4rem 0.8rem; font-size: var(--step-small);",
-                                          disabled: isProcessing,
+                                          disabled: isDisabled,
                                           onclick: () => this.handleRenew(plan.code)
                                       },
-                                      isProcessing ? "Initializing..." : isCurrent ? "Renew Current Plan" : `Upgrade`
+                                      isProcessing
+                                          ? "Initializing..."
+                                          : isCurrent
+                                              ? (isRenewalDue ? "Renew Now" : "Active")
+                                              : "Upgrade"
                                   )
                               ),
                               h("p", { class: "dashboard-muted", style: "margin-top: var(--space-3);" }, plan.description || "No description provided."),
+                              isCurrent && !isRenewalDue
+                                  ? h(
+                                        "p",
+                                        { class: "dashboard-muted", style: "margin-top: var(--space-2); font-size: 0.78rem;" },
+                                        `Next billing: ${this.formatDate(this.summary?.trial_active ? this.summary?.trial_ends_at : this.summary?.next_billing_date)}`
+                                    )
+                                  : null,
                               h(
                                   "div",
                                   {
