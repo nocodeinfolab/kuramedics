@@ -21,9 +21,28 @@ export default class DashboardHome extends Component {
 
     async afterMount() {
         await this.loadDashboardSummary();
+
+        this._pollTimer = setInterval(() => {
+            if (this.isAppVisible()) {
+                this.loadDashboardSummary({ silent: true });
+            }
+        }, 60000);
     }
 
-    async loadDashboardSummary() {
+    isAppVisible() {
+        return document.visibilityState === "visible";
+    }
+
+    beforeUnmount() {
+        if (this._pollTimer) clearInterval(this._pollTimer);
+    }
+
+    async loadDashboardSummary({ silent = false } = {}) {
+        if (!silent) {
+            this.summaryLoading = true;
+            this.update();
+        }
+
         try {
             const res = await api.get("/bookings/dashboard-summary");
             const summary = res.data || res;
