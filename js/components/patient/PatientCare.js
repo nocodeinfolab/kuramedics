@@ -39,9 +39,37 @@ export default class PatientCare extends Component {
     }
 
     async afterMount() {
+        await this.checkForPaymentReturn();
         await this.loadData();
     }
-
+    
+    async checkForPaymentReturn() {
+        const params = new URLSearchParams(window.location.search);
+        const reference = params.get("reference") || params.get("trxref");
+    
+        if (!reference) {
+            return;
+        }
+    
+        try {
+            const res = await api.get(`/payments/verify/${encodeURIComponent(reference)}`);
+            const payment = res.data || res;
+    
+            if (payment.status === "paid") {
+                this.paymentReturnMessage = { type: "success", text: "Payment confirmed! You can now message your doctor." };
+            } else if (payment.status === "failed") {
+                this.paymentReturnMessage = { type: "error", text: "Payment could not be confirmed. Please try again or contact support." };
+            } else {
+                this.paymentReturnMessage = { type: "info", text: "Your payment is still being processed. This page will update shortly." };
+            }
+        } catch (error) {
+            console.error("Failed to verify payment on return:", error);
+            this.paymentReturnMessage = { type: "error", text: "We couldn't confirm your payment status. Please refresh in a moment." };
+        } finally {
+            const cleanUrl = window.location.pathname;
+            window.history.replaceState({}, document.title, cleanUrl);
+        }
+    }
     // ---------- Data loading ----------
 
     async loadData({ silent = false } = {}) {
@@ -116,9 +144,29 @@ export default class PatientCare extends Component {
         }
     }
 
-    handlePayNow(booking) {
-        // TODO: wire up once payment endpoints are built.
-        console.log("Pay now clicked for booking:", booking.id);
+    async handlePayNow(booking) {
+        this.payingBookingId = booking.id;
+        this.errorMessage = "";
+        this.update();
+    
+        try {
+            const res = await api.post("/payments", {
+                booking_id: booking.id,
+                return_path: "/patient/care",
+            });
+            const payment = res.data || res;
+    
+            if (payment.checkout_url) {
+                window.location.href = payment.checkout_url;
+            } else {
+                throw new Error("No checkout URL was returned for this payment.");
+            }
+        } catch (error) {
+            console.error("Failed to start payment:", error);
+            this.errorMessage = error.message || "Failed to start payment. Please try again.";
+            this.payingBookingId = null;
+            this.update();
+        }
     }
     async downloadPrescription(booking) {
         try {
@@ -239,12 +287,33 @@ export default class PatientCare extends Component {
     }
 
     renderAlerts() {
-        if (!this.errorMessage) return null;
-        return h(
-            "div",
-            { class: "dashboard-card", style: "border-left: 4px solid #ef4444; margin-bottom: var(--space-3);" },
-            h("p", { style: "color: #ef4444; margin: 0;" }, this.errorMessage)
-        );
+        const alerts = [];
+    
+        if (this.errorMessage) {
+            alerts.push(
+                h(
+                    "div",
+                    { class: "dashboard-card", style: "border-left: 4px solid #ef4444; margin-bottom: var(--space-3);" },
+                    h("p", { style: "color: #ef4444; margin: 0;" }, this.errorMessage)
+                )
+            );
+        }
+    
+        if (this.paymentReturnMessage) {
+            const colors = { success: "#10b981", error: "#ef4444", info: "#0284c7" };
+            alerts.push(
+                h(
+                    "div",
+                    {
+                        class: "dashboard-card",
+                        style: `border-left: 4px solid ${colors[this.paymentReturnMessage.type]}; margin-bottom: var(--space-3);`,
+                    },
+                    h("p", { style: `color: ${colors[this.paymentReturnMessage.type]}; margin: 0;` }, this.paymentReturnMessage.text)
+                )
+            );
+        }
+    
+        return alerts.length > 0 ? alerts : null;
     }
 
     renderContent() {
