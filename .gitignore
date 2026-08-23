@@ -1,1 +1,21 @@
+# Dependencies
+node_modules/
+
+# Capacitor web asset staging (regenerated from index.html/css/js each run)
 www/
+
+# Android build output
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+android/.idea/
+
+# iOS build output (for later)
+ios/App/build/
+ios/App/Pods/
+ios/App/App.xcworkspace/xcuserdata/
+ios/App/App.xcodeproj/xcuserdata/
+
+# OS/editor noise
+.DS_Store
