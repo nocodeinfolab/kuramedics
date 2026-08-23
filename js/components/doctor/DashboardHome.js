@@ -68,6 +68,16 @@ export default class DashboardHome extends Component {
                 return "neutral";
         }
     }
+    getFirstName() {
+        const fullName = this.doctor?.full_name?.trim();
+        if (!fullName) return "Doctor";
+
+        const titlePattern = /^(dr|prof|professor|mr|mrs|ms|miss|engr|barr|chief)\.?\s+/i;
+        const withoutTitle = fullName.replace(titlePattern, "");
+
+        const firstWord = withoutTitle.split(/\s+/)[0];
+        return firstWord || "Doctor";
+    }
 
     getSubscriptionTone() {
         const status = (this.doctor?.subscription_status || "active").toLowerCase();
@@ -92,7 +102,7 @@ export default class DashboardHome extends Component {
     }
 
     renderHero() {
-        const firstName = this.doctor?.full_name?.split(" ")[0] || "Doctor";
+        const firstName = this.getFirstName();
 
         return h(
             "section",
