@@ -20,7 +20,7 @@ const STATUS_LABELS = {
 const SECTION_ORDER = ["Outcome", "Plan", "Follow-up"];
 
 export default class PatientCare extends Component {
-    constructor(patient, onOpenConversation) {
+    constructor(patient, onOpenConversation, initialTab = "upcoming") {
         super();
         this.patient = patient ?? {};
         this.onOpenConversation = onOpenConversation;
@@ -31,7 +31,7 @@ export default class PatientCare extends Component {
         this.bookings = [];
         this.recordsByBookingId = {};
 
-        this.activeTab = "upcoming";
+        this.activeTab = initialTab;
         this.expandedBookingId = null;
         this.messageLoadingId = null;
 
