@@ -2,19 +2,38 @@
 
 import { Component } from "../../core/component.js";
 import { h } from "../../utils/dom.js";
+import api from "../../services/api.js";
 
 export default class DashboardHome extends Component {
 
     constructor(doctor, onNavigate) {
         super();
         this.doctor = doctor ?? {};
-        // Navigation function passed from the parent dashboard container
         this.onNavigate = typeof onNavigate === "function" 
             ? onNavigate 
             : (tabName) => {
-                // Event fallback if no callback was provided directly
                 window.dispatchEvent(new CustomEvent("dashboard:navigate", { detail: { tab: tabName } }));
             };
+
+        this.recentBookings = [];
+        this.summaryLoading = true;
+    }
+
+    async afterMount() {
+        await this.loadDashboardSummary();
+    }
+
+    async loadDashboardSummary() {
+        try {
+            const res = await api.get("/bookings/dashboard-summary");
+            const summary = res.data || res;
+            this.recentBookings = summary.recentBookings || [];
+        } catch (error) {
+            console.error("Failed to load recent activity:", error);
+        } finally {
+            this.summaryLoading = false;
+            this.update();
+        }
     }
 
     /**
@@ -283,10 +302,62 @@ export default class DashboardHome extends Component {
             "section",
             { class: "dashboard-card" },
             h("h3", {}, "Recent Activity"),
-            h("p", { class: "dashboard-muted" }, "No recent activity yet.")
+            this.summaryLoading
+                ? h("p", { class: "dashboard-muted" }, "Loading recent activity...")
+                : this.recentBookings.length === 0
+                    ? h("p", { class: "dashboard-muted" }, "No recent activity yet.")
+                    : h(
+                          "div",
+                          { style: "display: flex; flex-direction: column; gap: 10px; margin-top: var(--space-2);" },
+                          this.recentBookings.map(booking => this.renderActivityRow(booking))
+                      )
         );
     }
 
+    renderActivityRow(booking) {
+        const statusText = {
+            pending: "New booking request",
+            pending_confirmation: "Awaiting your confirmation",
+            reschedule_requested: "You suggested a new time",
+            confirmed: "Appointment confirmed",
+            completed: "Consultation completed",
+            cancelled: "Booking cancelled",
+        }[booking.status] || booking.status;
+
+        return h(
+            "div",
+            {
+                style: "display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 0.6rem 0; border-bottom: 1px solid var(--color-line);",
+            },
+            h(
+                "div",
+                { style: "min-width: 0;" },
+                h(
+                    "p",
+                    { style: "margin: 0; font-size: 0.88rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" },
+                    booking.patient_name || "Patient"
+                ),
+                h(
+                    "p",
+                    { class: "dashboard-muted", style: "margin: 2px 0 0; font-size: 0.78rem;" },
+                    statusText
+                )
+            ),
+            h(
+                "p",
+                { class: "dashboard-muted", style: "margin: 0; font-size: 0.75rem; white-space: nowrap; flex-shrink: 0;" },
+                this.formatDate(booking.booking_date)
+            )
+        );
+    }
+
+    formatDate(dateString) {
+        if (!dateString) return "";
+        return new Date(dateString).toLocaleDateString(undefined, {
+            month: "short",
+            day: "numeric",
+        });
+    }
     statCard(title, value) {
         return h(
             "div",
