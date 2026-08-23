@@ -285,6 +285,9 @@ export default class PatientCare extends Component {
             )
         );
     }
+    renderSpinner() {
+        return h("span", { class: "btn-spinner" });
+    }
 
     renderAlerts() {
         const alerts = [];
@@ -458,9 +461,13 @@ export default class PatientCare extends Component {
                     {
                         class: "btn btn-primary",
                         style: btnStyle,
+                        disabled: isPaying,
                         onclick: () => this.handlePayNow(booking),
                     },
-                    `Pay Now${booking.consultation_fee_amount ? ` · ₦${Number(booking.consultation_fee_amount).toLocaleString()}` : ""}`
+                    isPaying ? this.renderSpinner() : null,
+                    isPaying
+                        ? "Redirecting..."
+                        : `Pay Now${booking.consultation_fee_amount ? ` · ₦${Number(booking.consultation_fee_amount).toLocaleString()}` : ""}`
                 )
             );
         }
@@ -541,7 +548,7 @@ export default class PatientCare extends Component {
         );
     }
 
-        renderConsultationNotes(booking) {
+    renderConsultationNotes(booking) {
         const record = this.recordsByBookingId[booking.id];
 
         if (!record) {
@@ -587,7 +594,7 @@ export default class PatientCare extends Component {
         );
     }
 
-        renderMedicationsList(medications, booking) {
+    renderMedicationsList(medications, booking) {
         return h(
             "div",
             { style: "margin-top: 4px; display: flex; flex-direction: column; gap: 8px;" },
