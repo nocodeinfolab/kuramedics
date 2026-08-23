@@ -270,20 +270,19 @@ export default class DoctorCardPage extends Component {
                 : null,
             this.imageError
                 ? h("p", { style: "color: #ef4444; font-size: 0.82rem; padding: 0 20px; text-align: center;" }, "Couldn't load your card preview. Make sure your profile is verified and complete, then try again.")
-                : null,
-            h("img", {
-                src: this.cardImageUrl,
-                alt: "Your doctor card",
-                style: `width: 100%; height: 100%; object-fit: cover; display: ${this.imageLoaded ? "block" : "none"};`,
-                onload: () => {
-                    this.imageLoaded = true;
-                    this.update();
-                },
-                onerror: () => {
-                    this.imageError = true;
-                    this.update();
-                },
-            })
+                : h("img", {
+                      src: this.cardImageUrl,
+                      alt: "Your doctor card",
+                      style: `width: 100%; height: 100%; object-fit: cover; display: ${this.imageLoaded ? "block" : "none"};`,
+                      onload: () => {
+                          this.imageLoaded = true;
+                          this.update();
+                      },
+                      onerror: () => {
+                          this.imageError = true;
+                          this.update();
+                      },
+                  })
         );
     }
 
