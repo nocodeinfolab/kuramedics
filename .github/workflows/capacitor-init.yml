@@ -6,6 +6,9 @@ name: Capacitor Init (run once)
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write   # required so the final `git push` step is allowed to commit back
+
 jobs:
   init:
     runs-on: ubuntu-latest
