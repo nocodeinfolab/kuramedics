@@ -4,6 +4,8 @@ import { Component } from "../../../core/component.js";
 import { h } from "../../../utils/dom.js";
 import api from "../../../services/api.js";
 
+const PLAN_ORDER = ["starter", "professional", "premium"];
+
 export default class DoctorSubscriptionPage extends Component {
     constructor(doctor, onBack) {
         super();
@@ -271,6 +273,7 @@ export default class DoctorSubscriptionPage extends Component {
         const currentPlanCode = this.summary?.plan_code || "starter";
         const subscriptionStatus = this.summary?.status || "active";
         const isRenewalDue = ["past_due", "suspended"].includes(subscriptionStatus);
+        const currentPlanIndex = PLAN_ORDER.indexOf(currentPlanCode);
 
         return h(
             "div",
@@ -285,6 +288,19 @@ export default class DoctorSubscriptionPage extends Component {
                           const isCurrent = plan.code === currentPlanCode;
                           const isProcessing = this.renewingPlanCode === plan.code;
                           const isDisabled = isProcessing || (isCurrent && !isRenewalDue);
+                          const planIndex = PLAN_ORDER.indexOf(plan.code);
+                          const isLowerTier = planIndex < currentPlanIndex;
+
+                          let buttonLabel;
+                          if (isProcessing) {
+                              buttonLabel = "Initializing...";
+                          } else if (isCurrent) {
+                              buttonLabel = isRenewalDue ? "Renew Now" : "Active";
+                          } else if (isLowerTier) {
+                              buttonLabel = "Downgrade";
+                          } else {
+                              buttonLabel = "Upgrade";
+                          }
 
                           return h(
                               "div",
@@ -308,16 +324,12 @@ export default class DoctorSubscriptionPage extends Component {
                                   h(
                                       "button",
                                       {
-                                          class: `btn ${isCurrent ? "btn-outline" : "btn-primary"}`,
+                                          class: `btn ${isCurrent || isLowerTier ? "btn-outline" : "btn-primary"}`,
                                           style: "padding: 0.4rem 0.8rem; font-size: var(--step-small);",
                                           disabled: isDisabled,
                                           onclick: () => this.handleRenew(plan.code)
                                       },
-                                      isProcessing
-                                          ? "Initializing..."
-                                          : isCurrent
-                                              ? (isRenewalDue ? "Renew Now" : "Active")
-                                              : "Upgrade"
+                                      buttonLabel
                                   )
                               ),
                               h("p", { class: "dashboard-muted", style: "margin-top: var(--space-3);" }, plan.description || "No description provided."),
