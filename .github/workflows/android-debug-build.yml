@@ -35,8 +35,17 @@ jobs:
           distribution: temurin
           java-version: 21
 
+      - name: Decode stable debug keystore
+        run: |
+          echo "${{ secrets.DEBUG_KEYSTORE_BASE64 }}" | base64 -d > android/app/debug.keystore
+
       - name: Build debug APK
         working-directory: android
+        env:
+          DEBUG_KEYSTORE_PATH: debug.keystore
+          DEBUG_KEYSTORE_PASSWORD: ${{ secrets.DEBUG_KEYSTORE_PASSWORD }}
+          DEBUG_KEY_ALIAS: ${{ secrets.DEBUG_KEY_ALIAS }}
+          DEBUG_KEY_PASSWORD: ${{ secrets.DEBUG_KEY_PASSWORD }}
         run: ./gradlew assembleDebug
 
       - name: Upload APK
