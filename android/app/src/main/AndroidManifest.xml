@@ -35,7 +35,24 @@
         </provider>
     </application>
 
+    <!-- Optional hardware features: declaring these as not required means the
+         app can still be installed on devices without a camera (e.g. some
+         tablets), rather than being filtered out of the Play Store listing. -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+    <uses-feature android:name="android.hardware.microphone" android:required="false" />
+
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Needed for LiveKit video/voice calls (VideoCallRoom.js), which run
+         WebRTC's getUserMedia() inside the WebView. Declaring these here is
+         the only native step required — Capacitor's built-in
+         BridgeWebChromeClient already requests the runtime permission and
+         grants the WebView resource automatically when the JS side calls
+         getUserMedia(), no custom MainActivity code needed. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
 </manifest>
