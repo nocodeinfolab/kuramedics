@@ -476,7 +476,7 @@ export default class DoctorDashboardPage extends Component {
         switch (this.activeTab) {
 
             case "home":
-                new DashboardHome(this.doctor, (tabId) => navigateToTab(tabId)).mount(staticWrapper);
+                new DashboardHome(this.doctor, (tabId, settingsView) => navigateToTab(tabId, settingsView)).mount(staticWrapper);
                 break;
 
             case "consultations":
