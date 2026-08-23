@@ -74,6 +74,7 @@ export default class PatientDashboardPage extends Component {
         this.incomingCall = null;
         this.dismissedCallBookingId = null;
         this.activeTab = "home";
+        this.pendingCareSubTab = null;
 
         this.tabs = [
             { id: "home", label: "Home", icon: "house" },
@@ -101,6 +102,7 @@ export default class PatientDashboardPage extends Component {
         }
     
         this.activeTab = "care";
+        this.pendingCareSubTab = "confirmed";
     
         try {
             const res = await api.get(`/payments/verify/${encodeURIComponent(reference)}`);
@@ -617,7 +619,9 @@ export default class PatientDashboardPage extends Component {
     
         let instance;
         if (tabId === "care") {
-            instance = new PatientCare(this.patient, (conversation) => this.openConversationInMessages(conversation));
+            const careInitialTab = this.pendingCareSubTab || "upcoming";
+            this.pendingCareSubTab = null;
+            instance = new PatientCare(this.patient, (conversation) => this.openConversationInMessages(conversation), careInitialTab);
         } else if (tabId === "messages") {
             instance = new PatientMessaging(this.patient, this.socket, (count) => this.onMessagesRead(count));
         } else if (tabId === "find") {
