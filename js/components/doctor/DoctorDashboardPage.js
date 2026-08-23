@@ -80,6 +80,8 @@ export default class DoctorDashboardPage extends Component {
                 class: "doctor-dashboard"
             },
 
+            h("div", { id: "doctor-payment-return-banner" }),
+
             h(
                 "main",
                 {
@@ -108,10 +110,67 @@ export default class DoctorDashboardPage extends Component {
     afterMount() {
 
         console.log("DoctorDashboardPage: afterMount()");
+        this.checkForPaymentReturn();
         this.loadDoctor();
         this.connectSocket();
         this.loadUnreadMessageCount();
 
+    }
+
+    async checkForPaymentReturn() {
+        const params = new URLSearchParams(window.location.search);
+        const reference = params.get("reference") || params.get("trxref");
+
+        if (!reference) {
+            return;
+        }
+
+        this.activeTab = "settings";
+        this.settingsView = "subscription";
+
+        try {
+            const res = await api.get(`/subscription/verify/${encodeURIComponent(reference)}`);
+            const subscription = res.data || res;
+
+            const message = subscription.status === "active" || subscription.status === "paid"
+                ? { type: "success", text: `Your ${subscription.plan_name || "subscription"} renewal is confirmed.` }
+                : subscription.status === "past_due" || subscription.status === "suspended"
+                    ? { type: "error", text: "Renewal could not be confirmed. Please try again." }
+                    : { type: "info", text: "Your renewal is still processing. This will update shortly." };
+
+            this.showPaymentReturnBanner(message);
+        } catch (error) {
+            console.error("Failed to verify subscription renewal on return:", error);
+            this.showPaymentReturnBanner({ type: "error", text: "We couldn't confirm your renewal status. Please refresh in a moment." });
+        } finally {
+            window.history.replaceState({}, document.title, `${window.location.pathname}#/doctor/dashboard`);
+
+            if (!this.loading) {
+                this.updatePage();
+            }
+        }
+    }
+
+    showPaymentReturnBanner(message) {
+        if (!this.el) return;
+
+        const container = this.el.querySelector("#doctor-payment-return-banner");
+        if (!container) return;
+
+        const colors = { success: "#10b981", error: "#ef4444", info: "#0284c7" };
+
+        container.replaceChildren(
+            h(
+                "div",
+                { style: `padding: 0.75rem 1rem; background: ${colors[message.type]}; color: #fff; text-align: center; font-size: 0.85rem;` },
+                message.text
+            )
+        );
+
+        if (this._paymentBannerTimer) clearTimeout(this._paymentBannerTimer);
+        this._paymentBannerTimer = setTimeout(() => {
+            container.replaceChildren();
+        }, 6000);
     }
 
     async loadUnreadMessageCount() {
@@ -139,6 +198,7 @@ export default class DoctorDashboardPage extends Component {
 
         this.socket?.disconnect();
         this._tabInstances?.messages?.unmount?.();
+        if (this._paymentBannerTimer) clearTimeout(this._paymentBannerTimer);
 
     }
 
