@@ -1,30 +1,13 @@
 // js/components/auth/GoogleAuth.js
 
-// No bundler in this project, so we deliberately do NOT `import` from
-// "@capacitor/core" or "@capacitor/google-auth" — bare npm specifiers can't
-// be resolved by a browser without a bundler/import map, and doing so broke
-// the plain web deployment entirely (Cloudflare Pages has no Capacitor
-// runtime, so the import itself failed to resolve).
-//
-// Instead we use the global `window.Capacitor` object that Capacitor's
-// native runtime auto-injects into the WebView. It exposes
-// `Capacitor.isNativePlatform()` and every registered native plugin under
-// `Capacitor.Plugins.<PluginName>` — this is Capacitor's documented,
-// supported path for apps that don't use a bundler. On the web deployment,
-// `window.Capacitor` simply doesn't exist, so every reference below safely
-// falls back via optional chaining.
-//
-// Note: @capacitor/google-auth still needs to be an npm dependency
-// (`npm install @capacitor/google-auth`) so `npx cap sync android` picks it
-// up and registers the native plugin during the build — it's just never
-// imported into browser-loaded JS.
-
 const API_BASE_URL =
     "https://doctors-consultation-backend.onrender.com/api/v1";
 
 // Same client ID Google Identity Services (web) already uses. The native
-// plugin needs this as its "server client ID" so the idToken it returns is
-// verifiable by the same backend endpoint that already validates GIS tokens.
+// plugin requires this exact WEB client ID on every platform (including
+// Android/iOS) as its "server client ID" — this is documented plugin
+// behavior, not a mistake — so the idToken it returns is verifiable by the
+// same backend endpoint that already validates GIS tokens.
 const WEB_CLIENT_ID =
     "249309356521-ajkp64pp89gru2pb1qqti3gahbe2ffcc.apps.googleusercontent.com";
 
@@ -32,8 +15,8 @@ function isNativePlatform() {
     return window.Capacitor?.isNativePlatform?.() ?? false;
 }
 
-function getNativeGoogleAuthPlugin() {
-    return window.Capacitor?.Plugins?.GoogleAuth ?? null;
+function getNativeGoogleSignInPlugin() {
+    return window.Capacitor?.Plugins?.GoogleSignIn ?? null;
 }
 
 class GoogleAuth {
@@ -117,16 +100,16 @@ class GoogleAuth {
 
         if (this.nativeInitialized) return;
 
-        const plugin = getNativeGoogleAuthPlugin();
+        const plugin = getNativeGoogleSignInPlugin();
 
         if (!plugin) {
             throw new Error("Native Google Sign-In plugin is not available.");
         }
 
+        // Must be the WEB client ID here, even on Android/iOS — this is
+        // required by the plugin, not a bug. See comment near the top.
         await plugin.initialize({
-            clientId: WEB_CLIENT_ID,
-            scopes: ["profile", "email"],
-            grantOfflineAccess: false
+            clientId: WEB_CLIENT_ID
         });
 
         this.nativeInitialized = true;
@@ -172,7 +155,7 @@ class GoogleAuth {
 
             await this.ensureNativeInitialized();
 
-            const plugin = getNativeGoogleAuthPlugin();
+            const plugin = getNativeGoogleSignInPlugin();
 
             if (!plugin) {
                 throw new Error("Native Google Sign-In plugin is not available.");
@@ -180,8 +163,8 @@ class GoogleAuth {
 
             console.log("Opening native Google Sign-In...");
 
-            const user = await plugin.signIn();
-            const idToken = user?.authentication?.idToken;
+            const result = await plugin.signIn();
+            const idToken = result?.idToken;
 
             if (!idToken) {
                 throw new Error("Google did not return an ID token.");
@@ -195,6 +178,19 @@ class GoogleAuth {
 
             console.error("----------------------------------------");
             console.error("Native Google authentication failed.");
+
+            // Common, actionable failure per the plugin's own docs: the
+            // account picker opens but fails right after picking an
+            // account — almost always means no Android OAuth client is
+            // registered yet for this app's package name + SHA-1.
+            if (error?.code === "SIGN_IN_CANCELED" || error?.message?.includes("reauth failed")) {
+                console.error(
+                    "This usually means no Android OAuth client is registered " +
+                    "for this app's package name + signing certificate SHA-1 " +
+                    "in Google Cloud Console."
+                );
+            }
+
             console.error(error);
             console.error("----------------------------------------");
 
@@ -286,7 +282,7 @@ class GoogleAuth {
 
         if (isNativePlatform() && this.nativeInitialized) {
 
-            const plugin = getNativeGoogleAuthPlugin();
+            const plugin = getNativeGoogleSignInPlugin();
             plugin?.signOut().catch(() => {});
 
         } else if (window.google?.accounts?.id) {
