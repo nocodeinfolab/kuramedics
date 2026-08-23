@@ -260,10 +260,10 @@ export default class DashboardHome extends Component {
             h(
                 "div",
                 { class: "quick-actions" },
-                this.actionButton("Edit Profile", () => this.onNavigate("settings")),
-                this.actionButton("Consultation Fees", () => this.onNavigate("services")),
-                this.actionButton("Availability", () => this.onNavigate("availability")),
-                this.actionButton("Booking Link")
+                this.actionButton("Edit Profile", () => this.onNavigate("settings", "profile")),
+                this.actionButton("Consultation Fees", () => this.onNavigate("settings", "consultation-services")),
+                this.actionButton("Availability", () => this.onNavigate("settings", "consultation-services")),
+                this.actionButton("Booking Link", () => this.onNavigate("settings", "doctor-card"))
             )
         );
     }
