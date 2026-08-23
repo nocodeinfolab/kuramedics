@@ -27,13 +27,21 @@ jobs:
         run: npm install @capacitor/core @capacitor/cli
 
       - name: Capacitor init
-        run: npx cap init YerosCare com.yeroscare.app --web-dir=.
+        run: npx cap init YerosCare com.yeroscare.app --web-dir=www
+
+      - name: Stage web assets into www/
+        run: |
+          mkdir -p www
+          cp -r index.html css js www/
 
       - name: Install Android platform package
         run: npm install @capacitor/android
 
       - name: Add Android platform
         run: npx cap add android
+
+      - name: Keep www/ out of git (it's regenerated from source each run)
+        run: echo "www/" >> .gitignore
 
       - name: Commit generated files back to the repo
         run: |
