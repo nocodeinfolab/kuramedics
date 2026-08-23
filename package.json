@@ -12,6 +12,7 @@
   "dependencies": {
     "@capacitor/android": "^8.5.0",
     "@capacitor/cli": "^7.6.8",
-    "@capacitor/core": "^8.5.0"
+    "@capacitor/core": "^8.5.0",
+    "@capawesome/capacitor-google-sign-in": "^0.1.2"
   }
 }
