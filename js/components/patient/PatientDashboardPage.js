@@ -93,10 +93,7 @@ export default class PatientDashboardPage extends Component {
     }
     
     async checkForPaymentReturn() {
-        const hash = window.location.hash || "";
-        const queryIndex = hash.indexOf("?");
-        const queryString = queryIndex >= 0 ? hash.slice(queryIndex + 1) : "";
-        const params = new URLSearchParams(queryString);
+        const params = new URLSearchParams(window.location.search);
         const reference = params.get("reference") || params.get("trxref");
     
         if (!reference) {
