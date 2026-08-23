@@ -339,52 +339,59 @@ export default class DoctorSubscriptionPage extends Component {
             renewals.length === 0
                 ? h("p", { class: "dashboard-muted" }, "No subscription payment transactions found.")
                 : h(
-                      "table",
-                      { style: "width: 100%; border-collapse: collapse; text-align: left; font-size: var(--step-small);" },
-                      h(
-                          "thead",
-                          {},
-                          h(
-                              "tr",
-                              { style: "border-bottom: 2px solid var(--color-line); color: var(--color-ink-faint);" },
-                              h("th", { style: "padding: 8px;" }, "Reference"),
-                              h("th", { style: "padding: 8px;" }, "Plan"),
-                              h("th", { style: "padding: 8px;" }, "Amount"),
-                              h("th", { style: "padding: 8px;" }, "Status"),
-                              h("th", { style: "padding: 8px;" }, "Date")
-                          )
-                      ),
-                      h(
-                          "tbody",
-                          {},
-                          renewals.map(item =>
-                              h(
-                                  "tr",
-                                  { style: "border-bottom: 1px solid var(--color-line);" },
-                                  h("td", { style: "padding: 8px; font-family: monospace;" }, item.reference),
-                                  h("td", { style: "padding: 8px;" }, (item.plan_code || "starter").toUpperCase()),
-                                  h("td", { style: "padding: 8px;" }, `${this.formatCurrency(item.amount)}`),
-                                  h(
-                                      "td",
-                                      { style: "padding: 8px;" },
-                                      h(
-                                          "span",
-                                          {
-                                              class: "dashboard-badge",
-                                              style: item.status === "success"
-                                                  ? "background: #10b981;"
-                                                  : item.status === "failed"
-                                                  ? "background: #ef4444;"
-                                                  : "background: var(--color-ink-faint);"
-                                          },
-                                          item.status
-                                      )
-                                  ),
-                                  h("td", { style: "padding: 8px;" }, this.formatDate(item.created_at))
-                              )
-                          )
-                      )
+                      "div",
+                      { style: "display: flex; flex-direction: column; gap: 10px;" },
+                      renewals.map(item => this.renderRenewalRow(item))
                   )
+        );
+    }
+
+    renderRenewalRow(item) {
+        const statusColor = item.status === "paid"
+            ? "#10b981"
+            : item.status === "failed"
+            ? "#ef4444"
+            : "var(--color-ink-faint)";
+
+        return h(
+            "div",
+            {
+                style: "padding: 0.75rem 0.85rem; background: var(--color-bg-muted, #f8fafc); border-radius: 8px; display: flex; flex-direction: column; gap: 6px;",
+            },
+            h(
+                "div",
+                { style: "display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;" },
+                h(
+                    "div",
+                    { style: "min-width: 0;" },
+                    h(
+                        "p",
+                        { style: "margin: 0; font-weight: 600; font-size: 0.9rem;" },
+                        `${(item.plan_code || "starter").toUpperCase()} · ${this.formatCurrency(item.amount)}`
+                    ),
+                    h(
+                        "p",
+                        {
+                            class: "dashboard-muted",
+                            style: "margin: 2px 0 0; font-size: 0.75rem; font-family: monospace; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;",
+                        },
+                        item.reference
+                    )
+                ),
+                h(
+                    "span",
+                    {
+                        class: "dashboard-badge",
+                        style: `background: ${statusColor}; font-size: 0.68rem; padding: 3px 8px; border-radius: 5px; white-space: nowrap; color: #fff; flex-shrink: 0;`,
+                    },
+                    item.status
+                )
+            ),
+            h(
+                "p",
+                { class: "dashboard-muted", style: "margin: 0; font-size: 0.78rem;" },
+                this.formatDate(item.created_at)
+            )
         );
     }
 
