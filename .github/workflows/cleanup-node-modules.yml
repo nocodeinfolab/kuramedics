@@ -1,0 +1,50 @@
+name: Cleanup node_modules from git (run once)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Remove node_modules from git tracking (keeps it on disk, just untracks it)
+        run: git rm -r --cached node_modules
+
+      - name: Write a proper .gitignore
+        run: |
+          cat > .gitignore << 'EOF'
+          # Dependencies
+          node_modules/
+
+          # Capacitor web asset staging (regenerated from index.html/css/js each run)
+          www/
+
+          # Android build output
+          android/app/build/
+          android/build/
+          android/.gradle/
+          android/local.properties
+          android/.idea/
+
+          # iOS build output (for later)
+          ios/App/build/
+          ios/App/Pods/
+          ios/App/App.xcworkspace/xcuserdata/
+          ios/App/App.xcodeproj/xcuserdata/
+
+          # OS/editor noise
+          .DS_Store
+          EOF
+
+      - name: Commit cleanup
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Remove node_modules from git, add proper .gitignore"
+          git push
