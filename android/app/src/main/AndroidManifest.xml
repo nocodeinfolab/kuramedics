@@ -55,4 +55,10 @@
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS" />
+
+    <!-- Android 13+ (targetSdk 35 here) requires this to be requested at
+         runtime before notifications can be shown at all — declaring it
+         alone isn't enough. See pushNotifications.js, which calls
+         PushNotifications.requestPermissions() before registering. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 </manifest>
