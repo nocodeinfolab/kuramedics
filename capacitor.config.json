@@ -1,5 +1,11 @@
 {
   "appId": "com.yeroscare.app",
   "appName": "YerosCare",
-  "webDir": "www"
+  "webDir": "www",
+  "plugins": {
+    "CapacitorUpdater": {
+      "autoUpdate": "off",
+      "appReadyTimeout": 10000
+    }
+  }
 }
