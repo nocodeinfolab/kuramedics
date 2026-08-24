@@ -1,9 +1,23 @@
-// js/services/otaUpdater.js
-import { CapacitorUpdater } from '@capgo/capacitor-updater';
-import { SplashScreen } from '@capacitor/splash-screen';
 import apiService from './api.js';
 
 export async function initUpdater() {
+  // This app has no bundler, so npm packages can't be imported by bare
+  // specifier (e.g. "@capgo/capacitor-updater") — the browser has no way
+  // to resolve that to a file on disk. Capacitor's native bridge instead
+  // exposes every registered plugin on window.Capacitor.Plugins at
+  // runtime, which works fine with plain relative-path ES modules.
+  // window.Capacitor only exists inside the native app shell (not a plain
+  // desktop browser tab, e.g. when testing via `npx serve`), so bail out
+  // cleanly if it's missing.
+  const Capacitor = window.Capacitor;
+  if (!Capacitor?.isNativePlatform?.()) return;
+
+  const { CapacitorUpdater, SplashScreen } = Capacitor.Plugins;
+  if (!CapacitorUpdater) {
+    console.warn('[otaUpdater] CapacitorUpdater plugin not found — was `npx cap sync` run after install?');
+    return;
+  }
+
   // Required every launch — skipping this triggers an automatic rollback
   await CapacitorUpdater.notifyAppReady();
 
@@ -16,8 +30,6 @@ export async function initUpdater() {
       `/mobile/updates/latest?current=${encodeURIComponent(current.bundle.version)}`
     );
 
-    // Expect { hasUpdate: false } when nothing new, to avoid apiService
-    // treating "no update" as a thrown error.
     if (!info?.hasUpdate || !info.url) return;
 
     const bundle = await CapacitorUpdater.download({
@@ -29,7 +41,7 @@ export async function initUpdater() {
     await CapacitorUpdater.next({ id: bundle.id });
 
     if (info.mandatory) {
-      SplashScreen.show();
+      await SplashScreen?.show();
       await CapacitorUpdater.set({ id: bundle.id }); // apply now, reloads app
     }
   } catch (err) {
