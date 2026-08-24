@@ -1,6 +1,7 @@
 import { Component } from "../../core/component.js";
 import { h } from "../../utils/dom.js";
 import GoogleAuth from "./GoogleAuth.js";
+import pushNotifications from "../../services/pushNotifications.js";
 
 export class DoctorLoginPage extends Component {
   render() {
@@ -81,10 +82,15 @@ export class DoctorLoginPage extends Component {
       "google-login-btn",
       "doctor",
       (user) => {
-        console.log("Doctor login successful.");
-        console.log(user);
-
-        window.location.hash = "/doctor/dashboard";
+          console.log("Doctor login successful.");
+          console.log(user);
+      
+          pushNotifications.init((data) => {
+            console.log("Notification tapped:", data);
+            window.location.hash = "/doctor/dashboard";
+          });
+      
+          window.location.hash = "/doctor/dashboard";
       },
       (error) => {
         console.error("Doctor login failed:", error);
