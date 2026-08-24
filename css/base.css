@@ -5,6 +5,14 @@
   box-sizing: border-box;
 }
 
+:root {
+  /* Capacitor Safe Area Inset Variables */
+  --safe-area-top: env(safe-area-inset-top, 0px);
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-area-left: env(safe-area-inset-left, 0px);
+  --safe-area-right: env(safe-area-inset-right, 0px);
+}
+
 html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
@@ -32,6 +40,15 @@ body {
   font-size: var(--step-body);
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
+  
+  /* Prevents horizontal scrolling caused by side safe areas */
+  padding-left: var(--safe-area-left);
+  padding-right: var(--safe-area-right);
+}
+
+#app {
+  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 img,
@@ -67,6 +84,18 @@ ul {
   outline: 2px solid var(--color-primary);
   outline-offset: 3px;
   border-radius: 4px;
+}
+
+/* Safe Area Utility Classes ------------------------------------------- */
+/* Apply .safe-area-top to your header, navbar, or top container in landing.css / dashboard CSS files */
+.safe-area-top {
+  padding-top: var(--safe-area-top);
+}
+
+/* Safe area padding wrapper for full-page layouts */
+.safe-area-pad {
+  padding-top: var(--safe-area-top);
+  padding-bottom: var(--safe-area-bottom);
 }
 
 /* Layout primitives --------------------------------------------------- */
