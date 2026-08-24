@@ -1,6 +1,7 @@
 import { Component } from "../../core/component.js";
 import { h } from "../../utils/dom.js";
 import GoogleAuth from "./GoogleAuth.js";
+import pushNotifications from "../../services/pushNotifications.js";
 
 export class PatientLoginPage extends Component {
   render() {
@@ -64,10 +65,19 @@ export class PatientLoginPage extends Component {
       "google-login-btn",
       "patient",
       (user) => {
-        console.log("Patient login successful.");
-        console.log(user);
-
-        window.location.hash = "/patient/dashboard";
+          console.log("Patient login successful.");
+          console.log(user);
+      
+          // Runs after a tap on a background/killed-app notification.
+          // `data` is whatever custom payload the backend sent (see
+          // notifications.controller.js) — route further once you decide
+          // what that payload looks like for each notification type.
+          pushNotifications.init((data) => {
+            console.log("Notification tapped:", data);
+            window.location.hash = "/patient/dashboard";
+          });
+      
+          window.location.hash = "/patient/dashboard";
       },
       (error) => {
         console.error("Patient login failed:", error);
