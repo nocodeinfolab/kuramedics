@@ -215,14 +215,14 @@
 }
 
 .dashboard-greeting {
-  margin: 0 0 var(--space-2);
+  margin: 0 0 4px;
   font-family: var(--font-mono);
   font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.8);
-  padding-top: 25px;
+  padding-top: 45px;
 }
 
 .dashboard-title {
@@ -235,7 +235,7 @@
 }
 
 .dashboard-subtitle {
-  margin-top: var(--space-2);
+  margin-top: 4px;
   font-size: var(--step-small);
   color: rgba(255, 255, 255, 0.85);
 }
