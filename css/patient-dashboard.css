@@ -403,3 +403,12 @@
     0%, 60%, 100% { transform: translateY(0); opacity: 0.5; }
     30% { transform: translateY(-4px); opacity: 1; }
 }
+/* Mobile Sticky Header Rule (<900px) */
+@media (max-width: 899px) {
+  .dashboard-header {
+    position: sticky;
+    top: var(--space-2);
+    z-index: 20;
+    padding: var(--space-4); /* Tighter padding on mobile to save vertical space */
+  }
+}
