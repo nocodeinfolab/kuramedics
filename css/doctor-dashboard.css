@@ -717,10 +717,4 @@
 
     background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
   }
-
-  /* Push page content down so it starts below the fixed header,
-     instead of underneath it */
-  .doctor-home {
-    padding-top: calc(var(--safe-area-top) + 140px); /* tune 140px to your header's actual height */
-  }
 }
