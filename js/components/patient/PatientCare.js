@@ -234,7 +234,7 @@ export default class PatientCare extends Component {
         return h(
             "div",
             { class: `dashboard-page${isFirstRender ? " dashboard-page--enter" : ""}` },
-            this.renderHeader(),
+            
             this.renderAlerts(),
             this.loading
                 ? h(
