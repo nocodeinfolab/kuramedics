@@ -49,7 +49,7 @@ export default class PatientCare extends Component {
         if (!silent) {
             this.loading = true;
             this.errorMessage = "";
-            this.update();
+            
         }
 
         try {
