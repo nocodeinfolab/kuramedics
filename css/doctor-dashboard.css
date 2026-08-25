@@ -17,9 +17,10 @@
 }
 
 .doctor-dashboard__content {
-  padding: -10 var(--space-3)
+  /* Mobile padding: Top = --space-4, Left/Right = --space-3 (or --space-2) */
+  padding: var(--space-4) var(--space-3)
     calc(var(--dash-nav-h) + env(safe-area-inset-bottom, 0px) + var(--space-6));
-
+  
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -214,14 +215,13 @@
 }
 
 .dashboard-greeting {
-  margin: var(--safe-area-top) 0 var(--space-2);
+  margin: 0 0 var(--space-2);
   font-family: var(--font-mono);
   font-size: 0.78rem;
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.8);
-  padding-top: 20px;
 }
 
 .dashboard-title {
@@ -708,9 +708,9 @@
 
     margin-left: calc(-1 * var(--space-3));
     margin-right: calc(-1 * var(--space-3));
-    margin-top: -20px;
+    margin-top: calc(-1 * var(--space-4));
 
-    padding-top: calc(var(--safe-area-top) + var(--space-6) + var(--space-4));
+    padding-top: calc(var(--safe-area-top) + var(--space-6));
     padding-left: var(--space-4);
     padding-right: var(--space-4);
     padding-bottom: var(--space-4);
