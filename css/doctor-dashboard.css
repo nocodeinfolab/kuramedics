@@ -711,3 +711,24 @@
     );
   }
 }
+@media (max-width: 899px) {
+  .doctor-dashboard .dashboard-header {
+    position: fixed;
+    inset: 0 0 auto 0;
+    width: 100%;
+    z-index: 51;
+    margin: 0;
+
+    height: 220px; /* taller than patient's 180px — see note below */
+
+    padding-top: calc(var(--safe-area-top) + var(--space-6));
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+    padding-bottom: var(--space-4);
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  }
+
+  .doctor-dashboard__content {
+    padding-top: 220px; /* must match header height exactly */
+  }
+}
