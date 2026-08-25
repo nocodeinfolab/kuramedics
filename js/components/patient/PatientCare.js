@@ -228,22 +228,16 @@ export default class PatientCare extends Component {
     // ---------- Render ----------
 
     render() {
-        const isFirstRender = !this._hasRenderedOnce;
-        this._hasRenderedOnce = true;
-
-        return h(
-            "div",
-            { class: `dashboard-page${isFirstRender ? " dashboard-page--enter" : ""}` },
-            this.renderHeader(),
-            this.renderAlerts(),
-            this.loading
-                ? h(
-                      "div",
-                      { class: "dashboard-card text-center py-4" },
-                      h("p", { class: "dashboard-muted" }, "Loading your appointments...")
-                  )
-                : this.renderContent()
-        );
+      const isFirstRender = !this._hasRenderedOnce;
+      this._hasRenderedOnce = true;
+    
+      return h("div", { class: "dashboard-page-shell" },
+        this.renderHeader(),  // no animation class — renders instantly
+        h("div", { class: `dashboard-page${isFirstRender ? " dashboard-page--enter" : ""}` },
+          this.renderAlerts(),
+          this.loading ? h("div", { class: "dashboard-card text-center py-4" }, h("p", { class: "dashboard-muted" }, "Loading your appointments...")) : this.renderContent()
+        )
+      );
     }
     renderHeader() {
         return h(
