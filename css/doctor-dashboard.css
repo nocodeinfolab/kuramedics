@@ -718,3 +718,7 @@
     background: purple;
   }
 }
+.doctor-dashboard {
+  min-height: 100dvh;
+  background: #6A1B9A;
+}
