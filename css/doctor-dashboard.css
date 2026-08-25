@@ -706,23 +706,15 @@
     top: 0;
     z-index: 20;
 
-    /* Break out of .doctor-dashboard__content's own padding on all three sides */
     margin-left: calc(-1 * var(--space-3));
     margin-right: calc(-1 * var(--space-3));
-    margin-top: calc(-1 * (var(--safe-area-top) + var(--space-4)));
+    margin-top: calc(-1 * var(--space-4));
 
-    /* Re-apply as internal padding, stacking the safe-area on top of the
-       original space-6 so content still sits comfortably below the notch */
     padding-top: calc(var(--safe-area-top) + var(--space-6));
     padding-left: var(--space-4);
     padding-right: var(--space-4);
     padding-bottom: var(--space-4);
 
-    /* It's now flush with the screen edges, so square off the top corners.
-       Keep the bottom rounded so it still reads as a hero card transitioning
-       into the content below. */
     border-radius: 0 0 var(--radius-xl) var(--radius-xl);
-
-    /* Cancel margin-bottom's card-spacing look bleeding weirdly if needed */
   }
 }
