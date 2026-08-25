@@ -18,7 +18,7 @@
 
 .doctor-dashboard__content {
   /* Mobile padding: Top = --space-4, Left/Right = --space-3 (or --space-2) */
-  padding: var(--space-4) var(--space-3)
+  padding: var(--space-1) var(--space-1)
     calc(var(--dash-nav-h) + env(safe-area-inset-bottom, 0px) + var(--space-6));
   
   width: 100%;
