@@ -83,7 +83,7 @@ export default class DoctorDashboardPage extends Component {
                 class: "doctor-dashboard"
             },
 
-            h("div", { id: "doctor-payment-return-banner" }),
+            
 
             h(
                 "main",
