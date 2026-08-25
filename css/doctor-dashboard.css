@@ -720,3 +720,6 @@
     background: purple;
   }
 }
+#doctor-payment-return-banner {
+  display: none !important;
+}
