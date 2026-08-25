@@ -709,7 +709,7 @@
 
     margin-left: calc(-1 * var(--space-3));
     margin-right: calc(-1 * var(--space-3));
-    margin-top: calc(-1 * var(--space-4));
+    margin-top: calc(-1 * var(--space-4) - 20px);
 
     padding-top: calc(var(--safe-area-top) + var(--space-6) + var(--space-4));
     padding-left: var(--space-4);
@@ -719,8 +719,4 @@
     border-radius: 0 0 var(--radius-xl) var(--radius-xl);
     background: purple;
   }
-}
-.doctor-dashboard {
-  min-height: 100dvh;
-  background: purple;
 }
