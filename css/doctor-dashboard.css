@@ -720,3 +720,8 @@
     background: purple;
   }
 }
+@media (max-width: 899px) {
+  .doctor-dashboard__content {
+    padding: 0;
+  }
+}
