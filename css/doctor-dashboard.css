@@ -707,7 +707,7 @@
       var(--space-4) +                    /* header padding-top */
       var(--safe-area-top) +              /* safe area */
       var(--space-6) +                    /* greeting/title space */
-      220px                               /* approximate header height */
+      140px                               /* approximate header height */
     );
   }
 }
@@ -728,7 +728,9 @@
     border-radius: 0 0 var(--radius-xl) var(--radius-xl);
   }
 
-  .doctor-dashboard__content {
-    padding-top: 220px; /* must match header height exactly */
-  }
-}
+  /* doctor-dashboard.css */
+   @media (max-width: 899px) {
+     .doctor-dashboard__content {
+       padding-top: calc(220px + var(--space-4));
+     }
+   }
