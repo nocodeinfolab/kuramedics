@@ -406,16 +406,23 @@
 
 @media (max-width: 899px) {
   .dashboard-header {
-    position: fixed;      /* ← Must change this */
-    inset: 0 0 auto 0;    /* ← top: 0, right: 0, left: 0 */
+    position: fixed;
+    inset: 0 0 auto 0;
     width: 100%;
     z-index: 51;
     margin: 0;
+    
+    height: 180px;
+    
     padding-top: calc(var(--safe-area-top) + var(--space-6));
     padding-left: var(--space-4);
     padding-right: var(--space-4);
     padding-bottom: var(--space-4);
     border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  }
+
+  .patient-dashboard__content {
+    padding-top: 180px; /* Match header height exactly */
   }
 }
 @media (max-width: 899px) {
@@ -428,3 +435,4 @@
     );
   }
 }
+
