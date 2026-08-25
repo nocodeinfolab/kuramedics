@@ -435,9 +435,3 @@
     );
   }
 }
-.dashboard-header--tab {
-  position: static; /* Override fixed positioning */
-  margin-bottom: var(--space-6);
-  padding: var(--space-6);
-  border-radius: var(--radius-xl);
-}
