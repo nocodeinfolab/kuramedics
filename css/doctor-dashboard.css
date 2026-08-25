@@ -17,10 +17,9 @@
 }
 
 .doctor-dashboard__content {
-  /* Mobile padding: Top = --space-4, Left/Right = --space-3 (or --space-2) */
-  padding: var(--space-4) var(--space-3)
+  padding: 0 var(--space-3)
     calc(var(--dash-nav-h) + env(safe-area-inset-bottom, 0px) + var(--space-6));
-  
+
   width: 100%;
   max-width: 100%;
   box-sizing: border-box;
@@ -720,6 +719,4 @@
     background: purple;
   }
 }
-#doctor-payment-return-banner {
-  display: none !important;
-}
+
