@@ -734,3 +734,30 @@
        padding-top: calc(220px + var(--space-4));
      }
    }
+   @media (max-width: 899px) {
+  .doctor-dashboard .dashboard-header {
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* vertically centers the whole cluster in the 220px box */
+    gap: 4px;
+  }
+
+  /* gap now owns the spacing — zero out the old margins so they don't stack on top of it */
+  .doctor-dashboard .dashboard-greeting {
+    margin: 0;
+    padding-top: 0;
+  }
+
+  .doctor-dashboard .dashboard-title {
+    margin: 0;
+  }
+
+  .doctor-dashboard .dashboard-subtitle {
+    margin-top: 0;
+  }
+
+  .doctor-dashboard .dashboard-hero-meta {
+    margin-top: 6px;
+    gap: 6px;
+  }
+}
