@@ -18,7 +18,8 @@
 }
 
 .patient-dashboard__content {
-  padding: var(--space-6) var(--space-5)
+  /* Mobile padding: Top = --space-4, Left/Right = --space-3 */
+  padding: var(--space-4) var(--space-3)
     calc(var(--dash-nav-h) + env(safe-area-inset-bottom, 0px) + var(--space-6));
   max-width: 960px;
   margin-inline: auto;
@@ -26,7 +27,6 @@
   min-width: 0;
   overflow-wrap: break-word;
 }
-
 .dashboard-loading {
   display: flex;
   align-items: center;
