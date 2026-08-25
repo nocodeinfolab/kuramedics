@@ -707,7 +707,7 @@
       var(--space-4) +                    /* header padding-top */
       var(--safe-area-top) +              /* safe area */
       var(--space-6) +                    /* greeting/title space */
-      140px                               /* approximate header height */
+      160px                               /* approximate header height */
     );
   }
 }
