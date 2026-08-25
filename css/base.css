@@ -219,20 +219,3 @@ ul {
   white-space: nowrap;
   border: 0;
 }
-@media (max-width: 899px) {
-  .dashboard-header {
-    position: sticky;
-    top: 0; /* not var(--space-2) — must pin flush to the true viewport top */
-    z-index: 20;
-
-    /* Pull the header back up into body's top padding so its own
-       background paints under the notch/camera from frame one */
-    margin-top: calc(-1 * var(--safe-area-top));
-
-    /* Re-add the inset as internal padding so content sits below the notch */
-    padding-top: calc(var(--safe-area-top) + var(--space-4));
-    padding-right: var(--space-4);
-    padding-bottom: var(--space-4);
-    padding-left: var(--space-4);
-  }
-}
