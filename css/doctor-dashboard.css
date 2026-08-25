@@ -701,24 +701,26 @@
 }
 @media (max-width: 899px) {
   .dashboard-header {
-    position: sticky;
+    position: fixed;      /* was sticky */
     top: 0;
+    left: 0;
+    right: 0;
     z-index: 20;
 
-    margin-left: calc(-1 * var(--space-3));
-    margin-right: calc(-1 * var(--space-3));
-    /* margin-top: -20px;  ← remove this */
+    margin: 0;             /* remove the negative side margins, we're not in-flow anymore */
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
 
-    padding-top: calc(var(--safe-area-top) + var(--space-4));  /* single safe-area application */
+    padding-top: calc(var(--safe-area-top) + var(--space-4));
     padding-left: var(--space-4);
     padding-right: var(--space-4);
     padding-bottom: var(--space-4);
 
-    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
-    background: purple;
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
   }
-}
-.doctor-dashboard {
-  min-height: 100dvh;
-  background: #6A1B9A;
+
+  /* Push page content down so it starts below the fixed header,
+     instead of underneath it */
+  .doctor-home {
+    padding-top: calc(var(--safe-area-top) + 140px); /* tune 140px to your header's actual height */
+  }
 }
