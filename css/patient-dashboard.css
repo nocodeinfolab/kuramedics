@@ -398,7 +398,7 @@
 }
 
 @media (max-width: 899px) {
-  .dashboard-header {
+  .patient-dashboard .dashboard-header {
     position: fixed;
     inset: 0 0 auto 0;
     width: 100%;
