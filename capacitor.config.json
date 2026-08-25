@@ -6,6 +6,9 @@
     "CapacitorUpdater": {
       "autoUpdate": "off",
       "appReadyTimeout": 10000
+    },
+    "android": {
+      "adjustMarginsForEdgeToEdge": "auto"
     }
   }
 }
