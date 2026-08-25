@@ -716,5 +716,6 @@
     padding-bottom: var(--space-4);
 
     border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+    background: purple;
   }
 }
