@@ -248,7 +248,7 @@ export default class PatientCare extends Component {
     renderHeader() {
         return h(
             "section",
-            
+            { class: "dashboard-header dashboard-header--tab" },  // ← Add new class
             h("p", { class: "dashboard-greeting" }, "My Care"),
             h("h1", { class: "dashboard-title" }, "Appointments & Records"),
             h(
