@@ -428,3 +428,41 @@
     );
   }
 }
+@media (max-width: 899px) {
+  .patient-dashboard .dashboard-header {
+    position: fixed;
+    inset: 0 0 auto 0;
+    width: 100%;
+    z-index: 51;
+    margin: 0;
+
+    height: 180px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* vertically centers greeting/title/subtitle in the fixed box */
+    gap: 4px;
+
+    padding-top: calc(var(--safe-area-top) + var(--space-6));
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+    padding-bottom: var(--space-4);
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  }
+
+  /* gap now owns the spacing — zero out individual margins so they don't stack on top of it */
+  .patient-dashboard .dashboard-greeting {
+    margin: 0;
+  }
+
+  .patient-dashboard .dashboard-title {
+    margin: 0;
+  }
+
+  .patient-dashboard .dashboard-subtitle {
+    margin: 0;
+  }
+
+  .patient-dashboard__content {
+    padding-top: calc(180px + var(--space-4)); /* header height + breathing room */
+  }
+}
