@@ -362,6 +362,7 @@ export default class PatientRecords extends Component {
 
     renderConsultationNote(note) {
         const sections = this.parseDoctorNotes(note.doctor_notes);
+        const medications = Array.isArray(note.medications) ? note.medications : [];
 
         return h(
             "div",
@@ -390,10 +391,75 @@ export default class PatientRecords extends Component {
                             { style: "margin: 0 0 8px; font-size: 0.88rem; line-height: 1.55;" },
                             paragraph
                         )
-                    )
+                    ),
+                    section.title === "Plan" && medications.length > 0
+                        ? this.renderMedicationsList(medications, note)
+                        : null
                 )
             )
         );
+    }
+
+    renderMedicationsList(medications, note) {
+        return h(
+            "div",
+            { style: "margin-top: 4px; display: flex; flex-direction: column; gap: 8px;" },
+            h(
+                "div",
+                { style: "display: flex; justify-content: space-between; align-items: center;" },
+                h(
+                    "p",
+                    { class: "dashboard-muted", style: "margin: 0; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em;" },
+                    "Prescription"
+                ),
+                h(
+                    "button",
+                    {
+                        style: "font-size: 0.74rem; color: var(--color-primary, #0284c7); font-weight: 600; background: none; border: none; cursor: pointer; padding: 0;",
+                        onclick: e => {
+                            e.stopPropagation();
+                            this.downloadPrescription(note);
+                        },
+                    },
+                    "Download prescription"
+                )
+            ),
+            medications.map(med => this.renderMedicationCard(med))
+        );
+    }
+
+    renderMedicationCard(med) {
+        const details = [med.dose, med.frequency, med.duration].filter(Boolean).join(" · ");
+
+        return h(
+            "div",
+            { style: "padding: 8px 10px; background: var(--color-bg-muted, #f1f5f9); border-radius: 6px;" },
+            h("p", { style: "margin: 0 0 2px; font-size: 0.86rem; font-weight: 600;" }, med.medication || "Unnamed medication"),
+            details ? h("p", { class: "dashboard-muted", style: "margin: 0; font-size: 0.78rem;" }, details) : null,
+            med.instructions
+                ? h("p", { style: "margin: 4px 0 0; font-size: 0.78rem; font-style: italic; line-height: 1.4;" }, med.instructions)
+                : null
+        );
+    }
+
+    async downloadPrescription(note) {
+        try {
+            const blob = await api.getBlob(`/consultations/booking/${note.booking_id}/prescription-pdf`);
+            const url = URL.createObjectURL(blob);
+
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `prescription-${note.booking_id}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error("Failed to download prescription:", error);
+            this.notesError = error.message || "Failed to download prescription.";
+            this.update();
+        }
     }
 
     update() {
