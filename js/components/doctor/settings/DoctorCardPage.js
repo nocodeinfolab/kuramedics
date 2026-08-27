@@ -169,25 +169,20 @@ export default class DoctorCardPage extends Component {
     renderHeader() {
         return h(
             "section",
-            { class: "dashboard-header", style: "display: flex; align-items: flex-start; gap: 10px;" },
+            { class: "dashboard-header" },
             h(
                 "button",
                 {
                     class: "btn btn-outline",
-                    style: "padding: 0.4rem 0.6rem; font-size: 0.8rem; border-radius: 6px; flex-shrink: 0; color: white;",
+                    style: "margin-bottom: var(--space-3); color: var(--color-white); border-color: rgba(255,255,255,0.4);",
                     onclick: () => this.onBack?.(),
                 },
-                "← Back"
+                "← Back to Settings"
             ),
-            h(
-                "div",
-                {},
-                h("p", { class: "dashboard-greeting" }, "Settings"),
-                h("h1", { class: "dashboard-title" }, "My Doctor Card")
-            )
+            
+            h("h1", { class: "dashboard-title" }, "My Doctor Card")
         );
     }
-
     renderContent() {
         return h(
             "div",
