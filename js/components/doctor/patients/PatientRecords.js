@@ -363,7 +363,7 @@ export default class PatientRecords extends Component {
     renderConsultationNote(note) {
         const sections = this.parseDoctorNotes(note.doctor_notes);
         const medications = Array.isArray(note.medications) ? note.medications : [];
-
+    
         return h(
             "div",
             {
@@ -374,6 +374,16 @@ export default class PatientRecords extends Component {
                 { class: "dashboard-muted", style: "margin: 0 0 10px; font-size: 0.78rem; font-weight: 600;" },
                 `Consultation · ${this.formatDate(note.booking_date || note.created_at)}`
             ),
+            note.follow_up_date
+                ? h(
+                      "p",
+                      {
+                          style: "margin: 0 0 10px; font-size: 0.8rem; font-weight: 600; color: #b45309; display: flex; align-items: center; gap: 5px;",
+                      },
+                      h("span", {}, "📅"),
+                      `Follow-up due: ${this.formatShortDate(note.follow_up_date)}`
+                  )
+                : null,
             sections.map(section =>
                 h(
                     "div",
