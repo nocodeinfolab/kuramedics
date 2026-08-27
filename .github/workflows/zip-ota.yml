@@ -1,0 +1,37 @@
+name: OTA Bundle Build
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  bundle-www:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Stage web assets into www/
+        run: |
+          mkdir -p www
+          cp -r index.html css js www/
+
+      - name: Zip www/ for OTA upload (index.html at the zip root)
+        run: |
+          cd www
+          zip -r ../yeroscare-www-bundle.zip .
+
+      - name: Upload OTA-ready www bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: yeroscare-www-bundle
+          path: yeroscare-www-bundle.zip
