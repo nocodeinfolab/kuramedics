@@ -117,7 +117,7 @@ export default class DoctorFinancePage extends Component {
     renderHeader() {
         return h(
             "section",
-            { class: "dashboard-header", style: "display: flex; align-items: flex-start; gap: 10px;" },
+            { class: "dashboard-header" },
             h(
                 "button",
                 {
@@ -127,12 +127,8 @@ export default class DoctorFinancePage extends Component {
                 },
                 "← Back to Settings"
             ),
-            h(
-                "div",
-                {},
-                h("p", { class: "dashboard-greeting" }, "Settings"),
-                h("h1", { class: "dashboard-title" }, "Finance")
-            )
+            h("p", { class: "dashboard-greeting" }, "Settings"),
+            h("h1", { class: "dashboard-title" }, "Finance")
         );
     }
 
