@@ -224,6 +224,14 @@ export default class PatientCare extends Component {
             minute: "2-digit",
         });
     }
+    formatShortDate(dateString) {
+        if (!dateString) return "N/A";
+        return new Date(dateString).toLocaleDateString(undefined, {
+            year: "numeric",
+            month: "short",
+            day: "numeric",
+        });
+    }
 
     // ---------- Render ----------
 
@@ -495,7 +503,7 @@ export default class PatientCare extends Component {
 
     renderConsultationNotes(booking) {
         const record = this.recordsByBookingId[booking.id];
-
+    
         if (!record) {
             return h(
                 "div",
@@ -503,16 +511,26 @@ export default class PatientCare extends Component {
                 h("p", { class: "dashboard-muted" }, "No notes have been recorded for this consultation yet.")
             );
         }
-
+    
         const sections = this.parseDoctorNotes(record.doctor_notes);
         const medications = Array.isArray(record.medications) ? record.medications : [];
-
+    
         return h(
             "div",
             {
                 style: "margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--color-line);",
                 onclick: e => e.stopPropagation(),
             },
+            record.follow_up_date
+                ? h(
+                      "p",
+                      {
+                          style: "margin: 0 0 12px; font-size: 0.8rem; font-weight: 600; color: #b45309; display: flex; align-items: center; gap: 5px;",
+                      },
+                      h("span", {}, "📅"),
+                      `Follow-up recommended: ${this.formatShortDate(record.follow_up_date)}`
+                  )
+                : null,
             sections.map(section =>
                 h(
                     "div",
