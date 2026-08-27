@@ -127,7 +127,12 @@ export default class DoctorFinancePage extends Component {
                 },
                 "← Back to Settings"
             ),
-            h("h1", { class: "dashboard-title" }, "Finance")
+            h("h1", { class: "dashboard-title" }, "Finance"),
+            h(
+                "p",
+                { class: "dashboard-subtitle" },
+                "Track your earnings, manage your payout account, and review past transactions."
+            )
         );
     }
 
