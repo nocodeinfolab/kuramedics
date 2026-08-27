@@ -625,7 +625,7 @@
 
 .btn-outline {
     background: transparent;
-    border: 1px solid var(--color-primary-line);
+    border: 2px solid var(--color-primary-line);
     color: var(--color-ink);
 }
 
