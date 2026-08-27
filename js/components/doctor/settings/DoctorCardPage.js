@@ -183,7 +183,7 @@ export default class DoctorCardPage extends Component {
             h(
                 "p",
                 { class: "dashboard-subtitle" },
-                "Download your platform card and share your booking card with patients on WhatsApp and beyond."
+                "Download and share your booking card with patients on WhatsApp and beyond."
             )
         );
     }
