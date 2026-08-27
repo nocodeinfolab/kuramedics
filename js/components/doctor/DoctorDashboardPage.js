@@ -116,7 +116,6 @@ export default class DoctorDashboardPage extends Component {
         this.checkForPaymentReturn();
         this.loadDoctor();
         this.connectSocket();
-        this.loadUnreadMessageCount();
 
         this._doctorPollTimer = setInterval(() => {
             if (this.isAppVisible()) {
@@ -186,27 +185,6 @@ export default class DoctorDashboardPage extends Component {
         }, 6000);
     }
 
-    async loadUnreadMessageCount() {
-
-        try {
-
-            const res = await api.get("/chat/conversations");
-            const payload = res.data || res;
-            const conversations = Array.isArray(payload) ? payload : payload.rows || payload.data || [];
-
-            const total = conversations.reduce((sum, c) => sum + (c.unread_count || 0), 0);
-
-            this.unreadMessageCount = total;
-            this.updateUnreadBadge();
-
-        } catch (error) {
-
-            console.error("Failed to load initial unread message count:", error);
-
-        }
-
-    }
-
     beforeUnmount() {
 
         this.socket?.disconnect();
@@ -234,11 +212,15 @@ export default class DoctorDashboardPage extends Component {
             console.error("Chat socket connection error:", err.message);
         });
 
+        this.socket.on("unread:count", ({ count }) => {
+            this.unreadMessageCount = count;
+            this.updateUnreadBadge();
+        });
+
         this.socket.on("message:new", (message) => {
             if (this._recentlySeenMessageIds.has(message.id)) return;
             this._recentlySeenMessageIds.add(message.id);
 
-            // The doctor is the recipient whenever the patient sent it.
             const isForDoctor = message.sender_role === "patient";
 
             if (isForDoctor) {
@@ -246,12 +228,6 @@ export default class DoctorDashboardPage extends Component {
                 this.updateUnreadBadge();
             }
 
-            // If the Messages tab is already cached/mounted, push the
-            // message straight into it. If the doctor is actively viewing
-            // that exact thread, PatientMessaging-equivalent logic there
-            // will call onMessagesRead(1) right back, netting the badge
-            // to zero change for that message — same pattern as the
-            // patient-side implementation.
             this._tabInstances?.messages?.receiveIncomingMessage?.(message);
         });
 
