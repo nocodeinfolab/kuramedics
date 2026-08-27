@@ -127,7 +127,7 @@ export default class DoctorFinancePage extends Component {
                 },
                 "← Back to Settings"
             ),
-            h("p", { class: "dashboard-greeting" }, "Settings"),
+            
             h("h1", { class: "dashboard-title" }, "Finance")
         );
     }
