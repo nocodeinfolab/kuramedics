@@ -122,10 +122,10 @@ export default class DoctorFinancePage extends Component {
                 "button",
                 {
                     class: "btn btn-outline",
-                    style: "padding: 0.4rem 0.6rem; font-size: 0.8rem; border-radius: 6px; flex-shrink: 0; color: white;",
-                    onclick: () => this.onBack(),
+                    style: "margin-bottom: var(--space-3); color: var(--color-white); border-color: rgba(255,255,255,0.4);",
+                    onclick: () => this.onBack()
                 },
-                "← Back"
+                "← Back to Settings"
             ),
             h(
                 "div",
