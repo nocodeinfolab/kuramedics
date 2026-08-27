@@ -179,8 +179,12 @@ export default class DoctorCardPage extends Component {
                 },
                 "← Back to Settings"
             ),
-            
-            h("h1", { class: "dashboard-title" }, "My Doctor Card")
+            h("h1", { class: "dashboard-title" }, "My Doctor Card"),
+            h(
+                "p",
+                { class: "dashboard-subtitle" },
+                "Download your platform card and share your booking card with patients on WhatsApp and beyond."
+            )
         );
     }
     renderContent() {
