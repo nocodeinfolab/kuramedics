@@ -339,6 +339,7 @@ export default class DoctorQueuePage extends Component {
                     outcome_notes: draftData.outcome_notes || "",
                     plan_notes: draftData.plan_notes || "",
                     follow_up_notes: draftData.follow_up_notes || "",
+                    follow_up_date: (draftData.follow_up_date || "").slice(0, 10),
                     medications: Array.isArray(draftData.medications) ? draftData.medications : []
                 };
             } catch (err) {
@@ -369,6 +370,7 @@ export default class DoctorQueuePage extends Component {
             outcome_notes: "",
             plan_notes: "",
             follow_up_notes: "",
+            follow_up_date: "",
             medications: []
         };
     
@@ -384,6 +386,7 @@ export default class DoctorQueuePage extends Component {
             outcome_notes: "",
             plan_notes: "",
             follow_up_notes: "",
+            follow_up_date: "",
             medications: []
         };
 
@@ -935,7 +938,8 @@ export default class DoctorQueuePage extends Component {
                 raw_notes: "",
                 outcome_notes: "",
                 plan_notes: "",
-                follow_up_notes: ""
+                follow_up_notes: "",
+                follow_up_date: ""
             };
     
             const isSaving = !!this.draftSaving[booking.id];
@@ -1001,6 +1005,14 @@ export default class DoctorQueuePage extends Component {
                         this.setClinicalField(booking.id, "follow_up_notes", e.target.value);
                         autoGrow(e.target);
                     }
+                }),
+                
+                h("label", { style: fieldLabelStyle }, "Follow-up Date"),
+                h("input", {
+                    type: "date",
+                    value: draft.follow_up_date || "",
+                    style: fieldInputStyle,
+                    onchange: e => this.setClinicalField(booking.id, "follow_up_date", e.target.value),
                 }),
     
                 h(
