@@ -35,13 +35,15 @@ export default class DoctorQueuePage extends Component {
         this.errorMessage = "";
         this.successMessage = "";
 
-        this.bookings = [];
-        this.page = 0;
-        this.hasMore = true;
-        this.totalCount = 0;
+        this.tabs = {
+            pending:   { bookings: [], page: 0, hasMore: true, totalCount: 0, loading: true, loadingMore: false },
+            confirmed: { bookings: [], page: 0, hasMore: true, totalCount: 0, loading: true, loadingMore: false },
+            completed: { bookings: [], page: 0, hasMore: true, totalCount: 0, loading: true, loadingMore: false },
+        };
+        this.searchTerm = "";
+        this._searchDebounceTimer = null;
 
         this.activeTab = "pending";
-        this.searchTerm = "";
 
         this.expandedBookingId = null;
         this.expandedAction = null; // 'confirm' | 'suggest' | 'decline' | 'clinical_notes'
@@ -54,53 +56,68 @@ export default class DoctorQueuePage extends Component {
     }
 
     async afterMount() {
-        await this.loadBookings({ reset: true });
+        await this.loadBookings(this.activeTab, { reset: true });
+        
+        ["pending", "confirmed", "completed"]
+            .filter(tab => tab !== this.activeTab)
+            .forEach(tab => this.loadBookings(tab, { reset: true }));
     }
 
     // ---------- Data loading ----------
 
-    async loadBookings({ reset = false } = {}) {
+    async loadBookings(tab, { reset = false } = {}) {
+        const state = this.tabs[tab];
+    
         if (reset) {
-            this.loading = true;
-            this.page = 0;
-            this.bookings = [];
-            this.hasMore = true;
+            state.loading = true;
+            state.page = 0;
+            state.bookings = [];
+            state.hasMore = true;
         } else {
-            this.loadingMore = true;
+            state.loadingMore = true;
         }
         this.errorMessage = "";
         this.update();
-
+    
         try {
-            const nextPage = this.page + 1;
-            const res = await api.get(`/bookings?page=${nextPage}&limit=${PAGE_LIMIT}`);
+            const nextPage = state.page + 1;
+            const params = new URLSearchParams({
+                page: nextPage,
+                limit: PAGE_LIMIT,
+                status: tab,
+            });
+            if (this.searchTerm.trim()) params.set("search", this.searchTerm.trim());
+    
+            const res = await api.get(`/bookings?${params.toString()}`);
             const payload = res.data || res;
             const rows = payload.rows || payload.data || payload.items || [];
             const total = payload.total ?? payload.count ?? rows.length;
-
-            this.bookings = reset ? rows : [...this.bookings, ...rows];
-            this.totalCount = total;
-            this.page = nextPage;
-            this.hasMore = this.bookings.length < total;
+    
+            state.bookings = reset ? rows : [...state.bookings, ...rows];
+            state.totalCount = total;
+            state.page = nextPage;
+            state.hasMore = state.bookings.length < total;
         } catch (error) {
-            console.error("Failed to load bookings:", error);
+            console.error(`Failed to load ${tab} bookings:`, error);
             this.errorMessage = error.message || "Failed to load appointment queue.";
         } finally {
-            this.loading = false;
-            this.loadingMore = false;
+            state.loading = false;
+            state.loadingMore = false;
             this.update();
         }
     }
-
     replaceBookingInList(updatedBooking) {
         if (!updatedBooking?.id) return;
-        this.bookings = this.bookings.map(b =>
+        const state = this.tabs[this.activeTab];
+        state.bookings = state.bookings.map(b =>
             b.id === updatedBooking.id ? { ...b, ...updatedBooking } : b
         );
     }
-
+    
     removeBookingFromList(bookingId) {
-        this.bookings = this.bookings.filter(b => b.id !== bookingId);
+        const state = this.tabs[this.activeTab];
+        state.bookings = state.bookings.filter(b => b.id !== bookingId);
+        state.totalCount = Math.max(0, state.totalCount - 1);
     }
 
     // ---------- Actions ----------
@@ -455,30 +472,24 @@ export default class DoctorQueuePage extends Component {
 
     setSearchTerm(term) {
         this.searchTerm = term;
-        this.update();
+        this.update(); // reflect typing in the input immediately
+    
+        clearTimeout(this._searchDebounceTimer);
+        this._searchDebounceTimer = setTimeout(() => {
+            // Search only needs to hit the tab currently in view.
+            this.loadBookings(this.activeTab, { reset: true });
+        }, 350);
     }
 
     // ---------- Derived data ----------
 
-    getStatusesForTab(tab) {
-        if (tab === "confirmed") return CONFIRMED_STATUSES;
-        if (tab === "completed") return COMPLETED_STATUSES;
-        return PENDING_STATUSES;
-    }
-
-    getFilteredBookings() {
-        const statuses = this.getStatusesForTab(this.activeTab);
-        const term = this.searchTerm.trim().toLowerCase();
-
-        return this.bookings
-            .filter(b => statuses.includes(b.status))
-            .filter(b => !term || (b.patient_name || "").toLowerCase().includes(term))
+    getActiveTabBookings() {
+        return [...this.tabs[this.activeTab].bookings]
             .sort((a, b) => new Date(a.booking_date) - new Date(b.booking_date));
     }
-
+    
     getTabCount(tab) {
-        const statuses = this.getStatusesForTab(tab);
-        return this.bookings.filter(b => statuses.includes(b.status)).length;
+        return this.tabs[tab].totalCount;
     }
 
     // ---------- Reason parsing ----------
@@ -554,7 +565,7 @@ export default class DoctorQueuePage extends Component {
             { class: "dashboard-page queue-page" },
             this.renderHeader(),
             this.renderAlerts(),
-            this.loading
+            this.tabs[this.activeTab].loading
                 ? h(
                       "div",
                       { class: "dashboard-card text-center py-4" },
@@ -669,7 +680,7 @@ export default class DoctorQueuePage extends Component {
     }
 
     renderList() {
-        const filtered = this.getFilteredBookings();
+        const filtered = this.getActiveTabBookings();
 
         if (filtered.length === 0) {
             return h(
@@ -1215,21 +1226,15 @@ export default class DoctorQueuePage extends Component {
     }
 
     renderLoadMore() {
-        if (!this.hasMore) return null;
-
-        return h(
-            "div",
-            { class: "text-center", style: "margin-top: var(--space-2);" },
-            h(
-                "button",
-                {
-                    class: "btn btn-outline",
-                    style: "padding: 0.35rem 0.8rem; font-size: 0.75rem; border-radius: 5px;",
-                    disabled: this.loadingMore,
-                    onclick: () => this.loadBookings({ reset: false }),
-                },
-                this.loadingMore ? "Loading..." : "Load More"
-            )
+        const state = this.tabs[this.activeTab];
+        if (!state.hasMore) return null;
+        return h("div", { class: "text-center", style: "margin-top: var(--space-2);" },
+            h("button", {
+                class: "btn btn-outline",
+                style: "padding: 0.35rem 0.8rem; font-size: 0.75rem; border-radius: 5px;",
+                disabled: state.loadingMore,
+                onclick: () => this.loadBookings(this.activeTab, { reset: false }),
+            }, state.loadingMore ? "Loading..." : "Load More")
         );
     }
 
