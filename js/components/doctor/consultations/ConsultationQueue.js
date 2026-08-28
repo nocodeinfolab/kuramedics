@@ -106,6 +106,19 @@ export default class DoctorQueuePage extends Component {
             this.update();
         }
     }
+    moveBookingBetweenTabs(updatedBooking, fromTab, toTab) {
+        const from = this.tabs[fromTab];
+        const to = this.tabs[toTab];
+    
+        from.bookings = from.bookings.filter(b => b.id !== updatedBooking.id);
+        from.totalCount = Math.max(0, from.totalCount - 1);
+    
+        const destinationAlreadyLoaded = to.bookings.length > 0 || !to.hasMore;
+        if (destinationAlreadyLoaded) {
+            to.bookings = [updatedBooking, ...to.bookings];
+        }
+        to.totalCount += 1;
+    }
     replaceBookingInList(updatedBooking) {
         if (!updatedBooking?.id) return;
         const state = this.tabs[this.activeTab];
@@ -127,15 +140,16 @@ export default class DoctorQueuePage extends Component {
         this.errorMessage = "";
         this.successMessage = "";
         this.update();
-
+    
         try {
             const body = {};
             if (this.draft.date) body.booking_date = new Date(this.draft.date).toISOString();
             if (this.draft.note) body.confirmation_note = this.draft.note;
-
+    
             const res = await api.patch(`/bookings/${booking.id}/confirm`, body);
             const updated = res.data || res;
-            this.replaceBookingInList(updated);
+    
+            this.moveBookingBetweenTabs(updated, "pending", "confirmed");
             this.successMessage = `Appointment with ${booking.patient_name} confirmed.`;
             this.closeActionForm();
         } catch (error) {
@@ -153,19 +167,20 @@ export default class DoctorQueuePage extends Component {
             this.update();
             return;
         }
-
+    
         this.actionLoadingId = booking.id;
         this.errorMessage = "";
         this.successMessage = "";
         this.update();
-
+    
         try {
             const res = await api.patch(`/bookings/${booking.id}/suggest-time`, {
                 booking_date: new Date(this.draft.date).toISOString(),
                 confirmation_note: this.draft.note || undefined,
             });
             const updated = res.data || res;
-            this.replaceBookingInList(updated);
+    
+            this.replaceBookingInList(updated); // still pending group, just updated fields
             this.successMessage = `New time proposed to ${booking.patient_name}.`;
             this.closeActionForm();
         } catch (error) {
@@ -182,13 +197,14 @@ export default class DoctorQueuePage extends Component {
         this.errorMessage = "";
         this.successMessage = "";
         this.update();
-
+    
         try {
             const res = await api.patch(`/bookings/${booking.id}/decline`, {
                 reason: this.draft.note || undefined,
             });
             const updated = res.data || res;
-            this.replaceBookingInList(updated);
+    
+            this.removeBookingFromList(updated.id); // cancelled has no tab — just gone
             this.successMessage = `Appointment request from ${booking.patient_name} declined.`;
             this.closeActionForm();
         } catch (error) {
@@ -209,23 +225,14 @@ export default class DoctorQueuePage extends Component {
         this.update();
     
         try {
-            await api.post("/consultations", {
-                booking_id: booking.id
-            });
+            await api.post("/consultations", { booking_id: booking.id });
     
-            this.replaceBookingInList({ ...booking, status: "completed" });
-    
-            this.successMessage =
-                `Consultation completed for ${booking.patient_name}.`;
-    
+            this.moveBookingBetweenTabs({ ...booking, status: "completed" }, "confirmed", "completed");
+            this.successMessage = `Consultation completed for ${booking.patient_name}.`;
             this.closeActionForm();
-    
         } catch (error) {
             console.error(error);
-    
-            this.errorMessage =
-                error.message || "Failed to complete consultation.";
-    
+            this.errorMessage = error.message || "Failed to complete consultation.";
         } finally {
             this.actionLoadingId = null;
             this.update();
@@ -236,13 +243,12 @@ export default class DoctorQueuePage extends Component {
         this.errorMessage = "";
         this.successMessage = "";
         this.update();
-
+    
         try {
-            const res = await api.patch(`/bookings/${booking.id}/status`, {
-                status: "completed",
-            });
+            const res = await api.patch(`/bookings/${booking.id}/status`, { status: "completed" });
             const updated = res.data || res;
-            this.replaceBookingInList(updated);
+    
+            this.moveBookingBetweenTabs(updated, "confirmed", "completed");
             this.successMessage = `Marked appointment with ${booking.patient_name} as completed.`;
         } catch (error) {
             console.error("Failed to mark booking completed:", error);
@@ -286,10 +292,10 @@ export default class DoctorQueuePage extends Component {
         this.errorMessage = "";
         this.successMessage = "";
         this.update();
-
+    
         try {
             await api.patch(`/bookings/${booking.id}/archive`, {});
-            this.removeBookingFromList(booking.id);
+            this.removeBookingFromList(booking.id); // active tab is "completed" when this fires
             this.successMessage = `Archived appointment with ${booking.patient_name}.`;
         } catch (error) {
             console.error("Failed to archive booking:", error);
@@ -301,22 +307,22 @@ export default class DoctorQueuePage extends Component {
     }
 
     async handleArchiveAllCompleted() {
-        const completedIds = this.bookings
-            .filter(b => COMPLETED_STATUSES.includes(b.status))
-            .map(b => b.id);
-
-        if (completedIds.length === 0) return;
-
+        const state = this.tabs.completed;
+        if (state.bookings.length === 0) return;
+    
         this.archivingAll = true;
         this.errorMessage = "";
         this.successMessage = "";
         this.update();
-
+    
         try {
             const res = await api.patch("/bookings/archive-completed", { all: true });
             const result = res.data || res;
-            this.bookings = this.bookings.filter(b => !COMPLETED_STATUSES.includes(b.status));
-            this.successMessage = `Archived ${result.archived_count ?? completedIds.length} completed appointment(s).`;
+    
+            const archivedCount = result.archived_count ?? state.bookings.length;
+            state.bookings = [];
+            state.totalCount = Math.max(0, state.totalCount - archivedCount);
+            this.successMessage = `Archived ${archivedCount} completed appointment(s).`;
         } catch (error) {
             console.error("Failed to archive completed bookings:", error);
             this.errorMessage = error.message || "Failed to archive completed appointments.";
@@ -325,7 +331,6 @@ export default class DoctorQueuePage extends Component {
             this.update();
         }
     }
-
     // ---------- Inline form state ----------
 
     async openActionForm(bookingId, action) {
