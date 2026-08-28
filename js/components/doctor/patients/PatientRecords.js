@@ -5,6 +5,8 @@ import { h } from "../../../utils/dom.js";
 import api from "../../../services/api.js";
 
 const SECTION_ORDER = ["Outcome", "Plan", "Follow-up"];
+const PATIENTS_PAGE_LIMIT = 20;
+const NOTES_PAGE_LIMIT = 5;
 
 export default class PatientRecords extends Component {
     constructor(doctor) {
@@ -12,39 +14,76 @@ export default class PatientRecords extends Component {
         this.doctor = doctor ?? {};
 
         this.loading = true;
+        this.loadingMore = false;
         this.errorMessage = "";
 
         this.patients = [];
+        this.page = 0;
+        this.hasMore = true;
+        this.totalCount = 0;
+
         this.searchTerm = "";
+        this._searchDebounceTimer = null;
 
         this.selectedPatientId = null;
+        // Per-patient notes state: { rows: [], page, hasMore, totalCount, loading, loadingMore }
         this.notesByPatient = {};
-        this.notesLoadingId = null;
         this.notesError = "";
     }
 
     async afterMount() {
-        await this.loadPatients();
+        await this.loadPatients({ reset: true });
     }
 
     // ---------- Data loading ----------
 
-    async loadPatients() {
-        this.loading = true;
+    async loadPatients({ reset = false } = {}) {
+        if (reset) {
+            this.loading = true;
+            this.page = 0;
+            this.patients = [];
+            this.hasMore = true;
+        } else {
+            this.loadingMore = true;
+        }
         this.errorMessage = "";
         this.update();
 
         try {
-            const res = await api.get("/consultations/patients");
+            const nextPage = this.page + 1;
+            const params = new URLSearchParams({
+                page: nextPage,
+                limit: PATIENTS_PAGE_LIMIT,
+            });
+            if (this.searchTerm.trim()) params.set("search", this.searchTerm.trim());
+
+            const res = await api.get(`/consultations/patients?${params.toString()}`);
             const payload = res.data || res;
-            this.patients = Array.isArray(payload) ? payload : payload.rows || payload.data || [];
+            const rows = payload.items || [];
+            const total = payload.pagination?.totalItems ?? rows.length;
+
+            this.patients = reset ? rows : [...this.patients, ...rows];
+            this.totalCount = total;
+            this.page = nextPage;
+            this.hasMore = this.patients.length < total;
         } catch (error) {
             console.error("Failed to load patients:", error);
             this.errorMessage = error.message || "Failed to load patient list.";
         } finally {
             this.loading = false;
+            this.loadingMore = false;
             this.update();
         }
+    }
+
+    setSearchTerm(term) {
+        this.searchTerm = term;
+        this.update(); // reflect typing immediately
+
+        clearTimeout(this._searchDebounceTimer);
+        this._searchDebounceTimer = setTimeout(() => {
+            this.loadPatients({ reset: true });
+        }, 350);
     }
 
     async selectPatient(patientId) {
@@ -58,39 +97,50 @@ export default class PatientRecords extends Component {
         this.notesError = "";
         this.update();
 
-        if (this.notesByPatient[patientId]) return;
+        if (this.notesByPatient[patientId]) return; // already loaded at least once
 
-        this.notesLoadingId = patientId;
+        await this.loadNotesForPatient(patientId, { reset: true });
+    }
+
+    async loadNotesForPatient(patientId, { reset = false } = {}) {
+        const existing = this.notesByPatient[patientId] || {
+            rows: [], page: 0, hasMore: true, totalCount: 0, loading: false, loadingMore: false,
+        };
+
+        if (reset) {
+            existing.loading = true;
+            existing.page = 0;
+            existing.rows = [];
+            existing.hasMore = true;
+        } else {
+            existing.loadingMore = true;
+        }
+        this.notesByPatient[patientId] = existing;
+        this.notesError = "";
         this.update();
 
         try {
-            const res = await api.get(`/consultations/patients/${patientId}/notes`);
+            const nextPage = existing.page + 1;
+            const res = await api.get(
+                `/consultations/patients/${patientId}/notes?page=${nextPage}&limit=${NOTES_PAGE_LIMIT}`
+            );
             const payload = res.data || res;
-            const notes = Array.isArray(payload) ? payload : payload.rows || payload.data || [];
-            this.notesByPatient[patientId] = notes;
+            const rows = payload.items || [];
+            const total = payload.pagination?.totalItems ?? rows.length;
+
+            existing.rows = reset ? rows : [...existing.rows, ...rows];
+            existing.totalCount = total;
+            existing.page = nextPage;
+            existing.hasMore = existing.rows.length < total;
         } catch (error) {
             console.error("Failed to load patient notes:", error);
             this.notesError = error.message || "Failed to load consultation notes.";
         } finally {
-            this.notesLoadingId = null;
+            existing.loading = false;
+            existing.loadingMore = false;
+            this.notesByPatient[patientId] = existing;
             this.update();
         }
-    }
-
-    setSearchTerm(term) {
-        this.searchTerm = term;
-        this.update();
-    }
-
-    // ---------- Derived data ----------
-
-    getFilteredPatients() {
-        const term = this.searchTerm.trim().toLowerCase();
-        if (!term) return this.patients;
-        return this.patients.filter(p =>
-            (p.full_name || "").toLowerCase().includes(term) ||
-            (p.email || "").toLowerCase().includes(term)
-        );
     }
 
     // ---------- Note parsing/formatting ----------
@@ -106,8 +156,6 @@ export default class PatientRecords extends Component {
             sections.push({ title: match[1], body: match[2].trim() });
         }
 
-        // Fallback: header format not detected — show the raw text as a single block
-        // rather than silently showing nothing.
         if (sections.length === 0) {
             return [{ title: "Notes", body: rawText.trim() }];
         }
@@ -199,7 +247,8 @@ export default class PatientRecords extends Component {
             "div",
             { class: "services-list" },
             this.renderSearch(),
-            this.renderList()
+            this.renderList(),
+            this.renderLoadMore()
         );
     }
 
@@ -221,9 +270,7 @@ export default class PatientRecords extends Component {
     }
 
     renderList() {
-        const filtered = this.getFilteredPatients();
-
-        if (filtered.length === 0) {
+        if (this.patients.length === 0) {
             return h(
                 "div",
                 { class: "dashboard-card text-center py-4" },
@@ -240,7 +287,25 @@ export default class PatientRecords extends Component {
         return h(
             "div",
             { class: "services-list" },
-            filtered.map(patient => this.renderPatientCard(patient))
+            this.patients.map(patient => this.renderPatientCard(patient))
+        );
+    }
+
+    renderLoadMore() {
+        if (!this.hasMore) return null;
+        return h(
+            "div",
+            { class: "text-center", style: "margin-top: var(--space-2);" },
+            h(
+                "button",
+                {
+                    class: "btn btn-outline",
+                    style: "padding: 0.35rem 0.8rem; font-size: 0.75rem; border-radius: 5px;",
+                    disabled: this.loadingMore,
+                    onclick: () => this.loadPatients({ reset: false }),
+                },
+                this.loadingMore ? "Loading..." : "Load More"
+            )
         );
     }
 
@@ -326,10 +391,9 @@ export default class PatientRecords extends Component {
     }
 
     renderPatientNotes(patient) {
-        const isLoading = this.notesLoadingId === patient.patient_id;
-        const notes = this.notesByPatient[patient.patient_id];
+        const state = this.notesByPatient[patient.patient_id];
 
-        if (isLoading) {
+        if (!state || state.loading) {
             return h(
                 "div",
                 { style: "margin-top: var(--space-3); padding: 0.85rem;" },
@@ -345,7 +409,7 @@ export default class PatientRecords extends Component {
             );
         }
 
-        if (!notes || notes.length === 0) {
+        if (!state.rows || state.rows.length === 0) {
             return h(
                 "div",
                 { style: "margin-top: var(--space-3); padding: 0.85rem;" },
@@ -356,14 +420,30 @@ export default class PatientRecords extends Component {
         return h(
             "div",
             { style: "margin-top: var(--space-3); display: flex; flex-direction: column; gap: var(--space-3);" },
-            notes.map(note => this.renderConsultationNote(note))
+            state.rows.map(note => this.renderConsultationNote(note)),
+            state.hasMore
+                ? h(
+                      "div",
+                      { class: "text-center" },
+                      h(
+                          "button",
+                          {
+                              class: "btn btn-outline",
+                              style: "padding: 0.35rem 0.8rem; font-size: 0.75rem; border-radius: 5px;",
+                              disabled: state.loadingMore,
+                              onclick: () => this.loadNotesForPatient(patient.patient_id, { reset: false }),
+                          },
+                          state.loadingMore ? "Loading..." : "Load older notes"
+                      )
+                  )
+                : null
         );
     }
 
     renderConsultationNote(note) {
         const sections = this.parseDoctorNotes(note.doctor_notes);
         const medications = Array.isArray(note.medications) ? note.medications : [];
-    
+
         return h(
             "div",
             {
