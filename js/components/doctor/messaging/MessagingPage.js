@@ -609,7 +609,7 @@ export default class MessagingPage extends Component {
                     : this.messages.length === 0
                     ? h("p", { class: "dashboard-muted text-center" }, "No messages yet. Say hello.")
                     : this.messages.map(message => this.renderMessageBubble(message))
-            )
+            ),
             this.renderComposer()
         );
     }
