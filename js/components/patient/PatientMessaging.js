@@ -594,7 +594,10 @@ export default class PatientMessaging extends Component {
                     class: "btn btn-outline",
                     style: "padding: 0.3rem 0.7rem; font-size: 0.74rem; border-radius: 5px;",
                     disabled: this.messagesLoadingOlder,
-                    onclick: () => this.loadOlderMessagesPreservingScroll(),
+                    onclick: () => {
+                        this._justLoadedOlder = true;
+                        this.loadOlderMessages();
+                    },
                 },
                 this.messagesLoadingOlder ? "Loading..." : "Load older messages"
             )
@@ -698,12 +701,30 @@ export default class PatientMessaging extends Component {
 
     update() {
         if (!this.el) return;
+    
+        const threadBody = this.el.querySelector("#patient-chat-thread-body");
+        const prevScrollHeight = threadBody?.scrollHeight ?? 0;
+        const prevScrollTop = threadBody?.scrollTop ?? 0;
+        const prevClientHeight = threadBody?.clientHeight ?? 0;
+        const wasNearBottom = threadBody
+            ? (prevScrollHeight - prevScrollTop - prevClientHeight) < 80
+            : true;
+    
         const newTree = this.render();
         this.el.replaceChildren(...(Array.isArray(newTree) ? newTree : [newTree]).flat());
     
-        if (this.view === "thread" && !this.messagesLoadingOlder) {
-            const threadBody = this.el.querySelector("#patient-chat-thread-body");
-            if (threadBody) threadBody.scrollTop = threadBody.scrollHeight;
+        if (this.view === "thread") {
+            const newThreadBody = this.el.querySelector("#patient-chat-thread-body");
+            if (newThreadBody) {
+                if (this._justLoadedOlder && threadBody) {
+                    newThreadBody.scrollTop = newThreadBody.scrollHeight - prevScrollHeight + prevScrollTop;
+                    this._justLoadedOlder = false;
+                } else if (wasNearBottom) {
+                    newThreadBody.scrollTop = newThreadBody.scrollHeight;
+                } else {
+                    newThreadBody.scrollTop = prevScrollTop;
+                }
+            }
         }
     }
 }
