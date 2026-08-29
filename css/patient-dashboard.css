@@ -428,18 +428,6 @@
     border-radius: 0 0 var(--radius-xl) var(--radius-xl);
   }
 
-  /* gap now owns the spacing — zero out individual margins so they don't stack on top of it */
-  .patient-dashboard .dashboard-greeting {
-    margin: 0;
-  }
-
-  .patient-dashboard .dashboard-title {
-    margin: 0;
-  }
-
-  .patient-dashboard .dashboard-subtitle {
-    margin: 0;
-  }
 
   .patient-dashboard__content {
     padding-top: calc(180px + var(--space-4)); /* header height + breathing room */
