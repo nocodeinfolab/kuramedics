@@ -10,6 +10,10 @@ function getPlugin() {
     return window.Capacitor?.Plugins?.PushNotifications ?? null;
 }
 
+function getPlatform() {
+    return window.Capacitor?.getPlatform?.() ?? "android";
+}
+
 class PushNotificationsService {
 
     constructor() {
@@ -116,7 +120,7 @@ class PushNotificationsService {
 
             await api.post("/notifications/register-device", {
                 token,
-                platform: "android"
+                platform: getPlatform()
             });
 
             this.currentToken = token;
@@ -136,28 +140,21 @@ class PushNotificationsService {
      * that's no longer signed in to this account.
      */
     async unregister() {
-
         if (!isNativePlatform() || !this.currentToken) return;
-
+    
         try {
-
             await api.post("/notifications/unregister-device", {
                 token: this.currentToken
             });
-
             console.log("PushNotifications: device unregistered.");
-
         } catch (error) {
-
             console.error("PushNotifications: failed to unregister device.", error);
-
         } finally {
-
+            const plugin = getPlugin();
+            await plugin?.removeAllListeners();
             this.currentToken = null;
             this.initialized = false;
-
         }
-
     }
 
 }
