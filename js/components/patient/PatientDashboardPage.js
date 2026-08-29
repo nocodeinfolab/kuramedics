@@ -865,7 +865,6 @@ export default class PatientDashboardPage extends Component {
         );
     }
 
-    // ---------- Existing card renderers (unchanged) ----------
 
     renderNextAppointmentCard(appointment) {
         const statusLabel =
@@ -875,9 +874,10 @@ export default class PatientDashboardPage extends Component {
                 reschedule_requested: "New Time Suggested",
                 confirmed: "Confirmed",
             }[appointment.status] || appointment.status;
-
+    
         const badgeColor = appointment.status === "confirmed" ? "#10b981" : "#f59e0b";
-
+        const extraCount = (this.dashboardSummary?.upcoming_appointment_count || 1) - 1;
+    
         return h(
             "div",
             { class: "dashboard-card", style: "padding: 1rem 1.1rem;" },
@@ -901,7 +901,14 @@ export default class PatientDashboardPage extends Component {
                             "p",
                             { class: "dashboard-muted", style: "margin: 0; font-size: 0.85rem;" },
                             this.formatDateTime(appointment.booking_date)
-                        )
+                        ),
+                        extraCount > 0
+                            ? h(
+                                  "p",
+                                  { class: "dashboard-muted", style: "margin: 4px 0 0; font-size: 0.78rem;" },
+                                  `+${extraCount} more upcoming`
+                              )
+                            : null
                     )
                 ),
                 h(
