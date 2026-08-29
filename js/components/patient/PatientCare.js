@@ -26,10 +26,16 @@ export default class PatientCare extends Component {
         this.onOpenConversation = onOpenConversation;
 
         this.loading = true;
+        this.loadingMore = false;
         this.errorMessage = "";
 
         this.bookings = [];
         this.recordsByBookingId = {};
+        this.page = 0;
+        this.hasMore = true;
+        this.totalCount = 0;
+
+        this.tabCounts = { upcoming: 0, confirmed: 0, completed: 0 };
 
         this.activeTab = initialTab;
         this.expandedBookingId = null;
@@ -39,43 +45,99 @@ export default class PatientCare extends Component {
     }
 
     async afterMount() {
-        await this.loadData();
+        await Promise.all([
+            this.loadTabCounts(),
+            this.loadBookingsForTab(this.activeTab, { reset: true }),
+        ]);
     }
-    
-    
+
     // ---------- Data loading ----------
 
-    async loadData({ silent = false } = {}) {
-        if (!silent) {
-            this.loading = true;
-            this.errorMessage = "";
+    async loadTabCounts() {
+        try {
+            const res = await api.get("/bookings/counts");
+            this.tabCounts = res.data || res;
             this.update();
+        } catch (error) {
+            console.error("Failed to load booking counts:", error);
+            // Non-critical — tab labels just won't show counts. List still works.
         }
+    }
+
+    getStatusesForTab(tab) {
+        if (tab === "confirmed") return CONFIRMED_STATUSES;
+        if (tab === "completed") return COMPLETED_STATUSES;
+        return PENDING_STATUSES;
+    }
+
+    async loadBookingsForTab(tab, { reset = false } = {}) {
+        const requestId = ++(this._loadRequestId || (this._loadRequestId = 0));
+
+        if (reset) {
+            this.loading = true;
+            this.page = 0;
+            this.bookings = [];
+            this.hasMore = true;
+            this.errorMessage = "";
+        } else {
+            this.loadingMore = true;
+        }
+        this.update();
 
         try {
-            const [bookingsRes, recordsRes] = await Promise.all([
-                api.get("/bookings?page=1&limit=50"),
-                api.get("/consultations/my-records"),
-            ]);
-
-            const bookingsPayload = bookingsRes.data || bookingsRes;
-            this.bookings = bookingsPayload.rows || bookingsPayload.data || bookingsPayload.items || [];
-
-            const recordsPayload = recordsRes.data || recordsRes;
-            const records = Array.isArray(recordsPayload) ? recordsPayload : recordsPayload.rows || recordsPayload.data || [];
-
-            this.recordsByBookingId = {};
-            records.forEach(record => {
-                this.recordsByBookingId[record.booking_id] = record;
+            const statuses = this.getStatusesForTab(tab);
+            const nextPage = this.page + 1;
+            const params = new URLSearchParams({
+                status: statuses.join(","),
+                page: String(nextPage),
+                limit: "20",
             });
+
+            const res = await api.get(`/bookings?${params.toString()}`);
+
+            if (requestId !== this._loadRequestId) return; // a newer tab switch superseded this
+
+            const payload = res.data || res;
+            const rows = payload.rows || payload.data || [];
+            const total = payload.total ?? rows.length;
+
+            this.bookings = reset ? rows : [...this.bookings, ...rows];
+            this.totalCount = total;
+            this.page = nextPage;
+            this.hasMore = this.bookings.length < total;
+
+            // Only fetch consultation notes for completed bookings actually on screen
+            if (tab === "completed" && rows.length > 0) {
+                await this.loadRecordsForBookings(rows.map(b => b.id));
+            }
 
             this._lastFetchedAt = Date.now();
         } catch (error) {
-            console.error("Failed to load care history:", error);
-            if (!silent) this.errorMessage = error.message || "Failed to load your appointments.";
+            if (requestId !== this._loadRequestId) return;
+            console.error("Failed to load bookings:", error);
+            this.errorMessage = error.message || "Failed to load your appointments.";
         } finally {
-            if (!silent) this.loading = false;
-            this.update();
+            if (requestId === this._loadRequestId) {
+                this.loading = false;
+                this.loadingMore = false;
+                this.update();
+            }
+        }
+    }
+
+    async loadRecordsForBookings(bookingIds) {
+        try {
+            const params = new URLSearchParams({ booking_ids: bookingIds.join(",") });
+            const res = await api.get(`/consultations/my-records?${params.toString()}`);
+            const payload = res.data || res;
+            const records = Array.isArray(payload) ? payload : payload.rows || payload.data || [];
+
+            records.forEach(record => {
+                this.recordsByBookingId[record.booking_id] = record;
+            });
+        } catch (error) {
+            console.error("Failed to load consultation records:", error);
+            // Non-critical for now — notes just show "not loaded" state per card
         }
     }
 
@@ -89,7 +151,11 @@ export default class PatientCare extends Component {
         if (this.activeTab === tab) return;
         this.activeTab = tab;
         this.expandedBookingId = null;
-        this.update();
+        this.loadBookingsForTab(tab, { reset: true });
+    }
+
+    loadMore() {
+        this.loadBookingsForTab(this.activeTab, { reset: false });
     }
 
     toggleBooking(bookingId) {
@@ -302,31 +368,46 @@ export default class PatientCare extends Component {
                         style: "padding: 0.42rem 0.8rem; font-size: 0.8rem; border-radius: 6px; white-space: nowrap; flex-shrink: 0;",
                         onclick: () => this.setTab(tab.key),
                     },
-                    `${tab.label} (${this.getTabCount(tab.key)})`
+                    `${tab.label} (${this.tabCounts[tab.key] ?? 0})`
                 )
             )
         );
     }
 
     renderList() {
-        const filtered = this.getFilteredBookings();
-
-        if (filtered.length === 0) {
+        // this.bookings IS the current tab's data now — no more in-memory filtering
+        if (this.bookings.length === 0) {
             return h(
                 "div",
                 { class: "dashboard-card text-center py-4" },
-                h(
-                    "p",
-                    { class: "dashboard-muted" },
-                    `No ${this.activeTab} appointments right now.`
-                )
+                h("p", { class: "dashboard-muted" }, `No ${this.activeTab} appointments right now.`)
             );
         }
 
         return h(
             "div",
             { class: "services-list" },
-            filtered.map(booking => this.renderBookingCard(booking))
+            this.bookings.map(booking => this.renderBookingCard(booking)),
+            this.renderLoadMore()
+        );
+    }
+
+    renderLoadMore() {
+        if (!this.hasMore || this.loading) return null;
+
+        return h(
+            "div",
+            { class: "text-center", style: "margin-top: var(--space-2);" },
+            h(
+                "button",
+                {
+                    class: "btn btn-outline",
+                    style: "padding: 0.35rem 0.8rem; font-size: 0.75rem; border-radius: 5px;",
+                    disabled: this.loadingMore,
+                    onclick: () => this.loadMore(),
+                },
+                this.loadingMore ? "Loading..." : "Load More"
+            )
         );
     }
 
