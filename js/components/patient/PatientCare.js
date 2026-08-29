@@ -71,9 +71,8 @@ export default class PatientCare extends Component {
     }
 
     async loadBookingsForTab(tab, { reset = false } = {}) {
-        this._loadRequestId = (this._loadRequestId || 0) + 1;
-        const requestId = this._loadRequestId;
-
+        const requestId = ++(this._loadRequestId || (this._loadRequestId = 0));
+    
         if (reset) {
             this.loading = true;
             this.page = 0;
@@ -84,7 +83,7 @@ export default class PatientCare extends Component {
             this.loadingMore = true;
         }
         this.update();
-
+    
         try {
             const statuses = this.getStatusesForTab(tab);
             const nextPage = this.page + 1;
@@ -93,25 +92,24 @@ export default class PatientCare extends Component {
                 page: String(nextPage),
                 limit: "20",
             });
-
+    
             const res = await api.get(`/bookings?${params.toString()}`);
-
-            if (requestId !== this._loadRequestId) return; // a newer tab switch superseded this
-
+    
+            if (requestId !== this._loadRequestId) return;
+    
             const payload = res.data || res;
-            const rows = payload.rows || payload.data || [];
-            const total = payload.total ?? rows.length;
-
+            const rows = payload.items || payload.rows || payload.data || [];
+            const pagination = payload.pagination || {};
+    
             this.bookings = reset ? rows : [...this.bookings, ...rows];
-            this.totalCount = total;
-            this.page = nextPage;
-            this.hasMore = this.bookings.length < total;
-
-            // Only fetch consultation notes for completed bookings actually on screen
+            this.totalCount = pagination.totalItems ?? rows.length;
+            this.page = pagination.currentPage ?? nextPage;
+            this.hasMore = pagination.hasNextPage ?? (this.bookings.length < this.totalCount);
+    
             if (tab === "completed" && rows.length > 0) {
                 await this.loadRecordsForBookings(rows.map(b => b.id));
             }
-
+    
             this._lastFetchedAt = Date.now();
         } catch (error) {
             if (requestId !== this._loadRequestId) return;
@@ -125,7 +123,6 @@ export default class PatientCare extends Component {
             }
         }
     }
-
     async loadRecordsForBookings(bookingIds) {
         try {
             const params = new URLSearchParams({ booking_ids: bookingIds.join(",") });
