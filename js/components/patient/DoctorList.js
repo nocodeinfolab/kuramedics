@@ -54,6 +54,13 @@ export default class DoctorList extends Component {
             // Non-critical — the dropdown just won't populate. Doctor list still works.
         }
     }
+    truncateBioForLines(bio, approxCharsPerLine = 45, lines = 5) {
+        if (!bio) return "";
+        const maxChars = approxCharsPerLine * lines;
+        if (bio.length <= maxChars) return bio;
+        // trim a bit further to leave room for the "See more" text itself
+        return bio.slice(0, maxChars - 15).trimEnd() + "… ";
+    }
 
     async loadDoctors({ reset = false } = {}) {
         if (reset) {
@@ -307,8 +314,13 @@ export default class DoctorList extends Component {
                     doctor.bio
                         ? h(
                               "p",
-                              { style: "margin: 8px 0 0; font-size: 0.84rem; line-height: 1.45; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical;" },
-                              doctor.bio
+                              { style: "margin: 8px 0 0; font-size: 0.84rem; line-height: 1.45;" },
+                              this.truncateBioForLines(doctor.bio),
+                              h(
+                                  "span",
+                                  { style: "color: var(--color-primary, #0284c7); font-weight: 600; white-space: nowrap;" },
+                                  doctor.bio.length > (45 * 5) ? "See more" : ""
+                              )
                           )
                         : null
                 )
