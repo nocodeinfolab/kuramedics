@@ -133,7 +133,7 @@ export default class DoctorProfilePage extends Component {
             h(
                 "div",
                 {
-                    style: "margin-bottom: var(--space-2);"
+                    style: "display: flex; justify-content: center; margin-bottom: var(--space-2);"
                 },
                 h(
                     "span",
