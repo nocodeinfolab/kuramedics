@@ -29,13 +29,16 @@ export default class PatientMessaging extends Component {
         this.totalCount = 0;
         this.searchTerm = "";
     
-        this.view = "list"; // "list" | "thread"
+        this.view = "list";
         this.activeConversationId = null;
         this.activeConversation = null;
     
         this.messages = [];
         this.messagesLoading = false;
+        this.messagesLoadingOlder = false;
         this.messagesError = "";
+        this.messagesPage = 0;
+        this.hasMoreMessages = true;
     
         this.messageDraft = "";
         this.sending = false;
@@ -105,17 +108,38 @@ export default class PatientMessaging extends Component {
         this.loadConversations({ reset: false });
     }
 
-    async loadMessages(conversationId, { silent = false } = {}) {
-        if (!silent) {
+    async loadMessages(conversationId, { silent = false, loadOlder = false } = {}) {
+        if (loadOlder) {
+            this.messagesLoadingOlder = true;
+        } else if (!silent) {
             this.messagesLoading = true;
             this.messagesError = "";
-            this.update();
+            this.messagesPage = 0;
+            this.hasMoreMessages = true;
         }
-
+        this.update();
+    
         try {
-            const res = await api.get(`/chat/conversations/${conversationId}/messages`);
+            const nextPage = loadOlder ? this.messagesPage + 1 : 1;
+            const params = new URLSearchParams({
+                page: String(nextPage),
+                limit: "30",
+            });
+    
+            const res = await api.get(`/chat/conversations/${conversationId}/messages?${params.toString()}`);
             const payload = res.data || res;
-            this.messages = Array.isArray(payload) ? payload : payload.rows || payload.data || [];
+            const rows = payload.items || payload.rows || payload.data || [];
+            const pagination = payload.pagination || {};
+    
+            if (loadOlder) {
+                // Prepend older messages above the currently loaded ones
+                this.messages = [...rows, ...this.messages];
+            } else {
+                this.messages = rows;
+            }
+    
+            this.messagesPage = pagination.currentPage ?? nextPage;
+            this.hasMoreMessages = pagination.hasNextPage ?? false;
         } catch (error) {
             console.error("Failed to load messages:", error);
             if (!silent) {
@@ -123,8 +147,14 @@ export default class PatientMessaging extends Component {
             }
         } finally {
             this.messagesLoading = false;
+            this.messagesLoadingOlder = false;
             this.update();
         }
+    }
+    
+    loadOlderMessages() {
+        if (!this.activeConversationId || this.messagesLoadingOlder || !this.hasMoreMessages) return;
+        this.loadMessages(this.activeConversationId, { loadOlder: true });
     }
 
     // ---------- Thread navigation ----------
@@ -134,6 +164,8 @@ export default class PatientMessaging extends Component {
         this.activeConversationId = conversation.id;
         this.activeConversation = conversation;
         this.messages = [];
+        this.messagesPage = 0;
+        this.hasMoreMessages = true;
         this.messageDraft = "";
         this.update();
     
@@ -525,12 +557,50 @@ export default class PatientMessaging extends Component {
                     ? h("p", { class: "dashboard-muted text-center" }, "Loading conversation...")
                     : this.messages.length === 0
                     ? h("p", { class: "dashboard-muted text-center" }, "No messages yet. Say hello.")
-                    : this.messages.map(message => this.renderMessageBubble(message))
+                    : [
+                          this.renderLoadOlderButton(),
+                          ...this.messages.map(message => this.renderMessageBubble(message)),
+                      ]
             ),
             this.renderComposer()
         );
     }
-
+    
+    renderLoadOlderButton() {
+        if (!this.hasMoreMessages) return null;
+    
+        return h(
+            "div",
+            { class: "text-center", style: "margin-bottom: 8px;" },
+            h(
+                "button",
+                {
+                    class: "btn btn-outline",
+                    style: "padding: 0.3rem 0.7rem; font-size: 0.74rem; border-radius: 5px;",
+                    disabled: this.messagesLoadingOlder,
+                    onclick: () => this.loadOlderMessagesPreservingScroll(),
+                },
+                this.messagesLoadingOlder ? "Loading..." : "Load older messages"
+            )
+        );
+    }
+    
+    async loadOlderMessagesPreservingScroll() {
+        const threadBody = this.el?.querySelector("#patient-chat-thread-body");
+        const previousScrollHeight = threadBody?.scrollHeight || 0;
+    
+        await this.loadOlderMessages();
+    
+        // After the new (taller) content renders, restore the user's visual position
+        // by shifting scrollTop by exactly how much content was added above it.
+        requestAnimationFrame(() => {
+            const updatedThreadBody = this.el?.querySelector("#patient-chat-thread-body");
+            if (updatedThreadBody) {
+                const newScrollHeight = updatedThreadBody.scrollHeight;
+                updatedThreadBody.scrollTop = newScrollHeight - previousScrollHeight;
+            }
+        });
+    }
     renderThreadStatusBar() {
         const conversation = this.activeConversation || {};
         if (conversation.status === "open") return null;
@@ -614,8 +684,8 @@ export default class PatientMessaging extends Component {
         if (!this.el) return;
         const newTree = this.render();
         this.el.replaceChildren(...(Array.isArray(newTree) ? newTree : [newTree]).flat());
-
-        if (this.view === "thread") {
+    
+        if (this.view === "thread" && !this.messagesLoadingOlder) {
             const threadBody = this.el.querySelector("#patient-chat-thread-body");
             if (threadBody) threadBody.scrollTop = threadBody.scrollHeight;
         }
