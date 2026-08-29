@@ -3,6 +3,7 @@
 import { Component } from "../../core/component.js";
 import { h } from "../../utils/dom.js";
 import api from "../../services/api.js";
+import pushNotifications from "../../services/pushNotifications.js";
 
 const GENDER_OPTIONS = [
     { value: "female", label: "Female" },
