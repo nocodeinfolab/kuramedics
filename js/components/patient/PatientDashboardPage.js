@@ -289,20 +289,40 @@ export default class PatientDashboardPage extends Component {
 
     async loadPatient() {
         this.loading = true;
+        this.dashboardLoading = true; // start this true immediately, since we're firing the request now
         this.update();
-
+    
+        // Fire immediately, in parallel with the profile call.
+        // .catch(() => null) so a failure here never rejects and blocks profile handling below.
+        const summaryPromise = this.fetchDashboardSummary().catch(error => {
+            console.error("Failed to load dashboard summary:", error);
+            return null;
+        });
+    
         try {
             const res = await api.get("/patient-profile/me");
             const profile = res.data || res;
-
+    
             this.patient = profile;
             this.needsOnboarding = REQUIRED_TRIAGE_FIELDS.some(field => !profile?.[field]);
-
+    
             if (!this.needsOnboarding) {
-                await this.loadDashboardSummary();
+                const summaryRes = await summaryPromise; // almost certainly already resolved by now
+    
+                if (summaryRes) {
+                    this.applyDashboardSummary(summaryRes);
+                } else {
+                    this.dashboardLoading = false;
+                    this.dashboardError = "Failed to load your dashboard.";
+                }
+    
                 this.consumePendingBooking();
+            } else {
+                // Onboarding path: we deliberately ignore summaryPromise's result.
+                // Nothing to do here — dashboardLoading just stays irrelevant until
+                // the patient completes onboarding and loadDashboardSummary() runs for real.
             }
-
+    
             if (this.needsOnboarding) {
                 this.onboardingDraft = {
                     date_of_birth: profile?.date_of_birth || "",
@@ -314,18 +334,16 @@ export default class PatientDashboardPage extends Component {
             }
         } catch (error) {
             console.error("Failed to load patient profile:", error);
-            // Treat as needing onboarding rather than dead-ending the page
             this.needsOnboarding = true;
         } finally {
             this.loading = false;
             this.update();
-
+    
             if (!this.needsOnboarding) {
                 this.updatePage();
             }
         }
     }
-
     consumePendingBooking() {
         const pendingDoctorId = localStorage.getItem("pendingBookingDoctorId");
         if (!pendingDoctorId) return;
@@ -337,24 +355,32 @@ export default class PatientDashboardPage extends Component {
 
     // ---------- Onboarding ----------
 
+    fetchDashboardSummary() {
+        return api.get("/patient/dashboard/summary");
+    }
+    
+    applyDashboardSummary(res) {
+        this.dashboardSummary = res.data || res;
+        this.dashboardLoading = false;
+        this.dashboardError = "";
+        this.update();
+    }
+    
     async loadDashboardSummary() {
         this.dashboardLoading = true;
         this.dashboardError = "";
         this.update();
-
+    
         try {
-            const res = await api.get("/patient/dashboard/summary");
-            this.dashboardSummary = res.data || res;
+            const res = await this.fetchDashboardSummary();
+            this.applyDashboardSummary(res);
         } catch (error) {
             console.error("Failed to load dashboard summary:", error);
             this.dashboardError = error.message || "Failed to load your dashboard.";
-        } finally {
             this.dashboardLoading = false;
             this.update();
         }
     }
-    
-    // ---------- Onboarding ----------
 
     setOnboardingField(field, value) {
         this.onboardingDraft = { ...this.onboardingDraft, [field]: value };
