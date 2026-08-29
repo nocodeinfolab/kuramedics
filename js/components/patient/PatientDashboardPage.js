@@ -957,6 +957,8 @@ export default class PatientDashboardPage extends Component {
     }
 
     renderRecentConsultationCard(consultation) {
+        const extraVisits = (this.dashboardSummary?.total_consultation_count || 1) - 1;
+    
         return h(
             "div",
             { class: "dashboard-card", style: "padding: 1rem 1.1rem;" },
@@ -974,9 +976,16 @@ export default class PatientDashboardPage extends Component {
                     h("p", { class: "dashboard-muted", style: "margin: 0 0 4px; font-size: 0.78rem;" }, "Recent Visit"),
                     h(
                         "p",
-                        { style: "margin: 0 0 10px; font-size: 0.9rem;" },
+                        { style: "margin: 0 0 4px; font-size: 0.9rem;" },
                         `Your consultation with ${consultation.doctor_name || "your doctor"} is complete.`
                     ),
+                    extraVisits > 0
+                        ? h(
+                              "p",
+                              { class: "dashboard-muted", style: "margin: 0 0 10px; font-size: 0.78rem;" },
+                              `+${extraVisits} more past visit${extraVisits === 1 ? "" : "s"}`
+                          )
+                        : h("div", { style: "margin-bottom: 10px;" }), // keep spacing consistent before the button
                     h(
                         "button",
                         {
