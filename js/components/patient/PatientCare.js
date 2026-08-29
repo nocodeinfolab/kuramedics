@@ -42,6 +42,7 @@ export default class PatientCare extends Component {
         this.messageLoadingId = null;
 
         this._lastFetchedAt = null;
+        this._loadRequestId = 0;
     }
 
     async afterMount() {
@@ -64,14 +65,16 @@ export default class PatientCare extends Component {
         }
     }
 
-    getStatusesForTab(tab) {
-        if (tab === "confirmed") return CONFIRMED_STATUSES;
-        if (tab === "completed") return COMPLETED_STATUSES;
-        return PENDING_STATUSES;
+    getBackendStatusKey(tab) {
+        // Maps this component's tab names to the backend's STATUS_GROUPS keys
+        if (tab === "upcoming") return "pending";
+        if (tab === "confirmed") return "confirmed";
+        if (tab === "completed") return "completed";
+        return "pending";
     }
 
     async loadBookingsForTab(tab, { reset = false } = {}) {
-        const requestId = ++(this._loadRequestId || (this._loadRequestId = 0));
+        const requestId = ++this._loadRequestId;
     
         if (reset) {
             this.loading = true;
@@ -85,10 +88,10 @@ export default class PatientCare extends Component {
         this.update();
     
         try {
-            const statuses = this.getStatusesForTab(tab);
+            const statusKey = this.getBackendStatusKey(tab);
             const nextPage = this.page + 1;
             const params = new URLSearchParams({
-                status: statuses.join(","),
+                status: statusKey, // "pending", "confirmed", or "completed" — matches STATUS_GROUPS key
                 page: String(nextPage),
                 limit: "20",
             });
@@ -224,28 +227,6 @@ export default class PatientCare extends Component {
             this.update();
         }
     }
-
-    // ---------- Derived data ----------
-
-    getStatusesForTab(tab) {
-        if (tab === "confirmed") return CONFIRMED_STATUSES;
-        if (tab === "completed") return COMPLETED_STATUSES;
-        return PENDING_STATUSES;
-    }
-
-    getFilteredBookings() {
-        const statuses = this.getStatusesForTab(this.activeTab);
-        return this.bookings
-            .filter(b => statuses.includes(b.status))
-            .sort((a, b) => new Date(b.booking_date) - new Date(a.booking_date));
-    }
-
-    getTabCount(tab) {
-        const statuses = this.getStatusesForTab(tab);
-        return this.bookings.filter(b => statuses.includes(b.status)).length;
-    }
-
-    // ---------- Note parsing (same approach as doctor-side PatientRecords.js) ----------
 
     parseDoctorNotes(rawText) {
         if (!rawText || typeof rawText !== "string") return [];
