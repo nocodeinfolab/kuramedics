@@ -153,22 +153,6 @@ export default class DoctorProfilePage extends Component {
         return h(
             "div",
             {},
-            h(
-                "div",
-                {
-                    style: "display: flex; justify-content: center; margin-bottom: var(--space-2);"
-                },
-                h(
-                    "span",
-                    {
-                        class: "dashboard-badge",
-                        style: this.profile.verification_status === "verified"
-                            ? "background: #10b981;"
-                            : ""
-                    },
-                    this.formatVerificationStatus(this.profile.verification_status)
-                )
-            ),
     
             h(
                 "div",
