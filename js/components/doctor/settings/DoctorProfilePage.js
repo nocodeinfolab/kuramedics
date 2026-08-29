@@ -95,18 +95,6 @@ export default class DoctorProfilePage extends Component {
                 "p",
                 { class: "dashboard-subtitle" },
                 "Patients see the professional information you provide here."
-            ),
-            h(
-                "div",
-                { class: "dashboard-hero-meta" },
-                h(
-                    "span",
-                    {
-                        class: "dashboard-badge",
-                        style: this.profile.verification_status === "verified" ? "background: #10b981;" : ""
-                    },
-                    this.formatVerificationStatus(this.profile.verification_status)
-                )
             )
         );
     }
@@ -131,46 +119,76 @@ export default class DoctorProfilePage extends Component {
 
     renderAvatarCard() {
         const avatar = this.profile.avatar_url;
-
+    
         const fileInput = h("input", {
             type: "file",
             accept: "image/*",
             style: "display:none",
             onchange: e => this.handleAvatarChange(e)
         });
-
+    
         return h(
             "div",
-            { class: "dashboard-card", style: "display: flex; align-items: center; gap: var(--space-4);" },
-            avatar
-                ? h("img", {
-                      class: "settings-profile-avatar",
-                      src: avatar,
-                      alt: "Doctor Avatar",
-                      style: "width: 80px; height: 80px; border-radius: 50%; object-fit: cover;"
-                  })
-                : h(
-                      "div",
-                      {
-                          class: "settings-profile-avatar settings-profile-avatar--placeholder",
-                          style: "width: 80px; height: 80px; border-radius: 50%; background: var(--color-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: bold;"
-                      },
-                      this.profile.full_name ? this.profile.full_name.charAt(0) : "D"
-                  ),
+            {},
             h(
                 "div",
-                {},
-                fileInput,
+                {
+                    style: "margin-bottom: var(--space-2);"
+                },
                 h(
-                    "button",
+                    "span",
                     {
-                        type: "button",
-                        class: "btn btn-outline",
-                        disabled: this.uploadingAvatar,
-                        onclick: () => fileInput.click()
+                        class: "dashboard-badge",
+                        style: this.profile.verification_status === "verified"
+                            ? "background: #10b981;"
+                            : ""
                     },
-                    this.uploadingAvatar ? h("span", { class: "btn-spinner" }) : null,
-                    this.uploadingAvatar ? "Uploading..." : "Change Photo"
+                    this.formatVerificationStatus(this.profile.verification_status)
+                )
+            ),
+    
+            h(
+                "div",
+                {
+                    class: "dashboard-card",
+                    style: "display: flex; align-items: center; gap: var(--space-4);"
+                },
+                avatar
+                    ? h("img", {
+                          class: "settings-profile-avatar",
+                          src: avatar,
+                          alt: "Doctor Avatar",
+                          style: "width: 80px; height: 80px; border-radius: 50%; object-fit: cover;"
+                      })
+                    : h(
+                          "div",
+                          {
+                              class: "settings-profile-avatar settings-profile-avatar--placeholder",
+                              style: "width: 80px; height: 80px; border-radius: 50%; background: var(--color-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: bold;"
+                          },
+                          this.profile.full_name
+                              ? this.profile.full_name.charAt(0)
+                              : "D"
+                      ),
+                h(
+                    "div",
+                    {},
+                    fileInput,
+                    h(
+                        "button",
+                        {
+                            type: "button",
+                            class: "btn btn-outline",
+                            disabled: this.uploadingAvatar,
+                            onclick: () => fileInput.click()
+                        },
+                        this.uploadingAvatar
+                            ? h("span", { class: "btn-spinner" })
+                            : null,
+                        this.uploadingAvatar
+                            ? "Uploading..."
+                            : "Change Photo"
+                    )
                 )
             )
         );
