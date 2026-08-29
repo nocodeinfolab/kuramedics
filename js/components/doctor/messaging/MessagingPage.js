@@ -11,6 +11,8 @@ const STATUS_LABELS = {
     closed: "Closed",
     archived: "Archived",
 };
+const CONVERSATIONS_PAGE_LIMIT = 20;
+const MESSAGES_PAGE_LIMIT = 30;
 
 export default class MessagingPage extends Component {
     constructor(doctor, socket, onMessagesRead) {
@@ -23,6 +25,17 @@ export default class MessagingPage extends Component {
         this.errorMessage = "";
 
         this.conversations = [];
+        this.convPage = 0;
+        this.convHasMore = true;
+        this.convTotalCount = 0;
+        this.convLoadingMore = false;
+        this._searchDebounceTimer = null;
+        
+        // messages: { rows, page, hasMore, totalCount, loadingOlder }
+        this.messagesPage = 0;
+        this.messagesHasMore = false;
+        this.messagesLoadingOlder = false;
+        
         this.searchTerm = "";
 
         this.view = "list"; // "list" | "thread"
@@ -54,45 +67,72 @@ export default class MessagingPage extends Component {
 
     // ---------- Data loading ----------
 
-    async loadConversations({ silent = false } = {}) {
-        if (!silent) {
-            this.loading = true;
-            this.errorMessage = "";
-            this.update();
+    async loadConversations({ reset = false, silent = false } = {}) {
+        if (reset) {
+            if (!silent) { this.loading = true; this.errorMessage = ""; }
+            this.convPage = 0;
+            this.conversations = [];
+            this.convHasMore = true;
+        } else {
+            this.convLoadingMore = true;
         }
-
+        this.update();
+    
         try {
-            const res = await api.get("/chat/conversations");
+            const nextPage = this.convPage + 1;
+            const params = new URLSearchParams({ page: nextPage, limit: CONVERSATIONS_PAGE_LIMIT });
+            if (this.searchTerm.trim()) params.set("search", this.searchTerm.trim());
+    
+            const res = await api.get(`/chat/conversations?${params.toString()}`);
             const payload = res.data || res;
-            this.conversations = Array.isArray(payload) ? payload : payload.rows || payload.data || [];
+            const rows = payload.items || [];
+            const total = payload.pagination?.totalItems ?? rows.length;
+    
+            this.conversations = reset ? rows : [...this.conversations, ...rows];
+            this.convTotalCount = total;
+            this.convPage = nextPage;
+            this.convHasMore = this.conversations.length < total;
             this._lastFetchedAt = Date.now();
         } catch (error) {
             console.error("Failed to load conversations:", error);
             if (!silent) this.errorMessage = error.message || "Failed to load messages.";
         } finally {
             if (!silent) this.loading = false;
+            this.convLoadingMore = false;
             this.update();
         }
     }
 
-    async loadMessages(conversationId, { silent = false } = {}) {
-        if (!silent) {
+    async loadMessages(conversationId, { silent = false, loadOlder = false } = {}) {
+        if (loadOlder) {
+            this.messagesLoadingOlder = true;
+        } else if (!silent) {
             this.messagesLoading = true;
             this.messagesError = "";
-            this.update();
         }
-
+        this.update();
+    
         try {
-            const res = await api.get(`/chat/conversations/${conversationId}/messages`);
+            const nextPage = loadOlder ? this.messagesPage + 1 : 1;
+            const res = await api.get(
+                `/chat/conversations/${conversationId}/messages?page=${nextPage}&limit=${MESSAGES_PAGE_LIMIT}`
+            );
             const payload = res.data || res;
-            this.messages = Array.isArray(payload) ? payload : payload.rows || payload.data || [];
+            const rows = payload.items || [];
+            const total = payload.pagination?.totalItems ?? rows.length;
+    
+            // rows arrive oldest-first within their page (service reverses each
+            // page already); loading "older" means prepending an earlier page
+            // above what's currently shown.
+            this.messages = loadOlder ? [...rows, ...this.messages] : rows;
+            this.messagesPage = nextPage;
+            this.messagesHasMore = this.messages.length < total;
         } catch (error) {
             console.error("Failed to load messages:", error);
-            if (!silent) {
-                this.messagesError = error.message || "Failed to load conversation.";
-            }
+            if (!silent) this.messagesError = error.message || "Failed to load conversation.";
         } finally {
             this.messagesLoading = false;
+            this.messagesLoadingOlder = false;
             this.update();
         }
     }
@@ -111,22 +151,24 @@ export default class MessagingPage extends Component {
 
     receiveIncomingMessage(message) {
         if (!message || !message.conversation_id) return;
-
+    
         const isActiveThread = this.view === "thread" && this.activeConversationId === message.conversation_id;
         const conversationExists = this.conversations.some(c => c.id === message.conversation_id);
-
+    
         if (isActiveThread) {
             this.addMessageIfNew(message);
             api.patch(`/chat/conversations/${message.conversation_id}/read`, {}).catch(() => {});
             this.onMessagesRead(1);
         }
-
+    
         if (!conversationExists) {
-            
-            this.loadConversations({ silent: true });
+            // Fetch just this one conversation instead of reloading the whole
+            // paginated list — keeps whatever the doctor is currently scrolled
+            // to / searching for untouched.
+            this.fetchAndPrependConversation(message.conversation_id);
             return;
         }
-
+    
         this.conversations = this.conversations.map(c => {
             if (c.id !== message.conversation_id) return c;
             return {
@@ -140,8 +182,22 @@ export default class MessagingPage extends Component {
                     : (c.unread_count || 0) + 1,
             };
         });
-
+    
         this.update();
+    }
+    
+    async fetchAndPrependConversation(conversationId) {
+        try {
+            const res = await api.get(`/chat/conversations/${conversationId}`);
+            const conversation = res.data || res;
+            // Guard against a race where it arrived while we were fetching.
+            if (this.conversations.some(c => c.id === conversationId)) return;
+            this.conversations = [conversation, ...this.conversations];
+            this.convTotalCount += 1;
+            this.update();
+        } catch (error) {
+            console.error("Failed to fetch new conversation:", error);
+        }
     }
     
     isStale(ttlMs = 30_000) {
@@ -159,12 +215,14 @@ export default class MessagingPage extends Component {
         this.activeConversationId = conversation.id;
         this.activeConversation = conversation;
         this.messages = [];
+        this.messagesPage = 0;
+        this.messagesHasMore = false;
         this.messageDraft = "";
         this.update();
-
+    
         this.socket?.emit("conversation:join", { conversationId: conversation.id });
-
-        await this.loadMessages(conversation.id);
+    
+        await this.loadMessages(conversation.id); // page 1, newest N messages
 
         try {
             const previousUnread = conversation.unread_count || 0;
@@ -271,16 +329,11 @@ export default class MessagingPage extends Component {
     setSearchTerm(term) {
         this.searchTerm = term;
         this.update();
-    }
-
-    // ---------- Derived data ----------
-
-    getFilteredConversations() {
-        const term = this.searchTerm.trim().toLowerCase();
-        if (!term) return this.conversations;
-        return this.conversations.filter(c =>
-            (c.patient_name || "").toLowerCase().includes(term)
-        );
+    
+        clearTimeout(this._searchDebounceTimer);
+        this._searchDebounceTimer = setTimeout(() => {
+            this.loadConversations({ reset: true });
+        }, 350);
     }
 
     // ---------- Formatting ----------
@@ -349,8 +402,6 @@ export default class MessagingPage extends Component {
     }
 
     renderConversationList() {
-        const filtered = this.getFilteredConversations();
-
         return h(
             "div",
             { class: "services-list" },
@@ -368,7 +419,7 @@ export default class MessagingPage extends Component {
                     oninput: e => this.setSearchTerm(e.target.value),
                 })
             ),
-            filtered.length === 0
+            this.conversations.length === 0
                 ? h(
                       "div",
                       { class: "dashboard-card text-center py-4" },
@@ -383,8 +434,27 @@ export default class MessagingPage extends Component {
                 : h(
                       "div",
                       { class: "services-list" },
-                      filtered.map(conversation => this.renderConversationCard(conversation))
-                  )
+                      this.conversations.map(conversation => this.renderConversationCard(conversation))
+                  ),
+            this.renderConversationsLoadMore()
+        );
+    }
+    
+    renderConversationsLoadMore() {
+        if (!this.convHasMore) return null;
+        return h(
+            "div",
+            { class: "text-center", style: "margin-top: var(--space-2);" },
+            h(
+                "button",
+                {
+                    class: "btn btn-outline",
+                    style: "padding: 0.35rem 0.8rem; font-size: 0.75rem; border-radius: 5px;",
+                    disabled: this.convLoadingMore,
+                    onclick: () => this.loadConversations({ reset: false }),
+                },
+                this.convLoadingMore ? "Loading..." : "Load more conversations"
+            )
         );
     }
 
@@ -514,16 +584,32 @@ export default class MessagingPage extends Component {
                 : null,
             h(
                 "div",
-                {
-                    id: "chat-thread-body",
-                    style: "flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 10px; -webkit-overflow-scrolling: touch;",
-                },
+                { id: "chat-thread-body", style: "..." },
+                this.messagesHasMore
+                    ? h(
+                          "div",
+                          { class: "text-center" },
+                          h(
+                              "button",
+                              {
+                                  class: "btn btn-outline",
+                                  style: "padding: 0.3rem 0.7rem; font-size: 0.75rem; border-radius: 5px;",
+                                  disabled: this.messagesLoadingOlder,
+                                  onclick: () => {
+                                      this._justLoadedOlder = true;
+                                      this.loadMessages(this.activeConversationId, { loadOlder: true });
+                                  },
+                              },
+                              this.messagesLoadingOlder ? "Loading..." : "Load older messages"
+                          )
+                      )
+                    : null,
                 this.messagesLoading
                     ? h("p", { class: "dashboard-muted text-center" }, "Loading conversation...")
                     : this.messages.length === 0
                     ? h("p", { class: "dashboard-muted text-center" }, "No messages yet. Say hello.")
                     : this.messages.map(message => this.renderMessageBubble(message))
-            ),
+            )
             this.renderComposer()
         );
     }
@@ -625,12 +711,25 @@ export default class MessagingPage extends Component {
 
     update() {
         if (!this.el) return;
+        const threadBody = this.el.querySelector("#chat-thread-body");
+        const prevScrollHeight = threadBody?.scrollHeight;
+        const prevScrollTop = threadBody?.scrollTop;
+    
         const newTree = this.render();
         this.el.replaceChildren(...(Array.isArray(newTree) ? newTree : [newTree]).flat());
-
+    
         if (this.view === "thread") {
-            const threadBody = this.el.querySelector("#chat-thread-body");
-            if (threadBody) threadBody.scrollTop = threadBody.scrollHeight;
+            const newThreadBody = this.el.querySelector("#chat-thread-body");
+            if (newThreadBody) {
+                if (this._justLoadedOlder && threadBody) {
+                    // Preserve reading position: keep the same messages in view
+                    // instead of jumping to bottom when older history is prepended.
+                    newThreadBody.scrollTop = newThreadBody.scrollHeight - prevScrollHeight + prevScrollTop;
+                    this._justLoadedOlder = false;
+                } else {
+                    newThreadBody.scrollTop = newThreadBody.scrollHeight;
+                }
+            }
         }
     }
 }
