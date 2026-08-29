@@ -166,15 +166,22 @@ export default class PatientDashboardPage extends Component {
     
         this.socket.on("message:new", (message) => {
             const isForOtherParticipant = message.sender_role !== "patient";
-    
+        
             if (isForOtherParticipant) {
                 this.dashboardSummary = {
                     ...this.dashboardSummary,
                     unread_message_count: (this.dashboardSummary?.unread_message_count || 0) + 1,
                 };
-                this.update();
+                this.updateUnreadBadge();
+        
+                // Optional, matches the doctor side's own comment/pattern:
+                // only refresh the visible Home tab's "unread" card if it's
+                // actually on screen right now.
+                if (this.activeTab === "home") {
+                    this.updatePage();
+                }
             }
-    
+        
             this._tabInstances?.messages?.receiveIncomingMessage?.(message);
         });
     }
@@ -206,7 +213,8 @@ export default class PatientDashboardPage extends Component {
             ...this.dashboardSummary,
             unread_message_count: Math.max(0, current - count),
         };
-        this.update();
+        this.updateUnreadBadge();
+        if (this.activeTab === "home") this.updatePage();
     }
     renderIncomingCallBanner() {
         const isVoice = this.incomingCall?.consultation_type === "voice_consultation";
@@ -1121,14 +1129,10 @@ export default class PatientDashboardPage extends Component {
                     },
                     h(
                         "span",
-                        { class: "patient-bottom-nav__icon-wrap" },
+                        { class: "patient-bottom-nav__icon-wrap", "data-tab-icon": tab.id },
                         h("span", { class: `icon-${tab.icon} patient-bottom-nav__icon` }),
                         tab.id === "messages" && unreadCount > 0
-                            ? h(
-                                  "span",
-                                  { class: "patient-bottom-nav__badge" },
-                                  unreadCount > 9 ? "9+" : String(unreadCount)
-                              )
+                            ? h("span", { class: "patient-bottom-nav__badge" }, unreadCount > 9 ? "9+" : String(unreadCount))
                             : null
                     ),
                     h("span", { class: "patient-bottom-nav__label" }, tab.label)
@@ -1146,6 +1150,27 @@ export default class PatientDashboardPage extends Component {
             hour: "2-digit",
             minute: "2-digit",
         });
+    }
+    updateUnreadBadge() {
+        if (!this.el) return;
+    
+        const wrap = this.el.querySelector('[data-tab-icon="messages"]');
+        if (!wrap) return;
+    
+        let badge = wrap.querySelector(".patient-bottom-nav__badge");
+        const count = this.dashboardSummary?.unread_message_count || 0;
+    
+        if (count > 0) {
+            const text = count > 9 ? "9+" : String(count);
+            if (!badge) {
+                badge = document.createElement("span");
+                badge.className = "patient-bottom-nav__badge";
+                wrap.appendChild(badge);
+            }
+            badge.textContent = text;
+        } else if (badge) {
+            badge.remove();
+        }
     }
 
     getFirstName(fullName) {
