@@ -126,7 +126,8 @@ export default class DoctorDashboardPage extends Component {
     }
     
     async handlePushNotificationTap(data) {
-        if (data?.type !== "chat_message" || !data.conversation_id) return;
+        const CHAT_NOTIFICATION_TYPES = ["new_message", "result_uploaded"];
+        if (!CHAT_NOTIFICATION_TYPES.includes(data?.type) || !data.conversation_id) return;
     
         try {
             const res = await api.get(`/chat/conversations/${data.conversation_id}`);
