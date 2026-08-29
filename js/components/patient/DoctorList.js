@@ -307,8 +307,14 @@ export default class DoctorList extends Component {
                     doctor.bio
                         ? h(
                               "p",
-                              { style: "margin: 8px 0 0; font-size: 0.84rem; line-height: 1.45; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical;" },
-                              doctor.bio
+                              { style: "margin: 8px 0 0; font-size: 0.84rem; line-height: 1.45; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical;" },
+                              doctor.bio,
+                              " ",
+                              h(
+                                  "span",
+                                  { style: "color: var(--color-primary, #0284c7); font-weight: 600; white-space: nowrap;" },
+                                  "See more"
+                              )
                           )
                         : null
                 )
