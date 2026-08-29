@@ -265,14 +265,20 @@ export default class PatientMessaging extends Component {
         if (!message || !message.conversation_id) return;
     
         const isActiveThread = this.view === "thread" && this.activeConversationId === message.conversation_id;
+        let appendedDirectly = false;
     
         if (isActiveThread) {
-            this.addMessageIfNew(message); 
+            const wasEmpty = this.messages.length === 0;
+            const isNew = this.addMessageIfNew(message);
             api.patch(`/chat/conversations/${message.conversation_id}/read`, {}).catch(() => {});
             this.onMessagesRead(1);
+    
+            if (isNew && !wasEmpty) {
+                this.appendMessageBubbleToThread(message);
+                appendedDirectly = true;
+            }
         }
     
-        // Keep the conversation list preview and unread badge in sync either way
         this.conversations = this.conversations.map(c => {
             if (c.id !== message.conversation_id) return c;
             return {
@@ -287,9 +293,19 @@ export default class PatientMessaging extends Component {
             };
         });
     
-        this.update();
+        if (this.view === "list" || (isActiveThread && !appendedDirectly)) {
+            this.update();
+        }
     }
-
+    
+    appendMessageBubbleToThread(message) {
+        const threadBody = this.el?.querySelector("#patient-chat-thread-body");
+        if (!threadBody) return;
+    
+        const bubbleNode = this.renderMessageBubble(message);
+        threadBody.appendChild(bubbleNode);
+        threadBody.scrollTop = threadBody.scrollHeight;
+    }
     // ---------- Message list helpers ----------
 
     addMessageIfNew(message) {
@@ -513,7 +529,7 @@ export default class PatientMessaging extends Component {
                 "button",
                 {
                     class: "btn btn-outline",
-                    style: "padding: 0.4rem 0.6rem; font-size: 0.8rem; border-radius: 6px; flex-shrink: 0;",
+                    style: "padding: 0.4rem 0.6rem; font-size: 0.8rem; border-radius: 6px; flex-shrink: 0; color: white;",
                     onclick: () => this.closeThread(),
                 },
                 "← Back"
