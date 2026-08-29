@@ -14,6 +14,7 @@ import DoctorFinancePage from "./settings/DoctorFinancePage.js";
 import DoctorSubscriptionPage from "./settings/DoctorSubscriptionPage.js";
 import DoctorCardPage from "./settings/DoctorCardPage.js";
 import api from "../../services/api.js";
+import pushNotifications from "../../services/pushNotifications.js";
 
 // Loaded via <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
 // in index.html — `io` is a global, not an ES module import, since this is a
@@ -111,18 +112,34 @@ export default class DoctorDashboardPage extends Component {
     }
 
     afterMount() {
-
         console.log("DoctorDashboardPage: afterMount()");
         this.checkForPaymentReturn();
         this.loadDoctor();
         this.connectSocket();
-
+        pushNotifications.init((data) => this.handlePushNotificationTap(data));
+    
         this._doctorPollTimer = setInterval(() => {
             if (this.isAppVisible()) {
                 this.loadDoctor({ silent: true });
             }
         }, 60000);
-
+    }
+    
+    async handlePushNotificationTap(data) {
+        if (data?.type !== "chat_message" || !data.conversation_id) return;
+    
+        try {
+            const res = await api.get(`/chat/conversations/${data.conversation_id}`);
+            const conversation = res.data || res;
+    
+            this.activeTab = "messages";
+            this.pendingConversation = conversation;
+            this.updatePage();
+        } catch (error) {
+            console.error("Failed to open conversation from push notification:", error);
+            this.activeTab = "messages";
+            this.updatePage();
+        }
     }
 
     isAppVisible() {
