@@ -93,9 +93,16 @@ export default class DoctorProfilePage extends Component {
             h(
                 "div",
                 {
-                    style: "display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);"
+                    style: "display: flex; align-items: center; gap: var(--space-3);"
                 },
-                h("h1", { class: "dashboard-title", style: "margin: 0;" }, "Doctor Profile"),
+                h(
+                    "h1",
+                    {
+                        class: "dashboard-title",
+                        style: "margin: 0;"
+                    },
+                    "Doctor Profile"
+                ),
                 h(
                     "span",
                     {
