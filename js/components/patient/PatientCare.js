@@ -71,7 +71,8 @@ export default class PatientCare extends Component {
     }
 
     async loadBookingsForTab(tab, { reset = false } = {}) {
-        const requestId = ++(this._loadRequestId || (this._loadRequestId = 0));
+        this._loadRequestId = (this._loadRequestId || 0) + 1;
+        const requestId = this._loadRequestId;
 
         if (reset) {
             this.loading = true;
