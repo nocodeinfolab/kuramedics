@@ -90,7 +90,23 @@ export default class DoctorProfilePage extends Component {
                 },
                 "← Back to Settings"
             ),
-            h("h1", { class: "dashboard-title" }, "Doctor Profile"),
+            h(
+                "div",
+                {
+                    style: "display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);"
+                },
+                h("h1", { class: "dashboard-title", style: "margin: 0;" }, "Doctor Profile"),
+                h(
+                    "span",
+                    {
+                        class: "dashboard-badge",
+                        style: this.profile.verification_status === "verified"
+                            ? "background: #10b981;"
+                            : ""
+                    },
+                    this.formatVerificationStatus(this.profile.verification_status)
+                )
+            ),
             h(
                 "p",
                 { class: "dashboard-subtitle" },
