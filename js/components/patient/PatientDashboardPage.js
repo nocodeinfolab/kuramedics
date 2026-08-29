@@ -8,6 +8,8 @@ import PatientMessaging from "./PatientMessaging.js";
 import PatientFindCare from "./PatientFindCare.js";
 import PatientProfilePage from "./PatientProfilePage.js";
 import VideoCallRoom from "../shared/VideoCallRoom.js";
+import pushNotifications from "../../services/pushNotifications.js";
+
 const SOCKET_BASE_URL = "https://doctors-consultation-backend.onrender.com";
 
 const REQUIRED_TRIAGE_FIELDS = ["date_of_birth", "gender"];
@@ -91,6 +93,20 @@ export default class PatientDashboardPage extends Component {
         this.checkForPaymentReturn();
         this.loadPatient();
         this.connectSocket();
+        pushNotifications.init((data) => this.handlePushNotificationTap(data));
+    }
+    async handlePushNotificationTap(data) {
+        if (data?.type !== "chat_message" || !data.conversation_id) return;
+    
+        try {
+            const res = await api.get(`/chat/conversations/${data.conversation_id}`);
+            const conversation = res.data || res;
+            this.openConversationInMessages(conversation);
+        } catch (error) {
+            console.error("Failed to open conversation from push notification:", error);
+            
+            this.setTab("messages");
+        }
     }
     
     async checkForPaymentReturn() {
