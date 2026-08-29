@@ -191,20 +191,8 @@ export default class DoctorConsultationServicesPage extends Component {
                 "p",
                 { class: "dashboard-subtitle" },
                 "Set up rates, durations, and availability notes for your services."
-            ),
-            h(
-                "div",
-                { class: "dashboard-hero-meta" },
-                h(
-                    "button",
-                    {
-                        class: "btn btn-primary",
-                        style: "background: var(--color-white); color: var(--color-primary);",
-                        onclick: () => this.handleOpenModal()
-                    },
-                    "+ Add New Service"
-                )
             )
+            
         );
     }
 
