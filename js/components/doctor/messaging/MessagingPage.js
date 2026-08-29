@@ -714,9 +714,17 @@ export default class MessagingPage extends Component {
 
     update() {
         if (!this.el) return;
+    
         const threadBody = this.el.querySelector("#chat-thread-body");
-        const prevScrollHeight = threadBody?.scrollHeight;
-        const prevScrollTop = threadBody?.scrollTop;
+        const prevScrollHeight = threadBody?.scrollHeight ?? 0;
+        const prevScrollTop = threadBody?.scrollTop ?? 0;
+        const prevClientHeight = threadBody?.clientHeight ?? 0;
+        // "Near bottom" = within ~80px of the bottom edge. Treat no prior
+        // body (first open) as near-bottom so a fresh thread still opens
+        // scrolled to the latest message.
+        const wasNearBottom = threadBody
+            ? (prevScrollHeight - prevScrollTop - prevClientHeight) < 80
+            : true;
     
         const newTree = this.render();
         this.el.replaceChildren(...(Array.isArray(newTree) ? newTree : [newTree]).flat());
@@ -725,12 +733,19 @@ export default class MessagingPage extends Component {
             const newThreadBody = this.el.querySelector("#chat-thread-body");
             if (newThreadBody) {
                 if (this._justLoadedOlder && threadBody) {
-                    // Preserve reading position: keep the same messages in view
-                    // instead of jumping to bottom when older history is prepended.
+                    // Older messages were prepended — keep the same messages in
+                    // view rather than jumping anywhere.
                     newThreadBody.scrollTop = newThreadBody.scrollHeight - prevScrollHeight + prevScrollTop;
                     this._justLoadedOlder = false;
-                } else {
+                } else if (wasNearBottom) {
+                    // User was following the conversation live — keep them at
+                    // the bottom as new messages arrive.
                     newThreadBody.scrollTop = newThreadBody.scrollHeight;
+                } else {
+                    // User had scrolled up to read history — a new render (a
+                    // live message, a poll, a status change) shouldn't yank
+                    // them back down. Restore their exact position.
+                    newThreadBody.scrollTop = prevScrollTop;
                 }
             }
         }
