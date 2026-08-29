@@ -584,7 +584,10 @@ export default class MessagingPage extends Component {
                 : null,
             h(
                 "div",
-                { id: "chat-thread-body", style: "..." },
+                {
+                    id: "chat-thread-body",
+                    style: "flex: 1; min-height: 0; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 10px; -webkit-overflow-scrolling: touch;",
+                },
                 this.messagesHasMore
                     ? h(
                           "div",
