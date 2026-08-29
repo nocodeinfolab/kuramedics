@@ -134,6 +134,9 @@ export default class PatientDashboardPage extends Component {
         const token = localStorage.getItem("accessToken");
         if (!token) return;
     
+        // Start polling immediately as a safety net until the socket connects
+        this.startActiveCallPolling();
+    
         this.socket = io(SOCKET_BASE_URL, {
             auth: { token },
             reconnection: true,
@@ -142,25 +145,25 @@ export default class PatientDashboardPage extends Component {
         });
     
         this.socket.on("connect", () => {
-            
             this.checkForActiveCall();
+            this.stopActiveCallPolling(); // socket is healthy, no need to poll
         });
-
+    
+        this.socket.on("disconnect", () => {
+            this.startActiveCallPolling(); // fall back to polling while socket is down
+        });
+    
         this.socket.on("connect_error", (err) => {
             console.error("Chat socket connection error:", err.message);
+            // connect_error fires repeatedly during failed reconnection attempts;
+            // polling is already running (started above / by disconnect), so nothing more to do here
         });
-
-        
-        if (this._activeCallPollTimer) clearInterval(this._activeCallPollTimer);
-        this._activeCallPollTimer = setInterval(() => {
-            this.checkForActiveCall();
-        }, 30_000);
     
         this.socket.on("call:started", (payload) => {
             this.incomingCall = payload;
             this.update();
         });
-
+    
         this.socket.on("message:new", (message) => {
             const isForOtherParticipant = message.sender_role !== "patient";
     
@@ -176,9 +179,23 @@ export default class PatientDashboardPage extends Component {
         });
     }
     
+    startActiveCallPolling() {
+        if (this._activeCallPollTimer) return; 
+        this._activeCallPollTimer = setInterval(() => {
+            this.checkForActiveCall();
+        }, 30_000);
+    }
+    
+    stopActiveCallPolling() {
+        if (this._activeCallPollTimer) {
+            clearInterval(this._activeCallPollTimer);
+            this._activeCallPollTimer = null;
+        }
+    }
+    
     unmount() {
         this.socket?.disconnect();
-        if (this._activeCallPollTimer) clearInterval(this._activeCallPollTimer);
+        this.stopActiveCallPolling();
         if (this._paymentBannerTimer) clearTimeout(this._paymentBannerTimer);
         super.unmount?.();
     }
