@@ -18,53 +18,91 @@ export default class PatientMessaging extends Component {
         this.patient = patient ?? {};
         this.socket = socket ?? null;
         this.onMessagesRead = onMessagesRead ?? (() => {}); 
-
+    
         this.loading = true;
+        this.loadingMore = false;
         this.errorMessage = "";
-
+    
         this.conversations = [];
+        this.page = 0;
+        this.hasMore = true;
+        this.totalCount = 0;
         this.searchTerm = "";
-
+    
         this.view = "list"; // "list" | "thread"
         this.activeConversationId = null;
         this.activeConversation = null;
-
+    
         this.messages = [];
         this.messagesLoading = false;
         this.messagesError = "";
-
+    
         this.messageDraft = "";
         this.sending = false;
-
+    
         this.pollTimer = null;
+        this._loadRequestId = 0;
     }
-
-    async afterMount() {
-        await this.loadConversations();
-    }
-
+    
     beforeUnmount() {
         this.stopPolling();
     }
 
     // ---------- Data loading ----------
 
-    async loadConversations() {
-        this.loading = true;
-        this.errorMessage = "";
+    async afterMount() {
+        await this.loadConversations({ reset: true });
+    }
+    
+    async loadConversations({ reset = false } = {}) {
+        const requestId = ++this._loadRequestId;
+    
+        if (reset) {
+            this.loading = true;
+            this.page = 0;
+            this.conversations = [];
+            this.hasMore = true;
+            this.errorMessage = "";
+        } else {
+            this.loadingMore = true;
+        }
         this.update();
-
+    
         try {
-            const res = await api.get("/chat/conversations");
+            const nextPage = this.page + 1;
+            const params = new URLSearchParams({
+                page: String(nextPage),
+                limit: "10",
+            });
+            if (this.searchTerm.trim()) params.set("search", this.searchTerm.trim());
+    
+            const res = await api.get(`/chat/conversations?${params.toString()}`);
+    
+            if (requestId !== this._loadRequestId) return;
+    
             const payload = res.data || res;
-            this.conversations = Array.isArray(payload) ? payload : payload.rows || payload.data || [];
+            const rows = payload.items || payload.rows || payload.data || [];
+            const pagination = payload.pagination || {};
+    
+            this.conversations = reset ? rows : [...this.conversations, ...rows];
+            this.totalCount = pagination.totalItems ?? rows.length;
+            this.page = pagination.currentPage ?? nextPage;
+            this.hasMore = pagination.hasNextPage ?? (this.conversations.length < this.totalCount);
         } catch (error) {
+            if (requestId !== this._loadRequestId) return;
             console.error("Failed to load conversations:", error);
             this.errorMessage = error.message || "Failed to load messages.";
         } finally {
-            this.loading = false;
-            this.update();
+            if (requestId === this._loadRequestId) {
+                this.loading = false;
+                this.loadingMore = false;
+                this.update();
+            }
         }
+    }
+    
+    loadMoreConversations() {
+        this.loadConversations({ reset: false });
     }
 
     async loadMessages(conversationId, { silent = false } = {}) {
@@ -124,7 +162,7 @@ export default class PatientMessaging extends Component {
 
     closeThread() {
         this.stopPolling();
-        this.socket?.emit("conversation:leave", { conversationId: this.activeConversationId });   // add this
+        this.socket?.emit("conversation:leave", { conversationId: this.activeConversationId });
         this.view = "list";
         this.activeConversationId = null;
         this.activeConversation = null;
@@ -132,7 +170,7 @@ export default class PatientMessaging extends Component {
         this.messageDraft = "";
         this.update();
     
-        this.loadConversations();
+        this.loadConversations({ reset: true });
     }
 
     startPolling(conversationId) {
@@ -182,7 +220,12 @@ export default class PatientMessaging extends Component {
 
     setSearchTerm(term) {
         this.searchTerm = term;
-        this.update();
+        this.update(); 
+    
+        clearTimeout(this._searchDebounceTimer);
+        this._searchDebounceTimer = setTimeout(() => {
+            this.loadConversations({ reset: true });
+        }, 400); 
     }
     // ---------- Live updates (called externally by PatientDashboardPage) ----------
 
@@ -223,16 +266,6 @@ export default class PatientMessaging extends Component {
             this.messages = [...this.messages, message];
         }
         return !alreadyExists;
-    }
-
-    // ---------- Derived data ----------
-
-    getFilteredConversations() {
-        const term = this.searchTerm.trim().toLowerCase();
-        if (!term) return this.conversations;
-        return this.conversations.filter(c =>
-            (c.doctor_name || "").toLowerCase().includes(term)
-        );
     }
 
     // ---------- Formatting ----------
@@ -305,8 +338,6 @@ export default class PatientMessaging extends Component {
     }
 
     renderConversationList() {
-        const filtered = this.getFilteredConversations();
-
         return h(
             "div",
             { class: "services-list" },
@@ -324,7 +355,7 @@ export default class PatientMessaging extends Component {
                     oninput: e => this.setSearchTerm(e.target.value),
                 })
             ),
-            filtered.length === 0
+            this.conversations.length === 0
                 ? h(
                       "div",
                       { class: "dashboard-card text-center py-4" },
@@ -339,11 +370,30 @@ export default class PatientMessaging extends Component {
                 : h(
                       "div",
                       { class: "services-list" },
-                      filtered.map(conversation => this.renderConversationCard(conversation))
+                      this.conversations.map(conversation => this.renderConversationCard(conversation)),
+                      this.renderLoadMore()
                   )
         );
     }
-
+    
+    renderLoadMore() {
+        if (!this.hasMore || this.loading) return null;
+    
+        return h(
+            "div",
+            { class: "text-center", style: "margin-top: var(--space-2);" },
+            h(
+                "button",
+                {
+                    class: "btn btn-outline",
+                    style: "padding: 0.35rem 0.8rem; font-size: 0.75rem; border-radius: 5px;",
+                    disabled: this.loadingMore,
+                    onclick: () => this.loadMoreConversations(),
+                },
+                this.loadingMore ? "Loading..." : "Load More"
+            )
+        );
+    }
     renderConversationCard(conversation) {
         const unread = conversation.unread_count || 0;
         const statusLabel = STATUS_LABELS[conversation.status] || conversation.status;
