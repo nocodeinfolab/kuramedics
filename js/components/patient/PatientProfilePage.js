@@ -88,6 +88,7 @@ export default class PatientProfilePage extends Component {
         } catch (error) {
             console.error("Logout request failed:", error);
         } finally {
+            await pushNotifications.unregister(); 
             api.clearSession();
         }
     }
