@@ -96,16 +96,25 @@ export default class PatientDashboardPage extends Component {
         pushNotifications.init((data) => this.handlePushNotificationTap(data));
     }
     async handlePushNotificationTap(data) {
-        const CHAT_NOTIFICATION_TYPES = ["new_message", "result_uploaded"];
-        if (!CHAT_NOTIFICATION_TYPES.includes(data?.type) || !data.conversation_id) return;
+        const type = data?.type;
     
-        try {
-            const res = await api.get(`/chat/conversations/${data.conversation_id}`);
-            const conversation = res.data || res;
-            this.openConversationInMessages(conversation);
-        } catch (error) {
-            console.error("Failed to open conversation from push notification:", error);
-            this.setTab("messages");
+        if (type === "new_message" || type === "result_uploaded") {
+            if (!data.conversation_id) return;
+    
+            try {
+                const res = await api.get(`/chat/conversations/${data.conversation_id}`);
+                const conversation = res.data || res;
+                this.openConversationInMessages(conversation);
+            } catch (error) {
+                console.error("Failed to open conversation from push notification:", error);
+                this.setTab("messages");
+            }
+            return;
+        }
+    
+        if (type === "appointment_confirmed") {
+            this.setTab("care");
+            return;
         }
     }
     
