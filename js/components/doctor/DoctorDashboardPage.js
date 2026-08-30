@@ -126,25 +126,32 @@ export default class DoctorDashboardPage extends Component {
     }
     
     async handlePushNotificationTap(data) {
-        const CHAT_NOTIFICATION_TYPES = ["new_message", "result_uploaded"];
-        if (!CHAT_NOTIFICATION_TYPES.includes(data?.type) || !data.conversation_id) return;
+        const type = data?.type;
     
-        try {
-            const res = await api.get(`/chat/conversations/${data.conversation_id}`);
-            const conversation = res.data || res;
+        if (type === "new_message" || type === "result_uploaded") {
+            if (!data.conversation_id) return;
     
-            this.activeTab = "messages";
-            this.pendingConversation = conversation;
+            try {
+                const res = await api.get(`/chat/conversations/${data.conversation_id}`);
+                const conversation = res.data || res;
+    
+                this.activeTab = "messages";
+                this.pendingConversation = conversation;
+            } catch (error) {
+                console.error("Failed to open conversation from push notification:", error);
+                this.activeTab = "messages";
+            }
+    
             this.updatePage();
-        } catch (error) {
-            console.error("Failed to open conversation from push notification:", error);
-            this.activeTab = "messages";
-            this.updatePage();
+            return;
         }
-    }
-
-    isAppVisible() {
-        return document.visibilityState === "visible";
+    
+        if (type === "new_appointment") {
+            this.activeTab = "consultations";
+            this.settingsView = "menu";
+            this.updatePage();
+            return;
+        }
     }
 
     async checkForPaymentReturn() {
