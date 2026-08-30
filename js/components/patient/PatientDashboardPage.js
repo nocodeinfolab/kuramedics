@@ -112,7 +112,7 @@ export default class PatientDashboardPage extends Component {
             return;
         }
     
-        if (type === "appointment_confirmed") {
+        if (type === "appointment_confirmed" || type === "appointment_rescheduled") {
             this.setTab("care");
             return;
         }
