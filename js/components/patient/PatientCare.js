@@ -226,9 +226,9 @@ export default class PatientCare extends Component {
                 throw new Error("No checkout URL was returned for this payment.");
             }
     
-            const isRealWebPage = /^https?:\/\//i.test(payment.checkout_url);
+            const isMock = payment.gateway_response?.mock === true;
     
-            if (isNative && !isRealWebPage) {
+            if (isNative && isMock) {
                 // Mock mode: no real checkout page to browse to — verify immediately.
                 await this.confirmPayment(payment.transaction_id);
                 return;
