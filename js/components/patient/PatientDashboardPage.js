@@ -107,6 +107,18 @@ export default class PatientDashboardPage extends Component {
             this.setTab("care");
             return;
         }
+        if (type === "consultation_completed") {
+            const careInstance = this._tabInstances.care;
+        
+            if (careInstance) {
+                careInstance.setTab("completed");
+            } else {
+                this.pendingCareSubTab = "completed";
+            }
+        
+            this.setTab("care");
+            return;
+        }
     }
     
     async checkForPaymentReturn() {
