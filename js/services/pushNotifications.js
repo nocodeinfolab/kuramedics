@@ -14,7 +14,7 @@ function getPlatform() {
     return window.Capacitor?.getPlatform?.() ?? "android";
 }
 
-const ALWAYS_VISIBLE_PUSH_TYPES = new Set(["new_appointment", "appointment_confirmed", "appointment_rescheduled"]);
+const ALWAYS_VISIBLE_PUSH_TYPES = new Set(["new_appointment", "appointment_confirmed", "appointment_rescheduled", "appointment_time_accepted"]);
 
 function getLocalNotificationsPlugin() {
     return window.Capacitor?.Plugins?.LocalNotifications ?? null;
