@@ -25,32 +25,42 @@ class PushNotificationsService {
     constructor() {
         this.initialized = false;
         this.currentToken = null;
+        this._initPromise = null;
     }
 
-    /**
-     * Call once after login (both doctor and patient), once `user` is
-     * known. Safe to call multiple times — it's a no-op after the first
-     * successful run per app session, and it's a no-op entirely on web,
-     * since there's no native push transport there.
-     */
     async init(onNotificationTap) {
 
         if (!isNativePlatform()) {
-
             console.log("PushNotifications: skipped (not on a native platform).");
             return;
-
         }
 
         if (this.initialized) return;
 
+        // If init() is already in flight (e.g. called twice in quick
+        // succession before the first call has finished awaiting
+        // permissions/registration), share that same in-flight promise
+        // instead of racing through listener registration a second time.
+        if (this._initPromise) {
+            return this._initPromise;
+        }
+
+        this._initPromise = this._doInit(onNotificationTap);
+
+        try {
+            await this._initPromise;
+        } finally {
+            this._initPromise = null;
+        }
+    }
+
+    async _doInit(onNotificationTap) {
+
         const plugin = getPlugin();
 
         if (!plugin) {
-
             console.error("PushNotifications: native plugin not available.");
             return;
-
         }
 
         console.log("----------------------------------------");
@@ -59,28 +69,19 @@ class PushNotificationsService {
         const permission = await plugin.requestPermissions();
 
         if (permission.receive !== "granted") {
-
             console.warn("PushNotifications: permission not granted.");
             return;
-
         }
 
-        // registrationError / registration are one-shot events tied to
-        // this specific register() call, so wire them up right before
-        // calling it rather than at module load time.
         plugin.addListener("registration", async (token) => {
-
             console.log("PushNotifications: device token received.");
             await this.syncTokenWithBackend(token.value);
-
         });
 
         plugin.addListener("registrationError", (error) => {
-
             console.error("PushNotifications: registration failed.", error);
-
         });
-        
+
         const localNotifications = getLocalNotificationsPlugin();
         if (localNotifications) {
             try {
@@ -88,7 +89,7 @@ class PushNotificationsService {
             } catch (error) {
                 console.warn("PushNotifications: local notification permission request failed.", error);
             }
-        
+
             localNotifications.addListener("localNotificationActionPerformed", (action) => {
                 console.log("PushNotifications: local notification tapped.", action);
                 if (onNotificationTap) {
@@ -98,20 +99,19 @@ class PushNotificationsService {
         }
 
         plugin.addListener("pushNotificationReceived", async (notification) => {
-        
             console.log("PushNotifications: received in foreground.", notification);
-        
+
             const type = notification.data?.type;
             if (!ALWAYS_VISIBLE_PUSH_TYPES.has(type)) return;
-        
-            const localNotifications = getLocalNotificationsPlugin();
-            if (!localNotifications) {
+
+            const ln = getLocalNotificationsPlugin();
+            if (!ln) {
                 console.warn("PushNotifications: LocalNotifications plugin not available, cannot force-display.");
                 return;
             }
-        
+
             try {
-                await localNotifications.schedule({
+                await ln.schedule({
                     notifications: [
                         {
                             id: Math.floor(Math.random() * 2147483647),
@@ -124,27 +124,23 @@ class PushNotificationsService {
             } catch (error) {
                 console.error("PushNotifications: failed to show local notification.", error);
             }
-        
         });
 
         plugin.addListener("pushNotificationActionPerformed", (action) => {
-
             console.log("PushNotifications: tapped.", action);
-
             if (onNotificationTap) {
                 onNotificationTap(action.notification?.data || {});
             }
-
         });
 
         await plugin.register();
 
         this.initialized = true;
-
         console.log("PushNotifications: initialized.");
         console.log("----------------------------------------");
-
     }
+
+    
 
     async syncTokenWithBackend(token) {
 
