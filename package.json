@@ -1,5 +1,5 @@
 {
-  "name": "kuramedics",
+  "name": "yeroscare",
   "version": "1.0.0",
   "description": "A component-based, build-tool-free single page app for YerosCare. Every feature of the product lives in its own component file, mounted through a tiny router. No framework, no bundler required — open `index.html` through any static server (or `npx serve`) and it runs, because the browser's native ES modules do the wiring.",
   "main": "index.js",
@@ -11,6 +11,8 @@
   "license": "ISC",
   "dependencies": {
       "@capacitor/android": "^8.5.0",
+      "@capacitor/app": "^8.1.1",
+      "@capacitor/browser": "^8.0.4",
       "@capacitor/cli": "^8.0.0",
       "@capacitor/core": "^8.5.0",
       "@capacitor/push-notifications": "^8.0.0",
