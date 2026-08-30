@@ -14,6 +14,12 @@ function getPlatform() {
     return window.Capacitor?.getPlatform?.() ?? "android";
 }
 
+const ALWAYS_VISIBLE_PUSH_TYPES = new Set(["new_appointment", "appointment_confirmed"]);
+
+function getLocalNotificationsPlugin() {
+    return window.Capacitor?.Plugins?.LocalNotifications ?? null;
+}
+
 class PushNotificationsService {
 
     constructor() {
@@ -74,20 +80,53 @@ class PushNotificationsService {
             console.error("PushNotifications: registration failed.", error);
 
         });
+        
+        const localNotifications = getLocalNotificationsPlugin();
+        if (localNotifications) {
+            try {
+                await localNotifications.requestPermissions();
+            } catch (error) {
+                console.warn("PushNotifications: local notification permission request failed.", error);
+            }
+        
+            localNotifications.addListener("localNotificationActionPerformed", (action) => {
+                console.log("PushNotifications: local notification tapped.", action);
+                if (onNotificationTap) {
+                    onNotificationTap(action.notification?.extra || {});
+                }
+            });
+        }
 
-        // Foreground notifications don't show a system banner by default
-        // on Android — this just logs for now. Route this into your own
-        // in-app toast/badge system if you want a visible foreground alert.
-        plugin.addListener("pushNotificationReceived", (notification) => {
-
+        plugin.addListener("pushNotificationReceived", async (notification) => {
+        
             console.log("PushNotifications: received in foreground.", notification);
-
+        
+            const type = notification.data?.type;
+            if (!ALWAYS_VISIBLE_PUSH_TYPES.has(type)) return;
+        
+            const localNotifications = getLocalNotificationsPlugin();
+            if (!localNotifications) {
+                console.warn("PushNotifications: LocalNotifications plugin not available, cannot force-display.");
+                return;
+            }
+        
+            try {
+                await localNotifications.schedule({
+                    notifications: [
+                        {
+                            id: Math.floor(Math.random() * 2147483647),
+                            title: notification.title || "Notification",
+                            body: notification.body || "",
+                            extra: notification.data || {},
+                        },
+                    ],
+                });
+            } catch (error) {
+                console.error("PushNotifications: failed to show local notification.", error);
+            }
+        
         });
 
-        // Fires when the user taps a notification (app in background or
-        // killed). `notification.notification.data` carries whatever
-        // custom `data` payload the backend sent — use it to deep-link
-        // (e.g. straight into a specific consultation or booking).
         plugin.addListener("pushNotificationActionPerformed", (action) => {
 
             console.log("PushNotifications: tapped.", action);
@@ -152,6 +191,10 @@ class PushNotificationsService {
         } finally {
             const plugin = getPlugin();
             await plugin?.removeAllListeners();
+
+            const localNotifications = getLocalNotificationsPlugin();
+            await localNotifications?.removeAllListeners();
+            
             this.currentToken = null;
             this.initialized = false;
         }
