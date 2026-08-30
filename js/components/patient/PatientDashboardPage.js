@@ -99,20 +99,11 @@ export default class PatientDashboardPage extends Component {
         const type = data?.type;
     
         if (type === "new_message" || type === "result_uploaded") {
-            if (!data.conversation_id) return;
-    
-            try {
-                const res = await api.get(`/chat/conversations/${data.conversation_id}`);
-                const conversation = res.data || res;
-                this.openConversationInMessages(conversation);
-            } catch (error) {
-                console.error("Failed to open conversation from push notification:", error);
-                this.setTab("messages");
-            }
+            this.setTab("messages");
             return;
         }
     
-        if (type === "appointment_confirmed" || type === "appointment_rescheduled") {
+        if (type === "appointment_confirmed" || type === "appointment_rescheduled" || type === "appointment_time_accepted") {
             this.setTab("care");
             return;
         }
