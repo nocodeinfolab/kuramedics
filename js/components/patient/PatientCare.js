@@ -582,7 +582,7 @@ export default class PatientCare extends Component {
                       { class: "dashboard-muted" },
                       `"${booking.confirmation_note}"`
                   )
-                : null
+                : null,
 
             h(
                 "button",
