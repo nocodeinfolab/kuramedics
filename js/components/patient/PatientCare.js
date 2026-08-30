@@ -226,10 +226,19 @@ export default class PatientCare extends Component {
                 throw new Error("No checkout URL was returned for this payment.");
             }
     
+            const isRealWebPage = /^https?:\/\//i.test(payment.checkout_url);
+    
+            if (isNative && !isRealWebPage) {
+                // Mock mode: checkout_url is already the callback, nothing to browse to.
+                this.payingBookingId = null;
+                await this.loadData({ silent: true });
+                this.update();
+                return;
+            }
+    
             if (isNative) {
                 await this.openCheckoutNative(payment.checkout_url);
             } else {
-                // dev/browser fallback — same as before
                 window.location.href = payment.checkout_url;
             }
         } catch (error) {
