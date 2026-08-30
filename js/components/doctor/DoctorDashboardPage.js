@@ -146,7 +146,7 @@ export default class DoctorDashboardPage extends Component {
             return;
         }
     
-        if (type === "new_appointment") {
+        if (type === "new_appointment" || type === "appointment_time_accepted") {
             this.activeTab = "consultations";
             this.settingsView = "menu";
             this.updatePage();
