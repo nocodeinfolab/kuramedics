@@ -207,23 +207,30 @@ export default class PatientCare extends Component {
             this.update();
         }
     }
-
+    
     async handlePayNow(booking) {
         this.payingBookingId = booking.id;
         this.errorMessage = "";
         this.update();
     
         try {
+            const isNative = window.Capacitor?.isNativePlatform?.();
+    
             const res = await api.post("/payments", {
                 booking_id: booking.id,
-                return_path: "/#/patient/dashboard",
+                return_path: isNative ? "yeroscare://payment-callback" : "/#/patient/dashboard",
             });
             const payment = res.data || res;
     
-            if (payment.checkout_url) {
-                window.location.href = payment.checkout_url;
-            } else {
+            if (!payment.checkout_url) {
                 throw new Error("No checkout URL was returned for this payment.");
+            }
+    
+            if (isNative) {
+                await this.openCheckoutNative(payment.checkout_url);
+            } else {
+                // dev/browser fallback — same as before
+                window.location.href = payment.checkout_url;
             }
         } catch (error) {
             console.error("Failed to start payment:", error);
@@ -231,6 +238,34 @@ export default class PatientCare extends Component {
             this.payingBookingId = null;
             this.update();
         }
+    }
+    
+    async openCheckoutNative(checkoutUrl) {
+        const { Browser, App } = window.Capacitor.Plugins;
+    
+        const urlListener = await App.addListener("appUrlOpen", async (event) => {
+            if (!event.url.startsWith("yeroscare://payment-callback")) return;
+    
+            urlListener.remove();
+            finishListener.remove();
+            await Browser.close();
+    
+            this.payingBookingId = null;
+            await this.loadData({ silent: true }); // re-check status from server, don't trust the URL params
+            this.update();
+        });
+    
+        // Covers the user dismissing the in-app browser without finishing payment
+        const finishListener = await Browser.addListener("browserFinished", () => {
+            urlListener.remove();
+            finishListener.remove();
+            if (this.payingBookingId) {
+                this.payingBookingId = null;
+                this.update();
+            }
+        });
+    
+        await Browser.open({ url: checkoutUrl, presentationStyle: "popover" });
     }
     async downloadPrescription(booking) {
         try {
