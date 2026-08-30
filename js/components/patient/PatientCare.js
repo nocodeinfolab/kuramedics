@@ -54,6 +54,13 @@ export default class PatientCare extends Component {
 
     // ---------- Data loading ----------
 
+    async loadData({ silent = false } = {}) {
+        await Promise.all([
+            this.loadTabCounts(),
+            this.loadBookingsForTab(this.activeTab, { reset: true, silent }),
+        ]);
+    }
+
     async loadTabCounts() {
         try {
             const res = await api.get("/bookings/counts");
