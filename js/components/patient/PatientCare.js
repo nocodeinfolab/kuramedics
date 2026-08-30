@@ -229,15 +229,13 @@ export default class PatientCare extends Component {
             const isRealWebPage = /^https?:\/\//i.test(payment.checkout_url);
     
             if (isNative && !isRealWebPage) {
-                // Mock mode: checkout_url is already the callback, nothing to browse to.
-                this.payingBookingId = null;
-                await this.loadData({ silent: true });
-                this.update();
+                // Mock mode: no real checkout page to browse to — verify immediately.
+                await this.confirmPayment(payment.transaction_id);
                 return;
             }
     
             if (isNative) {
-                await this.openCheckoutNative(payment.checkout_url);
+                await this.openCheckoutNative(payment.checkout_url, payment.transaction_id);
             } else {
                 window.location.href = payment.checkout_url;
             }
@@ -249,7 +247,7 @@ export default class PatientCare extends Component {
         }
     }
     
-    async openCheckoutNative(checkoutUrl) {
+    async openCheckoutNative(checkoutUrl, reference) {
         const { Browser, App } = window.Capacitor.Plugins;
     
         const urlListener = await App.addListener("appUrlOpen", async (event) => {
@@ -258,13 +256,10 @@ export default class PatientCare extends Component {
             urlListener.remove();
             finishListener.remove();
             await Browser.close();
-    
-            this.payingBookingId = null;
-            await this.loadData({ silent: true }); // re-check status from server, don't trust the URL params
-            this.update();
+            await this.confirmPayment(reference);
         });
     
-        // Covers the user dismissing the in-app browser without finishing payment
+        // User dismissed the browser without completing payment
         const finishListener = await Browser.addListener("browserFinished", () => {
             urlListener.remove();
             finishListener.remove();
@@ -275,6 +270,19 @@ export default class PatientCare extends Component {
         });
     
         await Browser.open({ url: checkoutUrl, presentationStyle: "popover" });
+    }
+    
+    async confirmPayment(reference) {
+        try {
+            await api.get(`/payments/verify/${reference}`);
+        } catch (error) {
+            console.error("Failed to verify payment:", error);
+            this.errorMessage = error.message || "Payment may have succeeded, but verification failed. Pull to refresh.";
+        } finally {
+            this.payingBookingId = null;
+            await this.loadData({ silent: true });
+            this.update();
+        }
     }
     async downloadPrescription(booking) {
         try {
