@@ -190,6 +190,23 @@ export default class PatientCare extends Component {
             this.update();
         }
     }
+    async acceptSuggestedTimeAndPay(booking) {
+        this.payingBookingId = booking.id;
+        this.errorMessage = "";
+        this.update();
+    
+        try {
+            const res = await api.patch(`/bookings/${booking.id}/accept-suggested-time`);
+            const updatedBooking = res.data || res;
+    
+            await this.handlePayNow(updatedBooking);
+        } catch (error) {
+            console.error("Failed to accept suggested time:", error);
+            this.errorMessage = error.message || "Failed to accept the suggested time. Please try again.";
+            this.payingBookingId = null;
+            this.update();
+        }
+    }
 
     async handlePayNow(booking) {
         this.payingBookingId = booking.id;
@@ -524,6 +541,7 @@ export default class PatientCare extends Component {
         );
     }
     renderRescheduleComparison(booking) {
+        const isPaying = this.payingBookingId === booking.id;
         return h(
             "div",
             {
@@ -565,6 +583,21 @@ export default class PatientCare extends Component {
                       `"${booking.confirmation_note}"`
                   )
                 : null
+
+            h(
+                "button",
+                {
+                    class: "btn btn-primary",
+                    style: "padding: 0.4rem 0.75rem; font-size: 0.8rem; border-radius: 6px; align-self: flex-start;",
+                    disabled: isPaying,
+                    onclick: (e) => {
+                        e.stopPropagation();
+                        this.acceptSuggestedTimeAndPay(booking);
+                    },
+                },
+                isPaying ? this.renderSpinner() : null,
+                isPaying ? "Redirecting..." : "Accept time & Pay"
+            )
         );
     }
 
