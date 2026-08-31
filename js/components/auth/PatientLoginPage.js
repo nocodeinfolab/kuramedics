@@ -22,7 +22,7 @@ export class PatientLoginPage extends Component {
           h(
             "h1",
             { class: "auth-title" },
-            "Welcome to KuraMedics"
+            "Welcome to YerosCare"
           ),
 
           h(
