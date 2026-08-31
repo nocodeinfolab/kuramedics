@@ -45,7 +45,7 @@ export class DoctorLoginPage extends Component {
           "div",
           { class: "doctor-info" },
 
-          h("h3", {}, "New to KuraMedics?"),
+          h("h3", {}, "New to YerosCare?"),
 
           h(
             "p",
