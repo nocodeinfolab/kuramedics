@@ -70,7 +70,7 @@ export class LandingPage extends Component {
       "header",
       { class: "landing__brand" },
       h("span", { class: "landing__brand-mark", "aria-hidden": "true" }),
-      h("span", { class: "landing__brand-name" }, "KuraMedics")
+      h("span", { class: "landing__brand-name" }, "YerosCare")
     );
   }
 
