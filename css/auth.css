@@ -174,4 +174,109 @@
 .auth-prefer-code__link:hover {
   text-decoration: underline;
 }
+/* OTP authentication section */
+.otp-auth-section {
+  width: 100%;
+  margin-top: 8px;
+}
 
+/* Heading area */
+.otp-intro {
+  text-align: center;
+  margin-bottom: 26px;
+}
+
+.otp-title {
+  margin: 0 0 8px;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.otp-description {
+  margin: 0 auto;
+  max-width: 360px;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: #6b7280;
+}
+
+/* Form */
+.otp-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.otp-field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.otp-input {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Send code button */
+.otp-submit-btn {
+  width: 100%;
+  margin-top: 4px;
+}
+
+/* Error */
+.otp-auth-section .auth-error {
+  margin-top: 12px;
+  text-align: center;
+}
+
+/* Back link */
+.otp-back {
+  display: flex;
+  justify-content: center;
+  margin-top: 22px;
+  font-size: 0.9rem;
+}
+.auth-input--code {
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  letter-spacing: 0.35em;
+  font-size: 1.35rem;
+  font-weight: 600;
+  padding-left: 0.35em;
+}
+
+.otp-auth-section .auth-subtitle {
+  text-align: center;
+  line-height: 1.5;
+}
+
+.otp-auth-section .auth-subtitle strong {
+  display: inline-block;
+  margin-top: 3px;
+  color: #111827;
+  font-weight: 600;
+  word-break: break-word;
+}
+
+#otp-auth-section .auth-btn--primary {
+  width: 100%;
+}
+
+#otp-auth-section .auth-switch {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+  font-size: 0.9rem;
+}
+
+#otp-resend-link.auth-link--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
