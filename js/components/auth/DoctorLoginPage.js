@@ -73,8 +73,24 @@ export class DoctorLoginPage extends Component {
     return h(
       "div",
       { id: "google-auth-section" },
-      h("div", { id: "google-login-btn", class: "google-btn-container" }),
-      
+  
+      h("div", {
+        id: "google-login-btn",
+        class: "google-btn-container"
+      }),
+  
+      h(
+        "button",
+        {
+          type: "button",
+          class: "apple-signin-btn",
+          disabled: true,
+          title: "Apple Sign In coming soon"
+        },
+        h("span", { class: "apple-signin-icon" }, ""),
+        h("span", {}, "Sign in with Apple")
+      ),
+  
       h(
         "div",
         { class: "auth-prefer-code" },
@@ -94,10 +110,8 @@ export class DoctorLoginPage extends Component {
           "Sign in with email instead"
         )
       )
-
     );
   }
-
   renderOtpEmailStep() {
     return h(
       "div",
