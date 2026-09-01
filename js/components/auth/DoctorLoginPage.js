@@ -74,15 +74,16 @@ export class DoctorLoginPage extends Component {
       "div",
       { id: "google-auth-section" },
       h("div", { id: "google-login-btn", class: "google-btn-container" }),
+      
       h(
-        "p",
-        { class: "auth-switch" },
-        "Prefer a code? ",
+        "div",
+        { class: "auth-prefer-code" },
+        h("span", {}, "Prefer a code?"),
         h(
           "a",
           {
             href: "#",
-            class: "auth-link",
+            class: "auth-link auth-prefer-code__link",
             onClick: (e) => {
               e.preventDefault();
               this.error = "";
@@ -93,6 +94,7 @@ export class DoctorLoginPage extends Component {
           "Sign in with email instead"
         )
       )
+
     );
   }
 
