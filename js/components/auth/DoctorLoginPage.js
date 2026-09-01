@@ -101,32 +101,61 @@ export class DoctorLoginPage extends Component {
   renderOtpEmailStep() {
     return h(
       "div",
-      { id: "otp-auth-section" },
-      h("label", { class: "auth-label", for: "otp-email" }, "Email address"),
-      h("input", {
-        type: "email",
-        id: "otp-email",
-        class: "auth-input",
-        placeholder: "you@example.com",
-        autocomplete: "email",
-        onKeydown: (e) => {
-          if (e.key === "Enter") this.handleSendCode();
-        }
-      }),
+      { id: "otp-auth-section", class: "otp-auth-section" },
+  
       h(
-        "button",
-        {
-          type: "button",
-          class: "auth-btn auth-btn--primary",
-          disabled: this.loading,
-          onClick: () => this.handleSendCode()
-        },
-        this.loading ? "Sending…" : "Send code"
+        "div",
+        { class: "otp-intro" },
+        h("h2", { class: "otp-title" }, "Sign in with email"),
+        h(
+          "p",
+          { class: "otp-description" },
+          "We'll send a secure 6-digit code to your email address."
+        )
       ),
-      this.error && h("p", { class: "auth-error" }, this.error),
+  
       h(
-        "p",
-        { class: "auth-switch" },
+        "div",
+        { class: "otp-form" },
+  
+        h(
+          "div",
+          { class: "otp-field" },
+          h(
+            "label",
+            { class: "auth-label", for: "otp-email" },
+            "Email address"
+          ),
+          h("input", {
+            type: "email",
+            id: "otp-email",
+            class: "auth-input otp-input",
+            placeholder: "you@example.com",
+            autocomplete: "email",
+            onKeydown: (e) => {
+              if (e.key === "Enter") this.handleSendCode();
+            }
+          })
+        ),
+  
+        h(
+          "button",
+          {
+            type: "button",
+            class: "auth-btn auth-btn--primary otp-submit-btn",
+            disabled: this.loading,
+            onClick: () => this.handleSendCode()
+          },
+          this.loading ? "Sending…" : "Send code"
+        )
+      ),
+  
+      this.error &&
+        h("p", { class: "auth-error" }, this.error),
+  
+      h(
+        "div",
+        { class: "otp-back" },
         h(
           "a",
           {
@@ -145,7 +174,6 @@ export class DoctorLoginPage extends Component {
       )
     );
   }
-
   renderOtpCodeStep() {
     return h(
       "div",
