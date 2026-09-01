@@ -156,3 +156,22 @@
     border-radius: var(--radius-md);
   }
 }
+.auth-prefer-code {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-top: 18px;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.auth-prefer-code__link {
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.auth-prefer-code__link:hover {
+  text-decoration: underline;
+}
+
