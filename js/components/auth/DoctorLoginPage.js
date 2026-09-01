@@ -15,6 +15,7 @@ export class DoctorLoginPage extends Component {
     // "google" | "otp-email" | "otp-code"
     this.view = "google";
     this.sentEmail = "";
+    this.isNewAccount = false;
     this.loading = false;
     this.error = "";
     this.resendCooldown = 0;
@@ -153,6 +154,28 @@ export class DoctorLoginPage extends Component {
         "Enter the 6-digit code sent to ",
         h("strong", {}, this.sentEmail)
       ),
+      this.isNewAccount &&
+        h(
+          "p",
+          { class: "auth-subtitle" },
+          "We'll create your doctor account with this email — you can add your specialization, MDCN licence and consultation fees afterward."
+        ),
+      this.isNewAccount &&
+        h(
+          "div",
+          {},
+          h("label", { class: "auth-label", for: "otp-full-name" }, "Full name"),
+          h("input", {
+            type: "text",
+            id: "otp-full-name",
+            class: "auth-input",
+            placeholder: "Dr. Jane Doe",
+            autocomplete: "name",
+            onKeydown: (e) => {
+              if (e.key === "Enter") this.handleVerifyCode();
+            }
+          })
+        ),
       h("input", {
         type: "text",
         id: "otp-code",
@@ -259,9 +282,10 @@ export class DoctorLoginPage extends Component {
     this.update();
 
     try {
-      await api.post(OTP_REQUEST_ENDPOINT, { email, role: "doctor" });
+      const result = await api.post(OTP_REQUEST_ENDPOINT, { email, role: "doctor" });
 
       this.sentEmail = email;
+      this.isNewAccount = !!result.data?.isNewAccount;
       this.view = "otp-code";
       this.loading = false;
       this.error = "";
@@ -277,11 +301,20 @@ export class DoctorLoginPage extends Component {
 
   async handleVerifyCode() {
     const code = this.el.querySelector("#otp-code")?.value.trim() || "";
+    const fullName = this.isNewAccount
+      ? this.el.querySelector("#otp-full-name")?.value.trim() || ""
+      : "";
 
     this.error = "";
 
     if (!/^\d{6}$/.test(code)) {
       this.error = "Enter the 6-digit code.";
+      this.update();
+      return;
+    }
+
+    if (this.isNewAccount && !fullName) {
+      this.error = "Enter your full name to create your account.";
       this.update();
       return;
     }
@@ -293,7 +326,8 @@ export class DoctorLoginPage extends Component {
       const result = await api.post(OTP_VERIFY_ENDPOINT, {
         email: this.sentEmail,
         otp: code,
-        role: "doctor"
+        role: "doctor",
+        ...(this.isNewAccount ? { full_name: fullName } : {})
       });
 
       const { accessToken, user } = result.data;
