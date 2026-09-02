@@ -94,8 +94,6 @@
   text-transform: uppercase;
 }
 
-/* A small dot instead of a second color block — reads as a status
-   indicator (this door is for doctors) rather than a decorative chip. */
 .auth-badge::before {
   content: "";
   width: 0.4rem;
@@ -129,32 +127,84 @@
   line-height: 1.7;
 }
 
-/* Google Identity button --------------------------------------------- */
+/* Social sign-in --------------------------------------------------------- */
 .google-btn-container {
   width: 100%;
   display: flex;
   justify-content: center;
-  margin: var(--space-6) 0 var(--space-4);
+  margin: var(--space-6) 0 var(--space-3);
 }
 
 .google-btn-container > div {
   width: 100% !important;
 }
 
-/* Quiet divider standing in for the old plain paragraph — a hairline
-   rather than an "or" label, so it reads as structure, not chrome. */
+.apple-signin-btn {
+  width: 100%;
+  height: 48px;
+  box-sizing: border-box;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: var(--color-white);
+
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: var(--step-small);
+  font-weight: 600;
+
+  cursor: not-allowed;
+  opacity: 0.55;
+  pointer-events: none;
+
+  transition: background-color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out);
+}
+
+.apple-signin-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex-shrink: 0;
+}
+
+/* Quiet "or" rule between the social buttons and the email path — a
+   hairline either side rather than a boxed label. */
+.auth-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3, 0.75rem);
+  margin: var(--space-5) 0;
+  color: var(--color-ink-faint);
+  font-size: var(--step-small);
+}
+
+.auth-divider::before,
+.auth-divider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--color-line);
+}
+
 .auth-switch {
   display: flex;
   justify-content: center;
   align-items: center;
   gap: var(--space-2, 0.5rem);
   flex-wrap: wrap;
-  padding-top: var(--space-5);
-  margin-top: var(--space-2, 0.5rem);
-  border-top: 1px solid var(--color-line);
   text-align: center;
   font-size: var(--step-small);
   color: var(--color-ink-soft);
+}
+
+#google-auth-section .auth-switch {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-line);
 }
 
 .auth-link {
@@ -177,10 +227,10 @@
   outline-offset: 2px;
 }
 
-/* Doctor info aside ---------------------------------------------------
-   A left-rule aside rather than a filled, rounded box — it sits inside
-   a card that already has a border and radius, so a second nested card
-   would just be the generic "boxes inside boxes" look. */
+/* Doctor info aside ------------------------------------------------------
+   A left-rule aside rather than a filled, rounded box — it sits inside a
+   card that already has a border and radius, so a second nested card
+   would just read as boxes-inside-boxes. */
 .doctor-info {
   margin: var(--space-6) 0;
   padding: var(--space-1, 0.25rem) 0 var(--space-1, 0.25rem) var(--space-4);
@@ -245,11 +295,10 @@
   }
 }
 
-/* OTP authentication section ------------------------------------------
-   Everything below previously used hardcoded hex instead of the token
-   system (#111827, #6b7280, #d1d5db) — that mismatch against the
-   card's tokenized palette was the main thing making the page feel
-   inconsistent. Rebuilt on the same tokens as the rest of the page. */
+/* OTP authentication section --------------------------------------------- */
+.otp-step-intro {
+  margin-bottom: var(--space-5);
+}
 
 .otp-auth-section .auth-subtitle {
   text-align: center;
@@ -266,19 +315,25 @@
 
 #otp-auth-section .auth-label {
   display: block;
-  margin: var(--space-4) 0 var(--space-2);
+  margin: 0 0 var(--space-2);
   font-size: var(--step-small);
   font-weight: 600;
   color: var(--color-ink);
 }
 
 #otp-auth-section .auth-input {
-  margin-bottom: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+#otp-auth-section .auth-input:focus-visible {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 20%, transparent);
 }
 
 #otp-auth-section .auth-btn--primary {
   width: 100%;
-  margin-top: var(--space-5);
+  margin-top: var(--space-2);
 }
 
 .otp-auth-section .auth-error {
@@ -291,26 +346,64 @@
   margin-top: var(--space-6);
 }
 
-/* The code input is the one place a monospace face earns its keep —
-   it's numeric data entry, not a label pretending to be a data label. */
-.auth-input--code {
-  width: 100%;
-  box-sizing: border-box;
-  text-align: center;
-  font-family: var(--font-mono);
-  letter-spacing: 0.5em;
-  font-size: 1.5rem;
-  font-weight: 600;
-  padding: 0.85em 0.6em 0.85em 0.85em;
-  color: var(--color-ink);
-  transition: box-shadow var(--duration-fast) var(--ease-out),
-    border-color var(--duration-fast) var(--ease-out);
+/* Segmented code entry — the "sleek modern app" OTP pattern: one box per
+   digit, big and tap-friendly, auto-advancing as you type. This is the
+   one place a monospace-style, heavily-spaced treatment earns its keep,
+   since it's numeric data entry, not a label pretending to be data. */
+.otp-code-group {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-2, 0.5rem);
+  margin: var(--space-2, 0.5rem) 0 var(--space-5);
 }
 
-.auth-input--code:focus-visible {
+.otp-code-digit {
+  width: 2.75rem;
+  height: 3.25rem;
+  flex: 0 1 3rem;
+  min-width: 0;
+
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-soft);
+
+  font-family: var(--font-mono);
+  font-size: 1.4rem;
+  font-weight: 600;
+  text-align: center;
+  color: var(--color-ink);
+
+  transition: border-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out);
+}
+
+.otp-code-digit:focus-visible {
   outline: none;
   border-color: var(--color-primary);
+  background: var(--color-white);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 20%, transparent);
+}
+
+.otp-code-digit:not(:placeholder-shown) {
+  border-color: var(--color-primary-line);
+  background: var(--color-white);
+}
+
+@media (max-width: 360px) {
+  .otp-code-group {
+    gap: 0.4rem;
+  }
+
+  .otp-code-digit {
+    width: 2.35rem;
+    height: 2.9rem;
+    font-size: 1.2rem;
+  }
+}
+
+.otp-name-field {
+  margin-bottom: var(--space-2);
 }
 
 #otp-resend-link.auth-link--disabled {
@@ -318,44 +411,4 @@
   opacity: 1;
   cursor: not-allowed;
   pointer-events: none;
-}
-
-/* Apple sign-in ---------------------------------------------------------
-   Currently disabled/unused on this page, but left in and retheme'd
-   (rather than removed) in case it's already referenced elsewhere.
-   Say the word if you want it live here too and I'll wire the states
-   in properly rather than leaving it as an inert placeholder. */
-.apple-signin-btn {
-  width: 100%;
-  height: 48px;
-  margin-top: var(--space-3, 0.75rem);
-  padding: 0 var(--space-5);
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.6rem;
-
-  border: 1px solid var(--color-line);
-  border-radius: var(--radius-md);
-  background: var(--color-white);
-
-  color: var(--color-ink);
-  font-family: var(--font-body);
-  font-size: var(--step-small);
-  font-weight: 600;
-
-  cursor: not-allowed;
-  opacity: 0.55;
-
-  transition: background-color var(--duration-fast) var(--ease-out),
-    border-color var(--duration-fast) var(--ease-out),
-    opacity var(--duration-fast) var(--ease-out);
-}
-
-.apple-signin-icon {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  font-size: 1.35rem;
-  line-height: 1;
-  font-weight: 400;
 }
