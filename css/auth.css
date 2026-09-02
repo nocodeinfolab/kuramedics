@@ -10,12 +10,13 @@
   justify-content: center;
   padding: var(--space-6) var(--space-5);
   background:
-    radial-gradient(circle at top right, var(--color-primary-soft), transparent 40%),
-    radial-gradient(circle at bottom left, color-mix(in srgb, var(--color-accent) 35%, transparent), transparent 35%),
+    radial-gradient(circle at top right, var(--color-primary-soft), transparent 45%),
+    radial-gradient(circle at bottom left, color-mix(in srgb, var(--color-accent) 22%, transparent), transparent 40%),
     var(--color-bg-soft);
 }
 
 .auth-card {
+  position: relative;
   width: 100%;
   max-width: 26rem;
   background: var(--color-white);
@@ -23,6 +24,42 @@
   border-radius: var(--radius-lg);
   padding: var(--space-7) var(--space-5);
   box-shadow: var(--shadow-card);
+  overflow: hidden;
+  animation: auth-card-in 0.5s var(--ease-out) both;
+}
+
+/* The one deliberate accent on the page: a hairline gradient rule at the
+   top of the card, rather than a colored badge or heavy border doing the
+   work. Everything else stays quiet. */
+.auth-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    var(--color-primary),
+    var(--color-accent)
+  );
+}
+
+@keyframes auth-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-card {
+    animation: none;
+  }
 }
 
 @media (min-width: 480px) {
@@ -40,25 +77,38 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0.45rem 1rem;
+  gap: 0.4rem;
+  padding: 0.4rem 0.9rem;
   border-radius: var(--radius-pill);
   background: var(--color-primary-soft);
   color: var(--color-primary-dark);
   border: 1px solid var(--color-primary-line);
-  font-family: var(--font-mono);
-  font-size: var(--step-eyebrow);
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+  font-family: var(--font-body);
+  font-size: var(--step-small);
+  font-weight: 600;
   margin-bottom: var(--space-5);
+  text-transform: lowercase;
 }
 
-/* Doctors get the accent identity color instead of a one-off blue, so the
-   whole palette still traces back to tokens.css. */
+.auth-badge::first-letter {
+  text-transform: uppercase;
+}
+
+/* A small dot instead of a second color block — reads as a status
+   indicator (this door is for doctors) rather than a decorative chip. */
+.auth-badge::before {
+  content: "";
+  width: 0.4rem;
+  height: 0.4rem;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
 .auth-badge--doctor {
-  background: var(--color-accent);
+  background: color-mix(in srgb, var(--color-accent) 16%, var(--color-white));
   color: var(--color-accent-ink);
-  border-color: transparent;
+  border-color: color-mix(in srgb, var(--color-accent) 35%, transparent);
 }
 
 .auth-title {
@@ -84,25 +134,63 @@
   width: 100%;
   display: flex;
   justify-content: center;
-  margin: var(--space-6) 0;
+  margin: var(--space-6) 0 var(--space-4);
 }
 
 .google-btn-container > div {
   width: 100% !important;
 }
 
+/* Quiet divider standing in for the old plain paragraph — a hairline
+   rather than an "or" label, so it reads as structure, not chrome. */
+.auth-switch {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-2, 0.5rem);
+  flex-wrap: wrap;
+  padding-top: var(--space-5);
+  margin-top: var(--space-2, 0.5rem);
+  border-top: 1px solid var(--color-line);
+  text-align: center;
+  font-size: var(--step-small);
+  color: var(--color-ink-soft);
+}
+
+.auth-link {
+  color: var(--color-primary);
+  font-weight: 600;
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.auth-link:hover {
+  color: var(--color-primary-dark);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.auth-link:focus-visible,
+.auth-back:focus-visible,
+.auth-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Doctor info aside ---------------------------------------------------
+   A left-rule aside rather than a filled, rounded box — it sits inside
+   a card that already has a border and radius, so a second nested card
+   would just be the generic "boxes inside boxes" look. */
 .doctor-info {
   margin: var(--space-6) 0;
-  padding: var(--space-5);
-  border-radius: var(--radius-md);
-  background: var(--color-bg-soft);
-  border: 1px solid var(--color-line);
+  padding: var(--space-1, 0.25rem) 0 var(--space-1, 0.25rem) var(--space-4);
+  border-left: 2px solid var(--color-primary-line);
 }
 
 .doctor-info h3 {
   margin: 0 0 var(--space-2);
   font-family: var(--font-body);
-  font-size: var(--step-body);
+  font-size: var(--step-small);
   font-weight: 600;
   color: var(--color-ink);
 }
@@ -156,97 +244,12 @@
     border-radius: var(--radius-md);
   }
 }
-.auth-prefer-code {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 6px;
-  margin-top: 18px;
-  font-size: 0.9rem;
-  color: #6b7280;
-}
 
-.auth-prefer-code__link {
-  font-weight: 600;
-  text-decoration: none;
-}
-
-.auth-prefer-code__link:hover {
-  text-decoration: underline;
-}
-/* OTP authentication section */
-.otp-auth-section {
-  width: 100%;
-  margin-top: 8px;
-}
-
-/* Heading area */
-.otp-intro {
-  text-align: center;
-  margin-bottom: 26px;
-}
-
-.otp-title {
-  margin: 0 0 8px;
-  font-size: 1.35rem;
-  font-weight: 700;
-  color: #111827;
-}
-
-.otp-description {
-  margin: 0 auto;
-  max-width: 360px;
-  font-size: 0.92rem;
-  line-height: 1.5;
-  color: #6b7280;
-}
-
-/* Form */
-.otp-form {
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.otp-field {
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-
-.otp-input {
-  width: 100%;
-  box-sizing: border-box;
-}
-
-/* Send code button */
-.otp-submit-btn {
-  width: 100%;
-  margin-top: 4px;
-}
-
-/* Error */
-.otp-auth-section .auth-error {
-  margin-top: 12px;
-  text-align: center;
-}
-
-/* Back link */
-.otp-back {
-  display: flex;
-  justify-content: center;
-  margin-top: 22px;
-  font-size: 0.9rem;
-}
-.auth-input--code {
-  width: 100%;
-  box-sizing: border-box;
-  text-align: center;
-  letter-spacing: 0.35em;
-  font-size: 1.35rem;
-  font-weight: 600;
-  padding-left: 0.35em;
-}
+/* OTP authentication section ------------------------------------------
+   Everything below previously used hardcoded hex instead of the token
+   system (#111827, #6b7280, #d1d5db) — that mismatch against the
+   card's tokenized palette was the main thing making the page feel
+   inconsistent. Rebuilt on the same tokens as the rest of the page. */
 
 .otp-auth-section .auth-subtitle {
   text-align: center;
@@ -256,56 +259,98 @@
 .otp-auth-section .auth-subtitle strong {
   display: inline-block;
   margin-top: 3px;
-  color: #111827;
+  color: var(--color-ink);
   font-weight: 600;
   word-break: break-word;
 }
 
+#otp-auth-section .auth-label {
+  display: block;
+  margin: var(--space-4) 0 var(--space-2);
+  font-size: var(--step-small);
+  font-weight: 600;
+  color: var(--color-ink);
+}
+
+#otp-auth-section .auth-input {
+  margin-bottom: var(--space-2);
+}
+
 #otp-auth-section .auth-btn--primary {
   width: 100%;
+  margin-top: var(--space-5);
+}
+
+.otp-auth-section .auth-error {
+  margin-top: var(--space-3, 0.75rem);
+  text-align: center;
+  font-size: var(--step-small);
 }
 
 #otp-auth-section .auth-switch {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-top: 20px;
-  font-size: 0.9rem;
+  margin-top: var(--space-6);
+}
+
+/* The code input is the one place a monospace face earns its keep —
+   it's numeric data entry, not a label pretending to be a data label. */
+.auth-input--code {
+  width: 100%;
+  box-sizing: border-box;
+  text-align: center;
+  font-family: var(--font-mono);
+  letter-spacing: 0.5em;
+  font-size: 1.5rem;
+  font-weight: 600;
+  padding: 0.85em 0.6em 0.85em 0.85em;
+  color: var(--color-ink);
+  transition: box-shadow var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out);
+}
+
+.auth-input--code:focus-visible {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 20%, transparent);
 }
 
 #otp-resend-link.auth-link--disabled {
-  opacity: 0.5;
+  color: var(--color-ink-faint);
+  opacity: 1;
   cursor: not-allowed;
   pointer-events: none;
 }
+
+/* Apple sign-in ---------------------------------------------------------
+   Currently disabled/unused on this page, but left in and retheme'd
+   (rather than removed) in case it's already referenced elsewhere.
+   Say the word if you want it live here too and I'll wire the states
+   in properly rather than leaving it as an inert placeholder. */
 .apple-signin-btn {
   width: 100%;
   height: 48px;
-  margin-top: 12px;
-  padding: 0 18px;
+  margin-top: var(--space-3, 0.75rem);
+  padding: 0 var(--space-5);
 
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 0.6rem;
 
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
-  background: #ffffff;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: var(--color-white);
 
-  color: #111827;
-  font-size: 0.95rem;
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-size: var(--step-small);
   font-weight: 600;
 
   cursor: not-allowed;
   opacity: 0.55;
 
-  transition:
-    background-color 0.2s ease,
-    border-color 0.2s ease,
-    opacity 0.2s ease;
+  transition: background-color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out),
+    opacity var(--duration-fast) var(--ease-out);
 }
 
 .apple-signin-icon {
