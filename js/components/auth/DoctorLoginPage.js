@@ -12,6 +12,7 @@ import api from "../../services/api.js";
 const OTP_REQUEST_ENDPOINT = "/auth/otp/request";
 const OTP_VERIFY_ENDPOINT = "/auth/otp/verify";
 const RESEND_COOLDOWN_SECONDS = 30;
+const CODE_LENGTH = 6;
 
 export class DoctorLoginPage extends Component {
   constructor(props) {
@@ -25,6 +26,7 @@ export class DoctorLoginPage extends Component {
     this.error = "";
     this.resendCooldown = 0;
     this._resendInterval = null;
+    this._focusTimeout = null;
   }
 
   render() {
@@ -79,6 +81,39 @@ export class DoctorLoginPage extends Component {
       "div",
       { id: "google-auth-section" },
       h("div", { id: "google-login-btn", class: "google-btn-container" }),
+
+      // Inactive for now — kept visible per product decision, just disabled.
+      h(
+        "button",
+        {
+          type: "button",
+          class: "apple-signin-btn",
+          disabled: true,
+          "aria-disabled": "true",
+          title: "Sign in with Apple — coming soon"
+        },
+        h(
+          "svg",
+          {
+            class: "apple-signin-icon",
+            viewBox: "0 0 24 24",
+            xmlns: "http://www.w3.org/2000/svg",
+            "aria-hidden": "true"
+          },
+          h("path", {
+            fill: "currentColor",
+            d: "M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.03 1.52-.06 2.098-.98 3.938-.98 1.837 0 2.35.98 3.96.95 1.637-.03 2.676-1.48 3.676-2.94 1.156-1.687 1.636-3.32 1.666-3.404-.036-.017-3.19-1.226-3.223-4.86-.028-3.036 2.478-4.49 2.59-4.554-1.42-2.08-3.617-2.31-4.39-2.36-2-.16-3.67 1.083-4.62 1.083zm3.42-3.11c.837-1.012 1.4-2.42 1.25-3.83-1.21.05-2.68.81-3.55 1.82-.78.9-1.46 2.33-1.28 3.7 1.34.1 2.72-.68 3.58-1.7z"
+          })
+        ),
+        h("span", {}, "Sign in with Apple")
+      ),
+
+      h(
+        "div",
+        { class: "auth-divider" },
+        h("span", {}, "or")
+      ),
+
       h(
         "p",
         { class: "auth-switch" },
@@ -93,6 +128,7 @@ export class DoctorLoginPage extends Component {
               this.error = "";
               this.view = "otp-email";
               this.update();
+              this.focusSoon("#otp-email");
             }
           },
           "Sign in with email instead"
@@ -104,7 +140,12 @@ export class DoctorLoginPage extends Component {
   renderOtpEmailStep() {
     return h(
       "div",
-      { id: "otp-auth-section" },
+      { id: "otp-auth-section", class: "otp-auth-section" },
+      h(
+        "p",
+        { class: "auth-subtitle otp-step-intro" },
+        "We'll email you a 6-digit code — no password needed."
+      ),
       h("label", { class: "auth-label", for: "otp-email" }, "Email address"),
       h("input", {
         type: "email",
@@ -152,7 +193,7 @@ export class DoctorLoginPage extends Component {
   renderOtpCodeStep() {
     return h(
       "div",
-      { id: "otp-auth-section" },
+      { id: "otp-auth-section", class: "otp-auth-section" },
       h(
         "p",
         { class: "auth-subtitle" },
@@ -165,10 +206,17 @@ export class DoctorLoginPage extends Component {
           { class: "auth-subtitle" },
           "We'll create your doctor account with this email — you can add your specialization, MDCN licence and consultation fees afterward."
         ),
+
+      h(
+        "div",
+        { class: "otp-code-group", role: "group", "aria-label": "6-digit verification code" },
+        ...this.renderCodeDigitInputs()
+      ),
+
       this.isNewAccount &&
         h(
           "div",
-          {},
+          { class: "otp-name-field" },
           h("label", { class: "auth-label", for: "otp-full-name" }, "Full name"),
           h("input", {
             type: "text",
@@ -181,18 +229,7 @@ export class DoctorLoginPage extends Component {
             }
           })
         ),
-      h("input", {
-        type: "text",
-        id: "otp-code",
-        class: "auth-input auth-input--code",
-        placeholder: "123456",
-        inputmode: "numeric",
-        maxlength: "6",
-        autocomplete: "one-time-code",
-        onKeydown: (e) => {
-          if (e.key === "Enter") this.handleVerifyCode();
-        }
-      }),
+
       h(
         "button",
         {
@@ -232,12 +269,127 @@ export class DoctorLoginPage extends Component {
               this.error = "";
               this.view = "otp-email";
               this.update();
+              this.focusSoon("#otp-email");
             }
           },
           "Use a different email"
         )
       )
     );
+  }
+
+  // Six individual boxes rather than one text field — auto-advances as you
+  // type, supports paste-the-whole-code, and auto-submits once filled (for
+  // returning doctors; new accounts still need the name field below first).
+  renderCodeDigitInputs() {
+    const inputs = [];
+    for (let i = 0; i < CODE_LENGTH; i++) {
+      inputs.push(
+        h("input", {
+          type: "text",
+          inputmode: "numeric",
+          pattern: "[0-9]*",
+          maxlength: "1",
+          class: "otp-code-digit",
+          id: `otp-code-${i}`,
+          autocomplete: i === 0 ? "one-time-code" : "off",
+          "aria-label": `Digit ${i + 1} of ${CODE_LENGTH}`,
+          onInput: (e) => this.handleCodeDigitInput(i, e),
+          onKeydown: (e) => this.handleCodeDigitKeydown(i, e),
+          onPaste: (e) => this.handleCodeDigitPaste(i, e)
+        })
+      );
+    }
+    return inputs;
+  }
+
+  handleCodeDigitInput(index, e) {
+    const digit = e.target.value.replace(/[^0-9]/g, "").slice(-1);
+    e.target.value = digit;
+
+    if (digit && index < CODE_LENGTH - 1) {
+      this.el.querySelector(`#otp-code-${index + 1}`)?.focus();
+    }
+
+    this.maybeAutoAdvanceOrSubmit();
+  }
+
+  handleCodeDigitKeydown(index, e) {
+    if (e.key === "Backspace" && !e.target.value && index > 0) {
+      e.preventDefault();
+      const prev = this.el.querySelector(`#otp-code-${index - 1}`);
+      if (prev) {
+        prev.value = "";
+        prev.focus();
+      }
+      return;
+    }
+
+    if (e.key === "ArrowLeft" && index > 0) {
+      e.preventDefault();
+      this.el.querySelector(`#otp-code-${index - 1}`)?.focus();
+      return;
+    }
+
+    if (e.key === "ArrowRight" && index < CODE_LENGTH - 1) {
+      e.preventDefault();
+      this.el.querySelector(`#otp-code-${index + 1}`)?.focus();
+      return;
+    }
+
+    if (e.key === "Enter") {
+      this.handleVerifyCode();
+    }
+  }
+
+  handleCodeDigitPaste(index, e) {
+    e.preventDefault();
+    const pasted = (e.clipboardData || window.clipboardData)
+      .getData("text")
+      .replace(/[^0-9]/g, "")
+      .slice(0, CODE_LENGTH);
+
+    if (!pasted) return;
+
+    pasted.split("").forEach((digit, i) => {
+      const input = this.el.querySelector(`#otp-code-${i}`);
+      if (input) input.value = digit;
+    });
+
+    const nextEmpty = Math.min(pasted.length, CODE_LENGTH - 1);
+    this.el.querySelector(`#otp-code-${nextEmpty}`)?.focus();
+
+    this.maybeAutoAdvanceOrSubmit();
+  }
+
+  maybeAutoAdvanceOrSubmit() {
+    const code = this.getCode();
+    if (code.length !== CODE_LENGTH) return;
+
+    if (this.isNewAccount) {
+      const nameInput = this.el.querySelector("#otp-full-name");
+      if (nameInput && !nameInput.value) nameInput.focus();
+      return;
+    }
+
+    this.handleVerifyCode();
+  }
+
+  getCode() {
+    let code = "";
+    for (let i = 0; i < CODE_LENGTH; i++) {
+      code += this.el.querySelector(`#otp-code-${i}`)?.value.trim() || "";
+    }
+    return code;
+  }
+
+  // Re-render (view switches, cooldown ticks) recreates these nodes, so
+  // focus has to be re-applied after the DOM settles rather than assumed.
+  focusSoon(selector) {
+    clearTimeout(this._focusTimeout);
+    this._focusTimeout = setTimeout(() => {
+      this.el?.querySelector(selector)?.focus();
+    }, 0);
   }
 
   afterMount() {
@@ -303,18 +455,22 @@ export class DoctorLoginPage extends Component {
       // request, etc.) — the spinner can never get stuck open.
       this.loading = false;
       this.update();
+
+      if (this.view === "otp-code") {
+        this.focusSoon("#otp-code-0");
+      }
     }
   }
 
   async handleVerifyCode() {
-    const code = this.el.querySelector("#otp-code")?.value.trim() || "";
+    const code = this.getCode();
     const fullName = this.isNewAccount
       ? this.el.querySelector("#otp-full-name")?.value.trim() || ""
       : "";
 
     this.error = "";
 
-    if (!/^\d{6}$/.test(code)) {
+    if (code.length !== CODE_LENGTH) {
       this.error = "Enter the 6-digit code.";
       this.update();
       return;
@@ -323,6 +479,7 @@ export class DoctorLoginPage extends Component {
     if (this.isNewAccount && !fullName) {
       this.error = "Enter your full name to create your account.";
       this.update();
+      this.el.querySelector("#otp-full-name")?.focus();
       return;
     }
 
@@ -368,7 +525,7 @@ export class DoctorLoginPage extends Component {
       }
 
       // Only touch the countdown text directly — avoid a full re-render
-      // (and losing focus on the code input) every second.
+      // (and losing focus on the code inputs) every second.
       const link = this.el?.querySelector("#otp-resend-link");
       if (!link) {
         clearInterval(this._resendInterval);
@@ -382,5 +539,6 @@ export class DoctorLoginPage extends Component {
 
   beforeUnmount() {
     clearInterval(this._resendInterval);
+    clearTimeout(this._focusTimeout);
   }
 }
