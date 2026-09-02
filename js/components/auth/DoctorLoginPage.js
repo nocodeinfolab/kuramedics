@@ -146,26 +146,71 @@ export class DoctorLoginPage extends Component {
         { class: "auth-subtitle otp-step-intro" },
         "We'll email you a 6-digit code — no password needed."
       ),
-      h("label", { class: "auth-label", for: "otp-email" }, "Email address"),
-      h("input", {
-        type: "email",
-        id: "otp-email",
-        class: "auth-input",
-        placeholder: "you@example.com",
-        autocomplete: "email",
-        onKeydown: (e) => {
-          if (e.key === "Enter") this.handleSendCode();
-        }
-      }),
+
+      h(
+        "label",
+        { class: "sr-only", for: "otp-email" },
+        "Email address"
+      ),
+      h(
+        "div",
+        { class: "auth-input-group" },
+        h(
+          "svg",
+          {
+            class: "auth-input-icon",
+            viewBox: "0 0 24 24",
+            xmlns: "http://www.w3.org/2000/svg",
+            "aria-hidden": "true"
+          },
+          h("path", {
+            fill: "none",
+            stroke: "currentColor",
+            "stroke-width": "1.6",
+            "stroke-linecap": "round",
+            "stroke-linejoin": "round",
+            d: "M3.5 6.5h17a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-17a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1zM3 7l9 6.5L21 7"
+          })
+        ),
+        h("input", {
+          type: "email",
+          id: "otp-email",
+          class: "auth-input",
+          placeholder: "you@example.com",
+          autocomplete: "email",
+          onKeydown: (e) => {
+            if (e.key === "Enter") this.handleSendCode();
+          }
+        })
+      ),
+
       h(
         "button",
         {
           type: "button",
-          class: "auth-btn auth-btn--primary",
+          class: "auth-btn auth-btn--primary auth-btn--icon",
           disabled: this.loading,
           onClick: () => this.handleSendCode()
         },
-        this.loading ? "Sending…" : "Send code"
+        h("span", {}, this.loading ? "Sending…" : "Send code"),
+        !this.loading &&
+          h(
+            "svg",
+            {
+              class: "auth-btn-icon",
+              viewBox: "0 0 24 24",
+              xmlns: "http://www.w3.org/2000/svg",
+              "aria-hidden": "true"
+            },
+            h("path", {
+              fill: "none",
+              stroke: "currentColor",
+              "stroke-width": "2",
+              "stroke-linecap": "round",
+              "stroke-linejoin": "round",
+              d: "M5 12h14M13 6l6 6-6 6"
+            })
+          )
       ),
       this.error && h("p", { class: "auth-error" }, this.error),
       h(
