@@ -30,45 +30,101 @@ export class DoctorLoginPage extends Component {
   render() {
     return h(
       "main",
-      { class: "auth-page" },
+      { class: "auth-page auth-page--split" },
       h(
-        "div",
-        { class: "auth-card" },
+        "section",
+        { class: "auth-panel" },
         h(
           "div",
-          { class: "auth-header" },
-          h("span", { class: "auth-badge auth-badge--doctor" }, "For Doctors"),
-          h("h1", { class: "auth-title" }, "Welcome back, Doctor"),
+          { class: "auth-panel__mark" },
+          h("span", {}, "YerosCare")
+        ),
+        h(
+          "div",
+          { class: "auth-panel__body" },
           h(
             "p",
-            { class: "auth-subtitle" },
-            "Sign in securely to manage your clinic, appointments, patients and earnings."
+            { class: "auth-panel__quote" },
+            "Built so a clinic can run itself — bookings, patients and earnings, in one place."
+          ),
+          h(
+            "div",
+            { class: "auth-panel__stats" },
+            h(
+              "div",
+              { class: "auth-panel__stat" },
+              h("strong", {}, "MDCN-verified"),
+              h("span", {}, "every doctor profile")
+            ),
+            h(
+              "div",
+              { class: "auth-panel__stat" },
+              h("strong", {}, "Your fees"),
+              h("span", {}, "you set the terms")
+            )
           )
         ),
-
-        this.view === "google" && this.renderGoogleView(),
-        this.view === "otp-email" && this.renderOtpEmailStep(),
-        this.view === "otp-code" && this.renderOtpCodeStep(),
-
+        h("div", { class: "auth-panel__motif", "aria-hidden": "true" },
+          h(
+            "svg",
+            { viewBox: "0 0 400 120", preserveAspectRatio: "none" },
+            h("path", {
+              d: "M0,80 L70,80 L95,20 L120,110 L145,55 L170,80 L400,80",
+              fill: "none",
+              stroke: "currentColor",
+              "stroke-width": "1.25"
+            })
+          )
+        )
+      ),
+      h(
+        "section",
+        { class: "auth-content" },
         h(
           "div",
-          { class: "doctor-info" },
-          h("h3", {}, "New to YerosCare?"),
+          { class: "auth-content__inner" },
+          h(
+            "div",
+            { class: "auth-topbar" },
+            h("a", { href: "#/", class: "auth-back" }, "← Back to home"),
+            h("span", { class: "auth-badge auth-badge--doctor" }, "For doctors")
+          ),
+
+          h(
+            "div",
+            { class: "auth-header" },
+            h("h1", { class: "auth-title" }, "Welcome back, doctor"),
+            h(
+              "p",
+              { class: "auth-subtitle" },
+              "Sign in to manage your clinic, appointments, patients and earnings."
+            )
+          ),
+
+          h(
+            "div",
+            { class: "auth-step", key: this.view },
+            this.view === "google" && this.renderGoogleView(),
+            this.view === "otp-email" && this.renderOtpEmailStep(),
+            this.view === "otp-code" && this.renderOtpCodeStep()
+          ),
+
+          h(
+            "div",
+            { class: "auth-info" },
+            h("h3", {}, "New to YerosCare?"),
+            h(
+              "p",
+              {},
+              "Signing in creates your doctor account. Afterward, you'll complete your professional profile, upload your MDCN licence and set your consultation fees before patients can find you."
+            )
+          ),
+
           h(
             "p",
-            {},
-            "Signing in creates your doctor account. Afterward, you'll complete your professional profile, upload your MDCN licence and configure your consultation fees before your profile becomes visible to patients."
+            { class: "auth-fineprint" },
+            "By continuing, you agree to our Terms of Service and Privacy Policy."
           )
-        ),
-        h(
-          "p",
-          { class: "auth-note" },
-          "By continuing, you agree to our Terms of Service and Privacy Policy."
-        ),
-        h(
-          "div",
-          { class: "auth-footer" },
-          h("a", { href: "#/", class: "auth-back" }, "← Back to Home")
         )
       )
     );
@@ -77,7 +133,7 @@ export class DoctorLoginPage extends Component {
   renderGoogleView() {
     return h(
       "div",
-      { id: "google-auth-section" },
+      { id: "google-auth-section", class: "auth-view" },
       h("div", { id: "google-login-btn", class: "google-btn-container" }),
       h(
         "p",
@@ -104,7 +160,7 @@ export class DoctorLoginPage extends Component {
   renderOtpEmailStep() {
     return h(
       "div",
-      { id: "otp-auth-section" },
+      { id: "otp-auth-section", class: "auth-view" },
       h("label", { class: "auth-label", for: "otp-email" }, "Email address"),
       h("input", {
         type: "email",
@@ -152,7 +208,7 @@ export class DoctorLoginPage extends Component {
   renderOtpCodeStep() {
     return h(
       "div",
-      { id: "otp-auth-section" },
+      { id: "otp-auth-section", class: "auth-view" },
       h(
         "p",
         { class: "auth-subtitle" },
@@ -163,7 +219,7 @@ export class DoctorLoginPage extends Component {
         h(
           "p",
           { class: "auth-subtitle" },
-          "We'll create your doctor account with this email — you can add your specialization, MDCN licence and consultation fees afterward."
+          "We'll create your doctor account with this email — specialization, MDCN licence and consultation fees come next."
         ),
       this.isNewAccount &&
         h(
@@ -185,7 +241,7 @@ export class DoctorLoginPage extends Component {
         type: "text",
         id: "otp-code",
         class: "auth-input auth-input--code",
-        placeholder: "123456",
+        placeholder: "······",
         inputmode: "numeric",
         maxlength: "6",
         autocomplete: "one-time-code",
@@ -298,9 +354,6 @@ export class DoctorLoginPage extends Component {
       console.error("OTP request failed:", err);
       this.error = err.message || "Couldn't send the code. Try again.";
     } finally {
-      // finally guarantees this runs even if api.post() rejects for a
-      // reason the try/catch above didn't anticipate (timeout, aborted
-      // request, etc.) — the spinner can never get stuck open.
       this.loading = false;
       this.update();
     }
@@ -347,9 +400,6 @@ export class DoctorLoginPage extends Component {
       console.error("OTP verify failed:", err);
       this.error = err.message || "Invalid or expired code.";
     } finally {
-      // Runs even on the success path above (finally always runs after a
-      // try block, return or not) — harmless here since onAuthSuccess
-      // navigates away, but it's what guarantees loading never sticks.
       this.loading = false;
       this.update();
     }
@@ -367,8 +417,6 @@ export class DoctorLoginPage extends Component {
         this.resendCooldown = 0;
       }
 
-      // Only touch the countdown text directly — avoid a full re-render
-      // (and losing focus on the code input) every second.
       const link = this.el?.querySelector("#otp-resend-link");
       if (!link) {
         clearInterval(this._resendInterval);
