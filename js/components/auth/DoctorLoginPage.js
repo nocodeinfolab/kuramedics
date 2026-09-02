@@ -4,6 +4,11 @@ import GoogleAuth from "./GoogleAuth.js";
 import pushNotifications from "../../services/pushNotifications.js";
 import api from "../../services/api.js";
 
+// Backend routes for authService.requestLoginOtp / verifyLoginOtp:
+//   POST /auth/otp/request  { email, role } -> { message, isNewAccount }
+//   POST /auth/otp/verify   { email, otp, role, full_name? } -> { message, data: { accessToken, user } }
+// full_name is only required when requestLoginOtp came back isNewAccount:
+// true — same envelope shape GoogleAuth.handleCredential already expects.
 const OTP_REQUEST_ENDPOINT = "/auth/otp/request";
 const OTP_VERIFY_ENDPOINT = "/auth/otp/verify";
 const RESEND_COOLDOWN_SECONDS = 30;
@@ -73,46 +78,16 @@ export class DoctorLoginPage extends Component {
     return h(
       "div",
       { id: "google-auth-section" },
-  
-      h("div", {
-        id: "google-login-btn",
-        class: "google-btn-container"
-      }),
-  
+      h("div", { id: "google-login-btn", class: "google-btn-container" }),
       h(
-        "button",
-        {
-          type: "button",
-          class: "apple-signin-btn",
-          disabled: true,
-          title: "Apple Sign In coming soon"
-        },
-        h(
-          "svg",
-          {
-            class: "apple-signin-icon",
-            viewBox: "0 0 24 24",
-            width: "20",
-            height: "20",
-            "aria-hidden": "true"
-          },
-          h("path", {
-            fill: "currentColor",
-            d: "M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.39 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.95-2.52 4.09zM12.03 7.25C11.88 5.02 13.69 3.18 15.76 3c.29 2.58-2.34 4.5-3.73 4.25z"
-          })
-        ),
-        h("span", {}, "Sign in with Apple")
-      ),
-  
-      h(
-        "div",
-        { class: "auth-prefer-code" },
-        h("span", {}, "Prefer a code?"),
+        "p",
+        { class: "auth-switch" },
+        "Prefer a code? ",
         h(
           "a",
           {
             href: "#",
-            class: "auth-link auth-prefer-code__link",
+            class: "auth-link",
             onClick: (e) => {
               e.preventDefault();
               this.error = "";
@@ -125,64 +100,36 @@ export class DoctorLoginPage extends Component {
       )
     );
   }
+
   renderOtpEmailStep() {
     return h(
       "div",
-      { id: "otp-auth-section", class: "otp-auth-section" },
-  
+      { id: "otp-auth-section" },
+      h("label", { class: "auth-label", for: "otp-email" }, "Email address"),
+      h("input", {
+        type: "email",
+        id: "otp-email",
+        class: "auth-input",
+        placeholder: "you@example.com",
+        autocomplete: "email",
+        onKeydown: (e) => {
+          if (e.key === "Enter") this.handleSendCode();
+        }
+      }),
       h(
-        "div",
-        { class: "otp-intro" },
-        h("h2", { class: "otp-title" }, "Sign in with email"),
-        h(
-          "p",
-          { class: "otp-description" },
-          "We'll send a secure 6-digit code to your email address."
-        )
+        "button",
+        {
+          type: "button",
+          class: "auth-btn auth-btn--primary",
+          disabled: this.loading,
+          onClick: () => this.handleSendCode()
+        },
+        this.loading ? "Sending…" : "Send code"
       ),
-  
+      this.error && h("p", { class: "auth-error" }, this.error),
       h(
-        "div",
-        { class: "otp-form" },
-  
-        h(
-          "div",
-          { class: "otp-field" },
-          h(
-            "label",
-            { class: "auth-label", for: "otp-email" },
-            "Email address"
-          ),
-          h("input", {
-            type: "email",
-            id: "otp-email",
-            class: "auth-input otp-input",
-            placeholder: "you@example.com",
-            autocomplete: "email",
-            onKeydown: (e) => {
-              if (e.key === "Enter") this.handleSendCode();
-            }
-          })
-        ),
-  
-        h(
-          "button",
-          {
-            type: "button",
-            class: "auth-btn auth-btn--primary otp-submit-btn",
-            disabled: this.loading,
-            onClick: () => this.handleSendCode()
-          },
-          this.loading ? "Sending…" : "Send code"
-        )
-      ),
-  
-      this.error &&
-        h("p", { class: "auth-error" }, this.error),
-  
-      h(
-        "div",
-        { class: "otp-back" },
+        "p",
+        { class: "auth-switch" },
         h(
           "a",
           {
@@ -201,6 +148,7 @@ export class DoctorLoginPage extends Component {
       )
     );
   }
+
   renderOtpCodeStep() {
     return h(
       "div",
@@ -344,14 +292,16 @@ export class DoctorLoginPage extends Component {
       this.sentEmail = email;
       this.isNewAccount = !!result.data?.isNewAccount;
       this.view = "otp-code";
-      this.loading = false;
       this.error = "";
-      this.update();
       this.startResendCooldown();
     } catch (err) {
       console.error("OTP request failed:", err);
-      this.loading = false;
       this.error = err.message || "Couldn't send the code. Try again.";
+    } finally {
+      // finally guarantees this runs even if api.post() rejects for a
+      // reason the try/catch above didn't anticipate (timeout, aborted
+      // request, etc.) — the spinner can never get stuck open.
+      this.loading = false;
       this.update();
     }
   }
@@ -392,12 +342,15 @@ export class DoctorLoginPage extends Component {
       api.setAccessToken(accessToken);
       localStorage.setItem("user", JSON.stringify(user));
 
-      this.loading = false;
       this.onAuthSuccess(result.data);
     } catch (err) {
       console.error("OTP verify failed:", err);
-      this.loading = false;
       this.error = err.message || "Invalid or expired code.";
+    } finally {
+      // Runs even on the success path above (finally always runs after a
+      // try block, return or not) — harmless here since onAuthSuccess
+      // navigates away, but it's what guarantees loading never sticks.
+      this.loading = false;
       this.update();
     }
   }
