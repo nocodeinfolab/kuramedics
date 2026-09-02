@@ -3,6 +3,8 @@
 const API_BASE_URL =
     "https://doctors-consultation-backend.onrender.com/api/v1";
 
+const REQUEST_TIMEOUT_MS = 20000; // any single request gives up after 20s
+
 class ApiService {
 
     constructor() {
@@ -41,13 +43,43 @@ class ApiService {
 
     }
 
+    // Wraps fetch with a hard timeout via AbortController. Without this, a
+    // stalled connection (flaky mobile network, a stuck upstream service,
+    // etc.) leaves the calling await unresolved forever — which is exactly
+    // what makes a UI spinner get stuck open with no way to recover short
+    // of a page refresh. This guarantees every fetch either resolves or
+    // rejects within REQUEST_TIMEOUT_MS.
+    async fetchWithTimeout(url, options = {}) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(
+            () => controller.abort(),
+            REQUEST_TIMEOUT_MS
+        );
+
+        try {
+            return await fetch(url, {
+                ...options,
+                signal: controller.signal
+            });
+        } catch (err) {
+            if (err.name === "AbortError") {
+                throw new Error(
+                    "The request timed out. Please check your connection and try again."
+                );
+            }
+            throw err;
+        } finally {
+            clearTimeout(timeoutId);
+        }
+    }
+
     async getCsrfToken() {
         console.log("getCsrfToken() called at", Date.now());
     
         console.log("----------------------------------------");
         console.log("Fetching CSRF token...");
     
-        const response = await fetch(
+        const response = await this.fetchWithTimeout(
             `${API_BASE_URL}/csrf-token`,
             {
                 credentials: "include"
@@ -87,7 +119,7 @@ class ApiService {
 
             const csrfToken = await this.getCsrfToken();
 
-            const response = await fetch(
+            const response = await this.fetchWithTimeout(
                 `${API_BASE_URL}/auth/refresh`,
                 {
                     method: "POST",
@@ -179,7 +211,7 @@ class ApiService {
             !!headers["X-CSRF-Token"]
         );
 
-        const response = await fetch(
+        const response = await this.fetchWithTimeout(
             `${API_BASE_URL}${endpoint}`,
             {
                 ...options,
