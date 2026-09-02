@@ -313,7 +313,69 @@
   word-break: break-word;
 }
 
-#otp-auth-section .auth-label {
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Icon-in-field pattern instead of a label sitting above a bare box —
+   the icon does the labeling work visually, the sr-only label keeps it
+   readable for assistive tech. */
+.auth-input-group {
+  position: relative;
+  margin-bottom: var(--space-4);
+}
+
+.auth-input-icon {
+  position: absolute;
+  left: var(--space-4);
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.15rem;
+  height: 1.15rem;
+  color: var(--color-ink-faint);
+  pointer-events: none;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.auth-input-group:focus-within .auth-input-icon {
+  color: var(--color-primary);
+}
+
+#otp-auth-section .auth-input {
+  width: 100%;
+  box-sizing: border-box;
+  height: 3.1rem;
+  padding: 0 var(--space-4) 0 2.9rem;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-soft);
+  color: var(--color-ink);
+  font-size: var(--step-body, 1rem);
+  transition: border-color var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+}
+
+#otp-auth-section .auth-input::placeholder {
+  color: var(--color-ink-faint);
+}
+
+#otp-auth-section .auth-input:focus-visible {
+  outline: none;
+  border-color: var(--color-primary);
+  background: var(--color-white);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 20%, transparent);
+}
+
+.otp-name-field .auth-label {
   display: block;
   margin: 0 0 var(--space-2);
   font-size: var(--step-small);
@@ -321,19 +383,71 @@
   color: var(--color-ink);
 }
 
-#otp-auth-section .auth-input {
-  margin-bottom: var(--space-4);
+.otp-name-field .auth-input {
+  width: 100%;
+  box-sizing: border-box;
+  height: 3.1rem;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-soft);
+  color: var(--color-ink);
+  font-size: var(--step-body, 1rem);
+  transition: border-color var(--duration-fast) var(--ease-out),
+    background-color var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
 }
 
-#otp-auth-section .auth-input:focus-visible {
+.otp-name-field .auth-input:focus-visible {
   outline: none;
   border-color: var(--color-primary);
+  background: var(--color-white);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 20%, transparent);
 }
 
 #otp-auth-section .auth-btn--primary {
   width: 100%;
+  height: 3.1rem;
   margin-top: var(--space-2);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--color-ink) 8%, transparent);
+  transition: transform var(--duration-fast) var(--ease-out),
+    box-shadow var(--duration-fast) var(--ease-out);
+}
+
+#otp-auth-section .auth-btn--primary:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px color-mix(in srgb, var(--color-primary) 25%, transparent);
+}
+
+#otp-auth-section .auth-btn--primary:not(:disabled):active {
+  transform: translateY(0);
+}
+
+.auth-btn--icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2, 0.5rem);
+}
+
+.auth-btn-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex-shrink: 0;
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+
+.auth-btn--icon:not(:disabled):hover .auth-btn-icon {
+  transform: translateX(2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #otp-auth-section .auth-btn--primary:not(:disabled):hover,
+  .auth-btn--icon:not(:disabled):hover .auth-btn-icon {
+    transform: none;
+  }
 }
 
 .otp-auth-section .auth-error {
