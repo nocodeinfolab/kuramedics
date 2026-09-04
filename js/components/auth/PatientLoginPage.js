@@ -7,11 +7,36 @@ import api from "../../services/api.js";
 // Backend routes for authService.requestLoginOtp / verifyLoginOtp:
 //   POST /auth/otp/request  { email, role } -> { message, isNewAccount }
 //   POST /auth/otp/verify   { email, otp, role, full_name? } -> { message, data: { accessToken, user } }
-// full_name is only required when requestLoginOtp came back isNewAccount:
-// true — same envelope shape GoogleAuth.handleCredential already expects.
 const OTP_REQUEST_ENDPOINT = "/auth/otp/request";
 const OTP_VERIFY_ENDPOINT = "/auth/otp/verify";
 const RESEND_COOLDOWN_SECONDS = 30;
+const OTP_DIGIT_COUNT = 6;
+
+const EnvelopeIcon = () =>
+  h(
+    "svg",
+    { class: "auth-input-icon", viewBox: "0 0 24 24", fill: "none", "aria-hidden": "true" },
+    h("path", {
+      d: "M3 6.5 12 13l9-6.5M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z",
+      stroke: "currentColor",
+      "stroke-width": "1.6",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round"
+    })
+  );
+
+const ArrowIcon = () =>
+  h(
+    "svg",
+    { class: "auth-btn-icon", viewBox: "0 0 24 24", fill: "none", "aria-hidden": "true" },
+    h("path", {
+      d: "M5 12h14M13 6l6 6-6 6",
+      stroke: "currentColor",
+      "stroke-width": "1.8",
+      "stroke-linecap": "round",
+      "stroke-linejoin": "round"
+    })
+  );
 
 export class PatientLoginPage extends Component {
   constructor(props) {
@@ -30,101 +55,45 @@ export class PatientLoginPage extends Component {
   render() {
     return h(
       "main",
-      { class: "auth-page auth-page--split" },
+      { class: "auth-page" },
       h(
-        "section",
-        { class: "auth-panel" },
+        "div",
+        { class: "auth-card" },
         h(
           "div",
-          { class: "auth-panel__mark" },
-          h("span", {}, "YerosCare")
+          { class: "auth-header" },
+          h("span", { class: "auth-badge" }, "For patients"),
+          h("h1", { class: "auth-title" }, "Welcome to YerosCare"),
+          h(
+            "p",
+            { class: "auth-subtitle" },
+            "Sign in to begin AI triage, manage appointments and access your medical records."
+          )
+        ),
+
+        this.view === "google" && this.renderGoogleView(),
+        this.view === "otp-email" && this.renderOtpEmailStep(),
+        this.view === "otp-code" && this.renderOtpCodeStep(),
+
+        h(
+          "div",
+          { class: "doctor-info" },
+          h("h3", {}, "New to YerosCare?"),
+          h(
+            "p",
+            {},
+            "Signing in creates your patient account automatically — you can start a triage or book an appointment right away."
+          )
+        ),
+        h(
+          "p",
+          { class: "auth-note" },
+          "By continuing, you agree to our Terms of Service and Privacy Policy."
         ),
         h(
           "div",
-          { class: "auth-panel__body" },
-          h(
-            "p",
-            { class: "auth-panel__quote" },
-            "Tell us what's wrong. We'll help you find the right care, fast."
-          ),
-          h(
-            "div",
-            { class: "auth-panel__stats" },
-            h(
-              "div",
-              { class: "auth-panel__stat" },
-              h("strong", {}, "AI triage"),
-              h("span", {}, "know what you need first")
-            ),
-            h(
-              "div",
-              { class: "auth-panel__stat" },
-              h("strong", {}, "MDCN-verified"),
-              h("span", {}, "every doctor you'll see")
-            )
-          )
-        ),
-        h("div", { class: "auth-panel__motif", "aria-hidden": "true" },
-          h(
-            "svg",
-            { viewBox: "0 0 400 120", preserveAspectRatio: "none" },
-            h("path", {
-              d: "M0,80 L70,80 L95,20 L120,110 L145,55 L170,80 L400,80",
-              fill: "none",
-              stroke: "currentColor",
-              "stroke-width": "1.25"
-            })
-          )
-        )
-      ),
-      h(
-        "section",
-        { class: "auth-content" },
-        h(
-          "div",
-          { class: "auth-content__inner" },
-          h(
-            "div",
-            { class: "auth-topbar" },
-            h("a", { href: "#/", class: "auth-back" }, "← Back to home"),
-            h("span", { class: "auth-badge" }, "For patients")
-          ),
-
-          h(
-            "div",
-            { class: "auth-header" },
-            h("h1", { class: "auth-title" }, "Welcome to YerosCare"),
-            h(
-              "p",
-              { class: "auth-subtitle" },
-              "Sign in to begin AI triage, manage appointments and access your medical records."
-            )
-          ),
-
-          h(
-            "div",
-            { class: "auth-step", key: this.view },
-            this.view === "google" && this.renderGoogleView(),
-            this.view === "otp-email" && this.renderOtpEmailStep(),
-            this.view === "otp-code" && this.renderOtpCodeStep()
-          ),
-
-          h(
-            "div",
-            { class: "auth-info" },
-            h("h3", {}, "New to YerosCare?"),
-            h(
-              "p",
-              {},
-              "Signing in creates your patient account automatically — you can start a triage or book an appointment right away."
-            )
-          ),
-
-          h(
-            "p",
-            { class: "auth-fineprint" },
-            "By continuing, you agree to our Terms of Service and Privacy Policy."
-          )
+          { class: "auth-footer" },
+          h("a", { href: "#/", class: "auth-back" }, "Back to Home")
         )
       )
     );
@@ -133,8 +102,12 @@ export class PatientLoginPage extends Component {
   renderGoogleView() {
     return h(
       "div",
-      { id: "google-auth-section", class: "auth-view" },
-      h("div", { id: "google-login-btn", class: "google-btn-container" }),
+      { id: "google-auth-section" },
+      h(
+        "div",
+        { class: "google-btn-container" },
+        h("div", { id: "google-login-btn" })
+      ),
       h(
         "p",
         { class: "auth-switch" },
@@ -160,27 +133,38 @@ export class PatientLoginPage extends Component {
   renderOtpEmailStep() {
     return h(
       "div",
-      { id: "otp-auth-section", class: "auth-view" },
-      h("label", { class: "auth-label", for: "otp-email" }, "Email address"),
-      h("input", {
-        type: "email",
-        id: "otp-email",
-        class: "auth-input",
-        placeholder: "you@example.com",
-        autocomplete: "email",
-        onKeydown: (e) => {
-          if (e.key === "Enter") this.handleSendCode();
-        }
-      }),
+      { id: "otp-auth-section", class: "otp-auth-section" },
+      h(
+        "div",
+        { class: "otp-step-intro" },
+        h("p", { class: "auth-subtitle" }, "We'll email you a 6-digit code to sign in.")
+      ),
+      h(
+        "div",
+        { class: "auth-input-group" },
+        h("label", { class: "sr-only", for: "otp-email" }, "Email address"),
+        EnvelopeIcon(),
+        h("input", {
+          type: "email",
+          id: "otp-email",
+          class: "auth-input",
+          placeholder: "you@example.com",
+          autocomplete: "email",
+          onKeydown: (e) => {
+            if (e.key === "Enter") this.handleSendCode();
+          }
+        })
+      ),
       h(
         "button",
         {
           type: "button",
-          class: "auth-btn auth-btn--primary",
+          class: "auth-btn auth-btn--primary auth-btn--icon",
           disabled: this.loading,
           onClick: () => this.handleSendCode()
         },
-        this.loading ? "Sending…" : "Send code"
+        h("span", {}, this.loading ? "Sending…" : "Send code"),
+        !this.loading && ArrowIcon()
       ),
       this.error && h("p", { class: "auth-error" }, this.error),
       h(
@@ -206,25 +190,42 @@ export class PatientLoginPage extends Component {
   }
 
   renderOtpCodeStep() {
+    const digitInput = (index) =>
+      h("input", {
+        type: "text",
+        id: `otp-digit-${index + 1}`,
+        class: "otp-code-digit",
+        inputmode: "numeric",
+        pattern: "[0-9]*",
+        maxlength: "1",
+        autocomplete: index === 0 ? "one-time-code" : "off",
+        onInput: (e) => this.handleOtpDigitInput(e, index),
+        onKeydown: (e) => this.handleOtpDigitKeydown(e, index)
+      });
+
     return h(
       "div",
-      { id: "otp-auth-section", class: "auth-view" },
+      { id: "otp-auth-section", class: "otp-auth-section" },
       h(
-        "p",
-        { class: "auth-subtitle" },
-        "Enter the 6-digit code sent to ",
-        h("strong", {}, this.sentEmail)
-      ),
-      this.isNewAccount &&
+        "div",
+        { class: "otp-step-intro" },
         h(
           "p",
           { class: "auth-subtitle" },
-          "We'll create your patient account with this email."
+          "Enter the 6-digit code sent to ",
+          h("strong", {}, this.sentEmail)
         ),
+        this.isNewAccount &&
+          h(
+            "p",
+            { class: "auth-subtitle" },
+            "We'll create your patient account with this email."
+          )
+      ),
       this.isNewAccount &&
         h(
           "div",
-          {},
+          { class: "otp-name-field" },
           h("label", { class: "auth-label", for: "otp-full-name" }, "Full name"),
           h("input", {
             type: "text",
@@ -237,27 +238,24 @@ export class PatientLoginPage extends Component {
             }
           })
         ),
-      h("input", {
-        type: "text",
-        id: "otp-code",
-        class: "auth-input auth-input--code",
-        placeholder: "······",
-        inputmode: "numeric",
-        maxlength: "6",
-        autocomplete: "one-time-code",
-        onKeydown: (e) => {
-          if (e.key === "Enter") this.handleVerifyCode();
-        }
-      }),
+      h(
+        "div",
+        {
+          class: "otp-code-group",
+          onPaste: (e) => this.handleOtpPaste(e)
+        },
+        ...Array.from({ length: OTP_DIGIT_COUNT }, (_, i) => digitInput(i))
+      ),
       h(
         "button",
         {
           type: "button",
-          class: "auth-btn auth-btn--primary",
+          class: "auth-btn auth-btn--primary auth-btn--icon",
           disabled: this.loading,
           onClick: () => this.handleVerifyCode()
         },
-        this.loading ? "Verifying…" : "Verify & sign in"
+        h("span", {}, this.loading ? "Verifying…" : "Verify & sign in"),
+        !this.loading && ArrowIcon()
       ),
       this.error && h("p", { class: "auth-error" }, this.error),
       h(
@@ -314,15 +312,10 @@ export class PatientLoginPage extends Component {
     );
   }
 
-  // Shared success handler for both Google and OTP login
   onAuthSuccess(user) {
     console.log("Patient login successful.");
     console.log(user);
 
-    // Runs after a tap on a background/killed-app notification.
-    // `data` is whatever custom payload the backend sent (see
-    // notifications.controller.js) — route further once you decide
-    // what that payload looks like for each notification type.
     pushNotifications.init((data) => {
       console.log("Notification tapped:", data);
       window.location.hash = "/patient/dashboard";
@@ -330,6 +323,62 @@ export class PatientLoginPage extends Component {
 
     window.location.hash = "/patient/dashboard";
   }
+
+  // ---------- Segmented OTP digit boxes ----------
+
+  getOtpCode() {
+    const digits = this.el.querySelectorAll(".otp-code-digit");
+    return Array.from(digits)
+      .map((input) => input.value)
+      .join("");
+  }
+
+  focusOtpDigit(index) {
+    // Deferred: after handleSendCode() flips the view and calls update(),
+    // the code-step markup may not exist in the DOM yet on this tick.
+    setTimeout(() => {
+      this.el?.querySelector(`#otp-digit-${index + 1}`)?.focus();
+    }, 0);
+  }
+
+  handleOtpDigitInput(e, index) {
+    const digit = e.target.value.replace(/\D/g, "").slice(-1);
+    e.target.value = digit;
+
+    if (digit && index < OTP_DIGIT_COUNT - 1) {
+      this.el.querySelector(`#otp-digit-${index + 2}`)?.focus();
+    }
+  }
+
+  handleOtpDigitKeydown(e, index) {
+    if (e.key === "Backspace" && !e.target.value && index > 0) {
+      const prev = this.el.querySelector(`#otp-digit-${index}`);
+      if (prev) {
+        prev.value = "";
+        prev.focus();
+      }
+    } else if (e.key === "Enter") {
+      this.handleVerifyCode();
+    }
+  }
+
+  handleOtpPaste(e) {
+    const text = (e.clipboardData || window.clipboardData)
+      .getData("text")
+      .replace(/\D/g, "")
+      .slice(0, OTP_DIGIT_COUNT);
+
+    if (!text) return;
+    e.preventDefault();
+
+    const digits = this.el.querySelectorAll(".otp-code-digit");
+    text.split("").forEach((digit, i) => {
+      if (digits[i]) digits[i].value = digit;
+    });
+    digits[Math.min(text.length, OTP_DIGIT_COUNT) - 1]?.focus();
+  }
+
+  // ---------- Network calls ----------
 
   async handleSendCode(prefillEmail) {
     const email =
@@ -354,6 +403,7 @@ export class PatientLoginPage extends Component {
       this.view = "otp-code";
       this.error = "";
       this.startResendCooldown();
+      this.focusOtpDigit(0);
     } catch (err) {
       console.error("OTP request failed:", err);
       this.error = err.message || "Couldn't send the code. Try again.";
@@ -364,7 +414,7 @@ export class PatientLoginPage extends Component {
   }
 
   async handleVerifyCode() {
-    const code = this.el.querySelector("#otp-code")?.value.trim() || "";
+    const code = this.getOtpCode();
     const fullName = this.isNewAccount
       ? this.el.querySelector("#otp-full-name")?.value.trim() || ""
       : "";
