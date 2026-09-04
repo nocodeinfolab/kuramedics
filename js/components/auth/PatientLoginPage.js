@@ -50,6 +50,14 @@ export class PatientLoginPage extends Component {
     this.error = "";
     this.resendCooldown = 0;
     this._resendInterval = null;
+
+    // Inputs are re-created (not patched) on every update(), so their
+    // values live here in state and get handed back as `value` on
+    // render — otherwise a re-render mid-typing or after an error wipes
+    // whatever the person already entered.
+    this.emailValue = "";
+    this.fullNameValue = "";
+    this.otpDigits = Array(OTP_DIGIT_COUNT).fill("");
   }
 
   render() {
@@ -150,6 +158,10 @@ export class PatientLoginPage extends Component {
           class: "auth-input",
           placeholder: "you@example.com",
           autocomplete: "email",
+          value: this.emailValue,
+          onInput: (e) => {
+            this.emailValue = e.target.value;
+          },
           onKeydown: (e) => {
             if (e.key === "Enter") this.handleSendCode();
           }
@@ -199,6 +211,7 @@ export class PatientLoginPage extends Component {
         pattern: "[0-9]*",
         maxlength: "1",
         autocomplete: index === 0 ? "one-time-code" : "off",
+        value: this.otpDigits[index],
         onInput: (e) => this.handleOtpDigitInput(e, index),
         onKeydown: (e) => this.handleOtpDigitKeydown(e, index)
       });
@@ -233,6 +246,10 @@ export class PatientLoginPage extends Component {
             class: "auth-input",
             placeholder: "Jane Doe",
             autocomplete: "name",
+            value: this.fullNameValue,
+            onInput: (e) => {
+              this.fullNameValue = e.target.value;
+            },
             onKeydown: (e) => {
               if (e.key === "Enter") this.handleVerifyCode();
             }
@@ -285,6 +302,7 @@ export class PatientLoginPage extends Component {
               e.preventDefault();
               this.error = "";
               this.view = "otp-email";
+              this.otpDigits = Array(OTP_DIGIT_COUNT).fill("");
               this.update();
             }
           },
@@ -327,10 +345,7 @@ export class PatientLoginPage extends Component {
   // ---------- Segmented OTP digit boxes ----------
 
   getOtpCode() {
-    const digits = this.el.querySelectorAll(".otp-code-digit");
-    return Array.from(digits)
-      .map((input) => input.value)
-      .join("");
+    return this.otpDigits.join("");
   }
 
   focusOtpDigit(index) {
@@ -344,6 +359,7 @@ export class PatientLoginPage extends Component {
   handleOtpDigitInput(e, index) {
     const digit = e.target.value.replace(/\D/g, "").slice(-1);
     e.target.value = digit;
+    this.otpDigits[index] = digit;
 
     if (digit && index < OTP_DIGIT_COUNT - 1) {
       this.el.querySelector(`#otp-digit-${index + 2}`)?.focus();
@@ -355,6 +371,7 @@ export class PatientLoginPage extends Component {
       const prev = this.el.querySelector(`#otp-digit-${index}`);
       if (prev) {
         prev.value = "";
+        this.otpDigits[index - 1] = "";
         prev.focus();
       }
     } else if (e.key === "Enter") {
@@ -374,6 +391,7 @@ export class PatientLoginPage extends Component {
     const digits = this.el.querySelectorAll(".otp-code-digit");
     text.split("").forEach((digit, i) => {
       if (digits[i]) digits[i].value = digit;
+      this.otpDigits[i] = digit;
     });
     digits[Math.min(text.length, OTP_DIGIT_COUNT) - 1]?.focus();
   }
@@ -401,6 +419,8 @@ export class PatientLoginPage extends Component {
       this.sentEmail = email;
       this.isNewAccount = !!result.data?.isNewAccount;
       this.view = "otp-code";
+      this.otpDigits = Array(OTP_DIGIT_COUNT).fill("");
+      this.fullNameValue = "";
       this.error = "";
       this.startResendCooldown();
       this.focusOtpDigit(0);
@@ -415,9 +435,7 @@ export class PatientLoginPage extends Component {
 
   async handleVerifyCode() {
     const code = this.getOtpCode();
-    const fullName = this.isNewAccount
-      ? this.el.querySelector("#otp-full-name")?.value.trim() || ""
-      : "";
+    const fullName = this.isNewAccount ? this.fullNameValue.trim() : "";
 
     this.error = "";
 
