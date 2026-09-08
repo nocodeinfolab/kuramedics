@@ -17,15 +17,29 @@
  * Children may be strings, numbers, nodes, arrays of those, or falsy
  * values (which are skipped, so conditional children like
  * `condition && h("span", {}, "x")` just work).
+ *
+ * SVG note: `<svg>` and all of its children (`path`, `circle`, `rect`,
+ * `line`, `polyline`, `g`, ...) must be created in the SVG namespace via
+ * `document.createElementNS`, or the browser will silently refuse to
+ * paint them even though they show up fine in the DOM tree. `h()` tracks
+ * whether it's currently building inside an `<svg>` subtree (including
+ * across nested `h()` calls for children) and switches namespaces
+ * automatically, so call sites don't need to think about it.
  */
+const SVG_NS = "http://www.w3.org/2000/svg";
+
 export function h(tag, attrs = {}, ...children) {
-  const el = document.createElement(tag);
+  const inSvg = tag === "svg" || SvgContext.active;
+  const el = inSvg ? document.createElementNS(SVG_NS, tag) : document.createElement(tag);
   let deferredValue;
 
   for (const [key, value] of Object.entries(attrs || {})) {
     if (value === null || value === undefined || value === false) continue;
     if (key === "class") {
-      el.className = value;
+      // className is not settable on SVG elements in all browsers;
+      // setAttribute works for both namespaces.
+      if (inSvg) el.setAttribute("class", value);
+      else el.className = value;
     } else if (key === "html") {
       el.innerHTML = value;
     } else if (key === "dataset") {
@@ -36,7 +50,7 @@ export function h(tag, attrs = {}, ...children) {
       // <select> has no value to set until its <option> children exist,
       // so defer this until after appendChildren runs below.
       deferredValue = value;
-    } else if (key === "value" || key === "checked") {
+    } else if (!inSvg && (key === "value" || key === "checked")) {
       el[key] = value;
     } else if (typeof value === "boolean") {
       if (value) el.setAttribute(key, "");
@@ -45,7 +59,15 @@ export function h(tag, attrs = {}, ...children) {
     }
   }
 
+  // Mark that we're inside an SVG subtree for the duration of building
+  // this element's children, then restore the previous state. This lets
+  // nested h("path", ...) / h("circle", ...) calls made while rendering
+  // an icon pick up the SVG namespace without every call site having to
+  // say so explicitly.
+  const wasActive = SvgContext.active;
+  if (tag === "svg") SvgContext.active = true;
   appendChildren(el, children);
+  SvgContext.active = wasActive;
 
   if (deferredValue !== undefined) {
     el.value = deferredValue;
@@ -53,6 +75,11 @@ export function h(tag, attrs = {}, ...children) {
 
   return el;
 }
+
+// Simple mutable flag rather than threading a param through every h()
+// call and through appendChildren. h() is not re-entrant across async
+// boundaries, so this is safe: rendering is always synchronous.
+const SvgContext = { active: false };
 
 function appendChildren(el, children) {
   for (const child of children.flat(Infinity)) {
