@@ -111,8 +111,8 @@ export class LandingPage extends Component {
         class: "landing__brand-mark",
         src: "/assets/yeroscarelogo.png",
         alt: "YerosCare",
-        width: "56",
-        height: "56",
+        width: "110",
+        height: "110",
       }),
       h("h1", { class: "landing__brand-name" }, "YerosCare"),
       h("p", { class: "landing__brand-tagline" }, "Care moves closer")
