@@ -1,60 +1,58 @@
 // js/components/landing/LandingPage.js
 
 import { Component } from "../../core/component.js";
-import { h, raw } from "../../utils/dom.js";
+import { h } from "../../utils/dom.js";
 
-// Petal/leaf logo mark — two overlapping teardrops with a dot, matching
-// the wordmark's serif character without being a literal medical icon.
-const LOGO_MARK_PATH =
-  "M32 4C32 4 12 14 12 34C12 45 21 53 32 56C32 56 32 34 32 4Z M32 4C32 4 52 14 52 34C52 45 43 53 32 56C32 56 32 34 32 4Z";
-
+// Icons sourced from Lucide (ISC license) — ships as raw path data, no
+// icon font, no CDN, same 24x24/stroke-2 convention we were already using.
 const Icons = {
   patient: () =>
     h(
       "svg",
-      { width: "22", height: "22", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "1.75", "stroke-linecap": "round", "stroke-linejoin": "round" },
-      h("circle", { cx: "12", cy: "8", r: "4" }),
-      h("path", { d: "M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8" })
+      { width: "22", height: "22", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" },
+      h("path", { d: "M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" }),
+      h("circle", { cx: "12", cy: "7", r: "4" })
     ),
   doctor: () =>
     h(
       "svg",
-      { width: "22", height: "22", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "1.75", "stroke-linecap": "round", "stroke-linejoin": "round" },
-      h("path", { d: "M8 3v5a4 4 0 0 0 8 0V3" }),
-      h("path", { d: "M8 5H6a1 1 0 0 0-1 1v2a5 5 0 0 0 5 5" }),
-      h("path", { d: "M16 5h2a1 1 0 0 1 1 1v2a5 5 0 0 1-5 5" }),
-      h("circle", { cx: "18", cy: "16", r: "3" }),
-      h("path", { d: "M12 13v3" })
+      { width: "22", height: "22", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" },
+      h("path", { d: "M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1" }),
+      h("path", { d: "M11 2v2" }),
+      h("path", { d: "M5 2v2" }),
+      h("path", { d: "M8 15a6 6 0 0 0 12 0v-3" }),
+      h("circle", { cx: "20", cy: "10", r: "2" })
     ),
   arrow: () =>
     h(
       "svg",
-      { width: "18", height: "18", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2.25", "stroke-linecap": "round", "stroke-linejoin": "round" },
-      h("line", { x1: "5", y1: "12", x2: "19", y2: "12" }),
-      h("polyline", { points: "12 5 19 12 12 19" })
+      { width: "18", height: "18", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" },
+      h("path", { d: "M5 12h14" }),
+      h("path", { d: "m12 5 7 7-7 7" })
     ),
   shield: () =>
     h(
       "svg",
-      { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "1.75", "stroke-linecap": "round", "stroke-linejoin": "round" },
-      h("path", { d: "M12 22s8-4 8-11V5l-8-3-8 3v6c0 7 8 11 8 11z" }),
-      h("polyline", { points: "9 12 11 14 15 10" })
+      { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" },
+      h("path", { d: "M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" }),
+      h("path", { d: "m9 12 2 2 4-4" })
     ),
   lock: () =>
     h(
       "svg",
-      { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "1.75", "stroke-linecap": "round", "stroke-linejoin": "round" },
-      h("rect", { x: "5", y: "11", width: "14", height: "9", rx: "2" }),
-      h("path", { d: "M8 11V7a4 4 0 0 1 8 0v4" })
+      { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" },
+      h("rect", { width: "18", height: "11", x: "3", y: "11", rx: "2", ry: "2" }),
+      h("path", { d: "M7 11V7a5 5 0 0 1 10 0v4" })
     ),
   notes: () =>
     h(
       "svg",
-      { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "1.75", "stroke-linecap": "round", "stroke-linejoin": "round" },
-      h("path", { d: "M14 3v4a1 1 0 0 0 1 1h4" }),
-      h("path", { d: "M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2z" }),
-      h("line", { x1: "9", y1: "13", x2: "15", y2: "13" }),
-      h("line", { x1: "9", y1: "17", x2: "13", y2: "17" })
+      { width: "20", height: "20", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" },
+      h("path", { d: "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" }),
+      h("path", { d: "M14 2v4a2 2 0 0 0 2 2h4" }),
+      h("path", { d: "M10 9H8" }),
+      h("path", { d: "M16 13H8" }),
+      h("path", { d: "M16 17H8" })
     ),
 };
 
@@ -109,12 +107,13 @@ export class LandingPage extends Component {
     return h(
       "div",
       { class: "landing__brand" },
-      h(
-        "svg",
-        { class: "landing__brand-mark", width: "56", height: "56", viewBox: "0 0 64 64", "aria-hidden": "true" },
-        raw(`<path d="${LOGO_MARK_PATH}" fill="currentColor" />`),
-        h("circle", { cx: "32", cy: "8", r: "5", class: "landing__brand-mark-dot" })
-      ),
+      h("img", {
+        class: "landing__brand-mark",
+        src: "/assests/yeroscarelogo.png",
+        alt: "YerosCare",
+        width: "56",
+        height: "56",
+      }),
       h("h1", { class: "landing__brand-name" }, "YerosCare"),
       h("p", { class: "landing__brand-tagline" }, "Care moves closer")
     );
