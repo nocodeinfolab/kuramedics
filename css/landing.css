@@ -102,6 +102,7 @@
   max-width: 70vw;
   margin: 0 auto;
   object-fit: contain;
+  transform: translateX(-30px);
 }
 .landing__brand-tagline {
   margin: 0;
