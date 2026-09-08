@@ -92,10 +92,8 @@
   margin-top: 8px;
 }
 .landing__brand-mark {
-  color: var(--violet);
-}
-.landing__brand-mark-dot {
-  fill: var(--gold);
+  display: block;
+  object-fit: contain;
 }
 .landing__brand-name {
   margin: 10px 0 2px;
