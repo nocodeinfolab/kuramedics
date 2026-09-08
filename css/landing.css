@@ -91,17 +91,17 @@
   align-items: center;
   margin-top: 8px;
 }
+.landing__brand-name {
+  margin: 0;
+  line-height: 0; /* collapse the h1's line-box around the image */
+}
 .landing__brand-mark {
   display: block;
+  width: 220px;
+  height: auto;
+  max-width: 70vw;
+  margin: 0 auto;
   object-fit: contain;
-}
-.landing__brand-name {
-  margin: 10px 0 2px;
-  font-family: "Playfair Display", Georgia, "Times New Roman", serif;
-  font-weight: 700;
-  font-size: 34px;
-  letter-spacing: 0.01em;
-  color: var(--violet-deep);
 }
 .landing__brand-tagline {
   margin: 0;
