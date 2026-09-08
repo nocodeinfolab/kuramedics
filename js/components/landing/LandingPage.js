@@ -107,14 +107,15 @@ export class LandingPage extends Component {
     return h(
       "div",
       { class: "landing__brand" },
-      h("img", {
-        class: "landing__brand-mark",
-        src: "/assets/yeroscarelogo.png",
-        alt: "YerosCare",
-        width: "200",
-        height: "200",
-      }),
-      h("h1", { class: "landing__brand-name" }, "YerosCare"),
+      h(
+        "h1",
+        { class: "landing__brand-name" },
+        h("img", {
+          class: "landing__brand-mark",
+          src: "/assests/yeroscarelogo.png",
+          alt: "YerosCare",
+        })
+      ),
       h("p", { class: "landing__brand-tagline" }, "Care moves closer")
     );
   }
