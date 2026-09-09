@@ -328,3 +328,264 @@
 .auth-back:hover {
   color: var(--color-primary);
 }
+
+/* ===========================================================================
+   Hero view (default screen: brand, illustration, headline, provider
+   buttons). No card chrome here — full-bleed like the landing page.
+   =========================================================================== */
+
+.auth-hero {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 440px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+/* Brand block — logo image + tagline. Built with flex + gap rather than
+   negative-margin/line-height tricks, so spacing can't collapse or
+   overlap regardless of the logo file's exact internal padding. */
+.auth-brand {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-6);
+}
+.auth-brand-mark {
+  display: block;
+  width: 200px;
+  max-width: 60vw;
+  height: auto;
+}
+.auth-brand-tagline {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--step-eyebrow);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+}
+
+/* Illustration ------------------------------------------------------------- */
+.auth-hero-illustration {
+  position: relative;
+  width: 240px;
+  height: 200px;
+  margin: 0 auto var(--space-6);
+}
+.auth-hero-illustration__blob {
+  position: absolute;
+  inset: 0;
+  background: var(--color-primary-soft);
+  border-radius: 44% 56% 62% 38% / 50% 44% 56% 50%;
+  z-index: 0;
+}
+.auth-hero-illustration__photo {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
+}
+.auth-hero-fallback {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+}
+.auth-hero-fallback-icon {
+  width: 64px;
+  height: 64px;
+}
+
+.auth-hero-bubble {
+  position: absolute;
+  z-index: 2;
+  top: 14%;
+  right: -6%;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--color-white);
+  border-radius: var(--radius-pill);
+  padding: 0.5rem 0.9rem 0.5rem 0.5rem;
+  box-shadow: var(--shadow-card);
+  max-width: 160px;
+  text-align: left;
+}
+.auth-hero-bubble__icon {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: var(--color-white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.auth-hero-bubble__icon-glyph {
+  width: 16px;
+  height: 16px;
+}
+.auth-hero-bubble__text {
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.25;
+  color: var(--color-ink);
+}
+
+/* Hero headline + lead ------------------------------------------------------ */
+.auth-hero-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(2rem, 8vw, 2.75rem);
+  line-height: 1.12;
+  color: var(--color-ink);
+}
+.auth-hero-title span {
+  display: block;
+}
+.auth-hero-title-accent {
+  color: var(--color-primary);
+}
+
+.auth-hero-lead {
+  max-width: 32ch;
+  margin: var(--space-4) auto 0;
+  font-size: var(--step-body);
+  line-height: 1.55;
+  color: var(--color-ink-soft);
+}
+
+/* Provider buttons ----------------------------------------------------------- */
+.auth-provider-list {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-6);
+}
+
+.auth-provider-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: 0.95rem 1.25rem;
+  border-radius: var(--radius-pill);
+  border: 1.5px solid var(--color-line-strong);
+  background: var(--color-white);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: var(--shadow-card);
+  transition: transform var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out);
+}
+.auth-provider-btn:active {
+  transform: translateY(1px);
+}
+.auth-provider-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+.auth-provider-btn:not(:disabled):hover {
+  border-color: var(--color-primary-line);
+}
+
+.auth-provider-btn__label {
+  flex: 1;
+  text-align: center;
+}
+
+.provider-btn-icon {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  color: var(--color-ink);
+}
+
+.auth-provider-btn__arrow {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  color: var(--color-primary);
+}
+.auth-provider-btn__arrow svg {
+  width: 100%;
+  height: 100%;
+}
+
+.auth-provider-btn--primary {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  border-color: transparent;
+  color: var(--color-white);
+  box-shadow: var(--shadow-raised);
+}
+.auth-provider-btn--primary .provider-btn-icon,
+.auth-provider-btn--primary .auth-provider-btn__arrow {
+  color: var(--color-white);
+}
+
+/* Google's own rendered button sits in this slot — keep it full width and
+   consistent with the provider button list around it. */
+.google-btn-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+.google-btn-container > div,
+.google-btn-container iframe {
+  width: 100% !important;
+}
+
+/* Labeled divider ("Doctor login") ------------------------------------------- */
+.auth-labeled-divider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  margin-top: var(--space-6);
+}
+.auth-labeled-divider__rule {
+  flex: 1;
+  height: 1px;
+  background: var(--color-line-strong);
+}
+.auth-labeled-divider__label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-ink-soft);
+  white-space: nowrap;
+}
+
+/* Footer role-switch link ------------------------------------------------------ */
+.auth-role-switch {
+  margin-top: var(--space-5);
+  font-size: var(--step-small);
+  color: var(--color-ink-soft);
+}
+.auth-role-switch__arrow {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  vertical-align: -2px;
+  color: var(--color-primary);
+}
