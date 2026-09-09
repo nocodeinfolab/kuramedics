@@ -14,6 +14,77 @@ const OTP_VERIFY_ENDPOINT = "/auth/otp/verify";
 const RESEND_COOLDOWN_SECONDS = 30;
 const CODE_LENGTH = 6;
 
+// Path to the doctor illustration used on the hero (pre-OTP) view.
+// Swap this to wherever the asset actually lives in /assests.
+const DOCTOR_ILLUSTRATION_SRC = "/assests/doctor-illustration.png";
+
+const Icons = {
+  arrow: () =>
+    h(
+      "svg",
+      { class: "auth-btn-icon", viewBox: "0 0 24 24", fill: "none", "aria-hidden": "true" },
+      h("path", {
+        d: "M5 12h14M13 6l6 6-6 6",
+        stroke: "currentColor",
+        "stroke-width": "2",
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round"
+      })
+    ),
+  envelope: () =>
+    h(
+      "svg",
+      { class: "provider-btn-icon", viewBox: "0 0 24 24", fill: "none", "aria-hidden": "true" },
+      h("path", {
+        d: "M3.5 6.5h17a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-17a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1zM3 7l9 6.5L21 7",
+        stroke: "currentColor",
+        "stroke-width": "1.8",
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round"
+      })
+    ),
+  google: () =>
+    h(
+      "svg",
+      { class: "provider-btn-icon", viewBox: "0 0 24 24", "aria-hidden": "true" },
+      h("path", { fill: "#4285F4", d: "M23.52 12.27c0-.85-.08-1.67-.22-2.45H12v4.64h6.47a5.53 5.53 0 0 1-2.4 3.63v3h3.88c2.27-2.09 3.57-5.17 3.57-8.82z" }),
+      h("path", { fill: "#34A853", d: "M12 24c3.24 0 5.96-1.07 7.95-2.91l-3.88-3c-1.08.72-2.46 1.15-4.07 1.15-3.13 0-5.78-2.11-6.73-4.96H1.26v3.1A12 12 0 0 0 12 24z" }),
+      h("path", { fill: "#FBBC05", d: "M5.27 14.28A7.2 7.2 0 0 1 4.89 12c0-.79.14-1.56.38-2.28v-3.1H1.26A12 12 0 0 0 0 12c0 1.94.46 3.77 1.26 5.38z" }),
+      h("path", { fill: "#EA4335", d: "M12 4.77c1.76 0 3.34.61 4.58 1.79l3.44-3.44C17.95 1.19 15.24 0 12 0 7.31 0 3.26 2.69 1.26 6.62l4.01 3.1C6.22 6.88 8.87 4.77 12 4.77z" })
+    ),
+  apple: () =>
+    h(
+      "svg",
+      { class: "provider-btn-icon", viewBox: "0 0 24 24", "aria-hidden": "true" },
+      h("path", {
+        fill: "currentColor",
+        d: "M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.03 1.52-.06 2.098-.98 3.938-.98 1.837 0 2.35.98 3.96.95 1.637-.03 2.676-1.48 3.676-2.94 1.156-1.687 1.636-3.32 1.666-3.404-.036-.017-3.19-1.226-3.223-4.86-.028-3.036 2.478-4.49 2.59-4.554-1.42-2.08-3.617-2.31-4.39-2.36-2-.16-3.67 1.083-4.62 1.083zm3.42-3.11c.837-1.012 1.4-2.42 1.25-3.83-1.21.05-2.68.81-3.55 1.82-.78.9-1.46 2.33-1.28 3.7 1.34.1 2.72-.68 3.58-1.7z"
+      })
+    ),
+  heartPulse: () =>
+    h(
+      "svg",
+      { class: "auth-hero-bubble__icon-glyph", viewBox: "0 0 24 24", fill: "none", "aria-hidden": "true" },
+      h("path", {
+        d: "M3.5 12h4l2-5 4 10 2-5h5",
+        stroke: "currentColor",
+        "stroke-width": "2",
+        "stroke-linecap": "round",
+        "stroke-linejoin": "round"
+      })
+    ),
+  stethoscope: () =>
+    h(
+      "svg",
+      { class: "auth-hero-fallback-icon", viewBox: "0 0 24 24", fill: "none", "aria-hidden": "true" },
+      h("path", { d: "M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1", stroke: "currentColor", "stroke-width": "1.6", "stroke-linecap": "round", "stroke-linejoin": "round" }),
+      h("path", { d: "M11 2v2", stroke: "currentColor", "stroke-width": "1.6", "stroke-linecap": "round" }),
+      h("path", { d: "M5 2v2", stroke: "currentColor", "stroke-width": "1.6", "stroke-linecap": "round" }),
+      h("path", { d: "M8 15a6 6 0 0 0 12 0v-3", stroke: "currentColor", "stroke-width": "1.6", "stroke-linecap": "round", "stroke-linejoin": "round" }),
+      h("circle", { cx: "20", cy: "10", r: "2", stroke: "currentColor", "stroke-width": "1.6" })
+    )
+};
+
 export class DoctorLoginPage extends Component {
   constructor(props) {
     super(props);
@@ -27,111 +98,204 @@ export class DoctorLoginPage extends Component {
     this.resendCooldown = 0;
     this._resendInterval = null;
     this._focusTimeout = null;
+    this._illustrationFailed = false;
   }
 
   render() {
+    const isHero = this.view === "google";
+
     return h(
       "main",
       { class: "auth-page" },
       h(
         "div",
-        { class: "auth-card" },
-        h(
-          "div",
-          { class: "auth-header" },
-          h("span", { class: "auth-badge auth-badge--doctor" }, "For Doctors"),
-          h("h1", { class: "auth-title" }, "Welcome back, Doctor"),
-          h(
-            "p",
-            { class: "auth-subtitle" },
-            "Sign in securely to manage your clinic, appointments, patients and earnings."
-          )
-        ),
-
-        this.view === "google" && this.renderGoogleView(),
-        this.view === "otp-email" && this.renderOtpEmailStep(),
-        this.view === "otp-code" && this.renderOtpCodeStep(),
-
-        h(
-          "div",
-          { class: "doctor-info" },
-          h("h3", {}, "New to YerosCare?"),
-          h(
-            "p",
-            {},
-            "Signing in creates your doctor account. Afterward, you'll complete your professional profile, upload your MDCN licence and configure your consultation fees before your profile becomes visible to patients."
-          )
-        ),
-        h(
-          "p",
-          { class: "auth-note" },
-          "By continuing, you agree to our Terms of Service and Privacy Policy."
-        ),
-        h(
-          "div",
-          { class: "auth-footer" },
-          h("a", { href: "#/", class: "auth-back" }, "← Back to Home")
-        )
+        { class: isHero ? "auth-hero" : "auth-card" },
+        isHero ? this.renderHeroView() : this.renderFormView()
       )
     );
   }
 
-  renderGoogleView() {
+  // ---------- Hero (default) view: brand, illustration, headline, three
+  // provider buttons. This is the screen a doctor sees first. ----------
+
+  renderHeroView() {
     return h(
       "div",
-      { id: "google-auth-section" },
-      h("div", { id: "google-login-btn", class: "google-btn-container" }),
+      {},
+      this.renderBrand(),
+      this.renderIllustration(),
+      h(
+        "h1",
+        { class: "auth-hero-title" },
+        h("span", {}, "Welcome Back,"),
+        h("span", { class: "auth-hero-title-accent" }, "Doctor")
+      ),
+      h(
+        "p",
+        { class: "auth-hero-lead" },
+        "Sign in to access your dashboard, manage your patients and continue providing exceptional care."
+      ),
+      this.renderProviderButtons(),
+      this.renderDivider(),
+      this.renderFooterSwitch()
+    );
+  }
 
+  renderBrand() {
+    return h(
+      "div",
+      { class: "auth-brand" },
+      h("img", {
+        class: "auth-brand-mark",
+        src: "/assests/yeroscarelogo.png",
+        alt: "YerosCare"
+      }),
+      h("p", { class: "auth-brand-tagline" }, "Care moves closer")
+    );
+  }
+
+  renderIllustration() {
+    return h(
+      "div",
+      { class: "auth-hero-illustration" },
+      h("div", { class: "auth-hero-illustration__blob", "aria-hidden": "true" }),
+      this._illustrationFailed
+        ? h("div", { class: "auth-hero-fallback" }, Icons.stethoscope())
+        : h("img", {
+            class: "auth-hero-illustration__photo",
+            src: DOCTOR_ILLUSTRATION_SRC,
+            alt: "",
+            onError: () => {
+              this._illustrationFailed = true;
+              this.update();
+            }
+          }),
+      h(
+        "div",
+        { class: "auth-hero-bubble" },
+        h("span", { class: "auth-hero-bubble__icon" }, Icons.heartPulse()),
+        h("span", { class: "auth-hero-bubble__text" }, "Better care, together")
+      )
+    );
+  }
+
+  renderProviderButtons() {
+    return h(
+      "div",
+      { class: "auth-provider-list" },
+      h(
+        "div",
+        { id: "google-login-btn", class: "google-btn-container" }
+      ),
       // Inactive for now — kept visible per product decision, just disabled.
       h(
         "button",
         {
           type: "button",
-          class: "apple-signin-btn",
+          class: "auth-provider-btn",
           disabled: true,
           "aria-disabled": "true",
           title: "Sign in with Apple — coming soon"
         },
-        h(
-          "svg",
-          {
-            class: "apple-signin-icon",
-            viewBox: "0 0 24 24",
-            xmlns: "http://www.w3.org/2000/svg",
-            "aria-hidden": "true"
-          },
-          h("path", {
-            fill: "currentColor",
-            d: "M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.03 1.52-.06 2.098-.98 3.938-.98 1.837 0 2.35.98 3.96.95 1.637-.03 2.676-1.48 3.676-2.94 1.156-1.687 1.636-3.32 1.666-3.404-.036-.017-3.19-1.226-3.223-4.86-.028-3.036 2.478-4.49 2.59-4.554-1.42-2.08-3.617-2.31-4.39-2.36-2-.16-3.67 1.083-4.62 1.083zm3.42-3.11c.837-1.012 1.4-2.42 1.25-3.83-1.21.05-2.68.81-3.55 1.82-.78.9-1.46 2.33-1.28 3.7 1.34.1 2.72-.68 3.58-1.7z"
-          })
-        ),
-        h("span", {}, "Sign in with Apple")
+        Icons.apple(),
+        h("span", { class: "auth-provider-btn__label" }, "Sign in with Apple"),
+        h("span", { class: "auth-provider-btn__arrow" }, Icons.arrow())
       ),
+      h(
+        "button",
+        {
+          type: "button",
+          class: "auth-provider-btn auth-provider-btn--primary",
+          onClick: () => {
+            this.error = "";
+            this.view = "otp-email";
+            this.update();
+            this.focusSoon("#otp-email");
+          }
+        },
+        Icons.envelope(),
+        h("span", { class: "auth-provider-btn__label" }, "Sign in with Email"),
+        h("span", { class: "auth-provider-btn__arrow" }, Icons.arrow())
+      )
+    );
+  }
+
+  renderDivider() {
+    return h(
+      "div",
+      { class: "auth-labeled-divider", "aria-hidden": "true" },
+      h("span", { class: "auth-labeled-divider__rule" }),
+      h("span", { class: "auth-labeled-divider__label" }, "Doctor login"),
+      h("span", { class: "auth-labeled-divider__rule" })
+    );
+  }
+
+  renderFooterSwitch() {
+    return h(
+      "p",
+      { class: "auth-role-switch" },
+      "Are you a patient? ",
+      h("a", { href: "#/patient/login", class: "auth-link" }, "Sign in here"),
+      " ",
+      h(
+        "svg",
+        { class: "auth-role-switch__arrow", viewBox: "0 0 24 24", fill: "none", "aria-hidden": "true" },
+        h("path", { d: "M5 12h14M13 6l6 6-6 6", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" })
+      )
+    );
+  }
+
+  // ---------- Form views (OTP steps): boxed card, same as before but
+  // restyled. Logic is unchanged from the working version. ----------
+
+  renderFormView() {
+    return h(
+      "div",
+      {},
+      h(
+        "div",
+        { class: "auth-header" },
+        h("span", { class: "auth-badge auth-badge--doctor" }, "For Doctors"),
+        h("h2", { class: "auth-title" }, this.view === "otp-code" ? "Enter your code" : "Sign in with email"),
+        this.view !== "otp-code" &&
+          h("p", { class: "auth-subtitle" }, "We'll email you a 6-digit code — no password needed.")
+      ),
+
+      this.view === "otp-email" && this.renderOtpEmailStep(),
+      this.view === "otp-code" && this.renderOtpCodeStep(),
 
       h(
         "div",
-        { class: "auth-divider" },
-        h("span", {}, "or")
+        { class: "doctor-info" },
+        h("h3", {}, "New to YerosCare?"),
+        h(
+          "p",
+          {},
+          "Signing in creates your doctor account. Afterward, you'll complete your professional profile, upload your MDCN licence and configure your consultation fees before your profile becomes visible to patients."
+        )
       ),
-
       h(
         "p",
-        { class: "auth-switch" },
-        "Prefer a code? ",
+        { class: "auth-note" },
+        "By continuing, you agree to our Terms of Service and Privacy Policy."
+      ),
+      h(
+        "div",
+        { class: "auth-footer" },
         h(
           "a",
           {
             href: "#",
-            class: "auth-link",
+            class: "auth-back",
             onClick: (e) => {
               e.preventDefault();
               this.error = "";
-              this.view = "otp-email";
+              this.view = "google";
               this.update();
-              this.focusSoon("#otp-email");
+              this.mountGoogleButton();
             }
           },
-          "Sign in with email instead"
+          "← Back to sign-in options"
         )
       )
     );
@@ -142,12 +306,6 @@ export class DoctorLoginPage extends Component {
       "div",
       { id: "otp-auth-section", class: "otp-auth-section" },
       h(
-        "p",
-        { class: "auth-subtitle otp-step-intro" },
-        "We'll email you a 6-digit code — no password needed."
-      ),
-
-      h(
         "label",
         { class: "sr-only", for: "otp-email" },
         "Email address"
@@ -155,23 +313,7 @@ export class DoctorLoginPage extends Component {
       h(
         "div",
         { class: "auth-input-group" },
-        h(
-          "svg",
-          {
-            class: "auth-input-icon",
-            viewBox: "0 0 24 24",
-            xmlns: "http://www.w3.org/2000/svg",
-            "aria-hidden": "true"
-          },
-          h("path", {
-            fill: "none",
-            stroke: "currentColor",
-            "stroke-width": "1.6",
-            "stroke-linecap": "round",
-            "stroke-linejoin": "round",
-            d: "M3.5 6.5h17a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-17a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1zM3 7l9 6.5L21 7"
-          })
-        ),
+        Icons.envelope(),
         h("input", {
           type: "email",
           id: "otp-email",
@@ -193,24 +335,7 @@ export class DoctorLoginPage extends Component {
           onClick: () => this.handleSendCode()
         },
         h("span", {}, this.loading ? "Sending…" : "Send code"),
-        !this.loading &&
-          h(
-            "svg",
-            {
-              class: "auth-btn-icon",
-              viewBox: "0 0 24 24",
-              xmlns: "http://www.w3.org/2000/svg",
-              "aria-hidden": "true"
-            },
-            h("path", {
-              fill: "none",
-              stroke: "currentColor",
-              "stroke-width": "2",
-              "stroke-linecap": "round",
-              "stroke-linejoin": "round",
-              d: "M5 12h14M13 6l6 6-6 6"
-            })
-          )
+        !this.loading && Icons.arrow()
       ),
       this.error && h("p", { class: "auth-error" }, this.error),
       h(
