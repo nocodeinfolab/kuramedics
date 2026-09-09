@@ -157,7 +157,7 @@ export class DoctorLoginPage extends Component {
     return h(
       "div",
       { class: "auth-hero-illustration" },
-      h("div", { class: "auth-hero-illustration__blob", "aria-hidden": "true" }),
+      
       this._illustrationFailed
         ? h("div", { class: "auth-hero-fallback" }, Icons.stethoscope())
         : h("img", {
