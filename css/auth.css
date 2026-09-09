@@ -360,7 +360,7 @@
   width: 200px;
   max-width: 60vw;
   height: auto;
-  transform: translateX(-24px);
+  transform: translateX(-18px);
 }
 .auth-brand-tagline {
   margin: 0;
