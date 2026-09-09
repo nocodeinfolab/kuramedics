@@ -169,12 +169,7 @@ export class DoctorLoginPage extends Component {
               this.update();
             }
           }),
-      h(
-        "div",
-        { class: "auth-hero-bubble" },
-        h("span", { class: "auth-hero-bubble__icon" }, Icons.heartPulse()),
-        h("span", { class: "auth-hero-bubble__text" }, "Better care, together")
-      )
+      
     );
   }
 
