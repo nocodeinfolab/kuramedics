@@ -15,7 +15,7 @@ const RESEND_COOLDOWN_SECONDS = 30;
 const CODE_LENGTH = 6;
 
 
-const DOCTOR_ILLUSTRATION_SRC = "/assets/doctor-illustration.png";
+const DOCTOR_ILLUSTRATION_SRC = "/assets/doctor_illustration.png";
 
 const Icons = {
   arrow: () =>
