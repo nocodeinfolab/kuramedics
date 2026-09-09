@@ -449,11 +449,11 @@
 /* Hero headline + lead ------------------------------------------------------ */
 .auth-hero-title {
   margin: 0;
-  font-family: var(--font-display);
+  font-family: "Playfair Display", Georgia, "Times New Roman", serif;
   font-weight: 700;
-  font-size: clamp(2rem, 8vw, 2.75rem);
-  line-height: 1.12;
-  color: var(--color-ink);
+  font-size: 34px;
+  line-height: 1.15;
+  color: var(--ink);
 }
 .auth-hero-title span {
   display: block;
