@@ -14,9 +14,8 @@ const OTP_VERIFY_ENDPOINT = "/auth/otp/verify";
 const RESEND_COOLDOWN_SECONDS = 30;
 const CODE_LENGTH = 6;
 
-// Path to the doctor illustration used on the hero (pre-OTP) view.
-// Swap this to wherever the asset actually lives in /assests.
-const DOCTOR_ILLUSTRATION_SRC = "/assests/doctor-illustration.png";
+
+const DOCTOR_ILLUSTRATION_SRC = "/assets/doctor-illustration.png";
 
 const Icons = {
   arrow: () =>
@@ -147,7 +146,7 @@ export class DoctorLoginPage extends Component {
       { class: "auth-brand" },
       h("img", {
         class: "auth-brand-mark",
-        src: "/assests/yeroscarelogo.png",
+        src: "/assets/yeroscarelogo.png",
         alt: "YerosCare"
       }),
       h("p", { class: "auth-brand-tagline" }, "Care moves closer")
