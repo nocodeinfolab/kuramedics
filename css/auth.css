@@ -557,6 +557,10 @@
 .auth-provider-list .google-btn-container {
   margin-bottom: 0;
 }
+.google-btn-container:has(iframe),
+.google-btn-container:has(button) {
+  opacity: 1;
+}
 
 /* Labeled divider ("Doctor login") ------------------------------------------- */
 .auth-labeled-divider {
