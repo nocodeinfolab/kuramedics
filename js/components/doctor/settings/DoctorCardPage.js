@@ -183,10 +183,9 @@ export default class DoctorCardPage extends Component {
             ),
     
             h(
-                "div",
-                { class: "page-hero__title-row" },
-                this.renderHeroAvatar(),
-                h("h1", { class: "page-hero__title" }, "My Doctor Card")
+                "h1",
+                { class: "page-hero__title" },
+                "My Doctor Card"
             ),
     
             h(
