@@ -207,7 +207,7 @@ export class DoctorLoginPage extends Component {
             this.focusSoon("#otp-email");
           }
         },
-        Icons.envelope("auth-input-icon"),
+        Icons.envelope(),
         h("span", { class: "auth-provider-btn__label" }, "Sign in with Email"),
         h("span", { class: "auth-provider-btn__arrow" }, Icons.arrow())
       )
@@ -304,10 +304,10 @@ export class DoctorLoginPage extends Component {
         { class: "sr-only", for: "otp-email" },
         "Email address"
       ),
-      h(
+     h(
         "div",
         { class: "auth-input-group" },
-        Icons.envelope(),
+        Icons.envelope("auth-input-icon"),
         h("input", {
           type: "email",
           id: "otp-email",
