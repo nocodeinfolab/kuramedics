@@ -30,10 +30,10 @@ const Icons = {
         "stroke-linejoin": "round"
       })
     ),
-  envelope: () =>
+  envelope: (cls = "provider-btn-icon") =>
     h(
       "svg",
-      { class: "provider-btn-icon", viewBox: "0 0 24 24", fill: "none", "aria-hidden": "true" },
+      { class: cls, viewBox: "0 0 24 24", fill: "none", "aria-hidden": "true" },
       h("path", {
         d: "M3.5 6.5h17a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-17a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1zM3 7l9 6.5L21 7",
         stroke: "currentColor",
@@ -207,7 +207,7 @@ export class DoctorLoginPage extends Component {
             this.focusSoon("#otp-email");
           }
         },
-        Icons.envelope(),
+        Icons.envelope("auth-input-icon"),
         h("span", { class: "auth-provider-btn__label" }, "Sign in with Email"),
         h("span", { class: "auth-provider-btn__arrow" }, Icons.arrow())
       )
