@@ -138,7 +138,8 @@ export default class DoctorProfilePage extends Component {
     }
 
     renderAvatarCard() {
-        const avatar = this.resolveAvatarUrl(this.profile.avatar_url);
+        const avatar =
+            this.avatarPreviewUrl || this.resolveAvatarUrl(this.profile.avatar_url);
         const initial = this.profile.full_name
             ? this.profile.full_name.charAt(0).toUpperCase()
             : "D";
@@ -350,8 +351,8 @@ export default class DoctorProfilePage extends Component {
             "div",
             { class: "dashboard-card" },
             h("h2", { style: "margin: 0 0 var(--space-4);" }, "Personal Information"),
-            this.renderInput("Full Name", "full_name"),
-            this.renderInput("Specialization", "specialization", "text", true),
+            this.renderInput("Full Name", "full_name", "text", true, { attrs: { autocomplete: "name" } }),
+            this.renderInput("Specialization", "specialization", "text", true, { hint: "e.g. Cardiologist, Paediatrician" }),
             this.renderTextarea("Bio", "bio")
         );
     }
@@ -361,8 +362,8 @@ export default class DoctorProfilePage extends Component {
             "div",
             { class: "dashboard-card" },
             h("h2", { style: "margin: 0 0 var(--space-4);" }, "Professional Information"),
-            this.renderInput("Years of Experience", "years_of_experience", "number"),
-            this.renderInput("MDCN Registration Number", "mdcn_registration_number")
+            this.renderInput("Years of Experience", "years_of_experience", "number", false, { attrs: { min: "0", max: "70", inputmode: "numeric" } }),
+            this.renderInput("MDCN Registration Number", "mdcn_registration_number", "text", false, { hint: "Enter it exactly as it appears on your licence." })
         );
     }
 
@@ -371,7 +372,7 @@ export default class DoctorProfilePage extends Component {
             "div",
             { class: "dashboard-card" },
             h("h2", { style: "margin: 0 0 var(--space-4);" }, "Contact"),
-            this.renderInput("Phone Number", "phone_number")
+            this.renderInput("Phone Number", "phone_number", "tel", false, { attrs: { autocomplete: "tel", inputmode: "tel" } })
         );
     }
 
@@ -405,30 +406,30 @@ export default class DoctorProfilePage extends Component {
     }
 
     renderActions() {
-        return h(
-            "div",
-            { class: "dashboard-card", style: "display: flex; flex-direction: column; align-items: flex-end; gap: var(--space-2);" },
-            this.saveError
-                ? h("p", { style: "color: #ef4444; margin: 0 0 var(--space-2);" }, this.saveError)
-                : null,
-            this.saveSuccess
-                ? h("p", { style: "color: #10b981; margin: 0 0 var(--space-2);" }, "Profile saved successfully.")
-                : null,
-            h(
-                "button",
-                {
-                    type: "submit",
-                    class: "btn btn-primary",
-                    disabled: this.saving
-                },
-                this.saving ? h("span", { class: "btn-spinner" }) : null,
-                this.saving ? "Saving..." : "Save Profile"
-            )
-        );
+      return h(
+        "div",
+        { class: "profile-actions" },
+        this.saveError
+          ? h("p", { class: "form-banner form-banner--error", role: "alert" }, this.saveError)
+          : null,
+        this.saveSuccess
+          ? h("p", { class: "form-banner form-banner--success", role: "status" }, "Profile saved.")
+          : null,
+        h(
+          "button",
+          { type: "submit", class: "btn btn-primary", disabled: this.saving },
+          this.saving ? h("span", { class: "btn-spinner" }) : null,
+          this.saving ? "Saving…" : "Save Profile"
+        )
+      );
     }
-
     async handleSave() {
         this.saving = true;
+        clearTimeout(this._successTimeout);
+        this._successTimeout = setTimeout(() => {
+          this.saveSuccess = false;
+          this.el?.querySelector(".form-banner--success")?.remove();
+        }, 3000);
         this.saveError = null;
         this.saveSuccess = false;
         this.update();
@@ -464,43 +465,107 @@ export default class DoctorProfilePage extends Component {
         }
     }
 
-    renderInput(label, field, type = "text", required = false) {
-        return h(
-            "div",
-            { class: "form-group" },
-            h("label", { class: "form-label" }, label),
-            h("input", {
-                class: "form-input",
-                type,
-                required,
-                value: this.profile[field] ?? "",
-                oninput: e => {
-                    this.profile[field] = e.target.value;
-                }
-            })
-        );
+    renderInput(label, field, type = "text", required = false, opts = {}) {
+      const id = `profile-${field}`;
+      return h(
+        "div",
+        { class: "form-group" },
+        h("label", { class: "form-label", for: id }, label),
+        h("input", {
+          id,
+          class: "form-input",
+          type,
+          required,
+          value: this.profile[field] ?? "",
+          oninput: e => { this.profile[field] = e.target.value; },
+          ...(opts.attrs || {})
+        }),
+        opts.hint ? h("p", { class: "form-hint" }, opts.hint) : null
+      );
     }
-
-    renderTextarea(label, field) {
-        return h(
-            "div",
-            { class: "form-group" },
-            h("label", { class: "form-label" }, label),
-            h(
-                "textarea",
-                {
-                    class: "form-textarea",
-                    rows: 5,
-                    oninput: e => {
-                        this.profile[field] = e.target.value;
-                    }
-                },
-                this.profile[field] || ""
-            )
-        );
+    
+    renderTextarea(label, field, max = 500) {
+      const id = `profile-${field}`;
+      const count = h("span", { class: "form-counter" }, `${(this.profile[field] || "").length}/${max}`);
+      return h(
+        "div",
+        { class: "form-group" },
+        h("label", { class: "form-label", for: id }, label),
+        h(
+          "textarea",
+          {
+            id,
+            class: "form-textarea",
+            rows: 5,
+            maxlength: String(max),
+            placeholder: "Tell patients about your background and approach.",
+            oninput: e => {
+              this.profile[field] = e.target.value;
+              count.textContent = `${e.target.value.length}/${max}`;
+            }
+          },
+          this.profile[field] || ""
+        ),
+        count
+      );
     }
     resolveAvatarUrl(url) {
         return apiService.resolveUrl(url);
+    }
+    getCompleteness() {
+      const p = this.profile;
+      const checks = [
+        ["Profile photo", !!p.avatar_url],
+        ["Full name", !!p.full_name?.trim()],
+        ["Specialization", !!p.specialization?.trim()],
+        ["Bio", (p.bio || "").trim().length >= 40],
+        ["Years of experience", p.years_of_experience !== "" && p.years_of_experience != null],
+        ["Phone number", !!p.phone_number?.trim()],
+        ["MDCN number", !!p.mdcn_registration_number?.trim()],
+        ["Accepted terms", !!p.doctor_terms_accepted_at]
+      ];
+      const done = checks.filter(([, ok]) => ok).length;
+      return {
+        pct: Math.round((done / checks.length) * 100),
+        missing: checks.filter(([, ok]) => !ok).map(([label]) => label)
+      };
+    }
+    
+    renderCompletenessCard() {
+      const { pct, missing } = this.getCompleteness();
+      if (pct === 100) return null;
+    
+      return h(
+        "div",
+        { class: "dashboard-card profile-progress" },
+        h(
+          "div",
+          { class: "profile-progress__head" },
+          h("h3", {}, "Complete your profile"),
+          h("span", { class: "profile-progress__pct" }, `${pct}%`)
+        ),
+        h(
+          "div",
+          { class: "profile-progress__track", role: "progressbar", "aria-valuenow": pct, "aria-valuemin": 0, "aria-valuemax": 100 },
+          h("div", { class: "profile-progress__bar", style: `width:${pct}%` })
+        ),
+        h("p", { class: "dashboard-muted" }, `Still needed: ${missing.join(", ")}`)
+      );
+    }
+    renderLoading() {
+      return h(
+        "div",
+        { "aria-busy": "true", "aria-label": "Loading profile" },
+        ...[0, 1, 2].map(() =>
+          h(
+            "div",
+            { class: "dashboard-card" },
+            h("div", { class: "skeleton skeleton--title" }),
+            h("div", { class: "skeleton skeleton--line" }),
+            h("div", { class: "skeleton skeleton--line skeleton--short" })
+          )
+        )
+      );
     }
 
     formatVerificationStatus(status) {
