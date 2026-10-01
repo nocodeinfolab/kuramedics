@@ -83,44 +83,38 @@ export default class DoctorProfilePage extends Component {
     renderHero() {
         return h(
             "section",
-            { class: "dashboard-header" },
+            { class: "dashboard-header page-hero" },
+    
             h(
                 "button",
                 {
-                    class: "btn btn-outline",
-                    style: "margin-bottom: var(--space-3); color: var(--color-white); border-color: rgba(255,255,255,0.4);",
+                    type: "button",
+                    class: "page-hero__back",
                     onclick: () => this.onBack()
                 },
-                "← Back to Settings"
+                this.renderChevronIcon(),
+                h("span", {}, "Settings")
             ),
+    
             h(
                 "div",
-                {
-                    style: "display: flex; align-items: center; gap: var(--space-3);"
-                },
-                h(
-                    "h1",
-                    {
-                        class: "dashboard-title",
-                        style: "margin: 0;"
-                    },
-                    "Doctor Profile"
-                ),
+                { class: "page-hero__title-row" },
+                h("h1", { class: "page-hero__title" }, "Doctor Profile"),
                 h(
                     "span",
                     {
-                        class: "dashboard-badge",
-                        style: this.profile.verification_status === "verified"
-                            ? "background: #10b981;"
-                            : ""
+                        class:
+                            "page-hero__status page-hero__status--" +
+                            (this.profile.verification_status || "unsubmitted")
                     },
                     this.formatVerificationStatus(this.profile.verification_status)
                 )
             ),
+    
             h(
                 "p",
-                { class: "dashboard-subtitle" },
-                "Patients see the professional information you provide here."
+                { class: "page-hero__subtitle" },
+                "The professional profile patients see when they book you."
             )
         );
     }
@@ -239,6 +233,22 @@ export default class DoctorProfilePage extends Component {
                     : null
             )
         );
+    }
+    renderChevronIcon() {
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("width", "14");
+        svg.setAttribute("height", "14");
+        svg.setAttribute("viewBox", "0 0 24 24");
+        svg.setAttribute("fill", "none");
+        svg.setAttribute("stroke", "currentColor");
+        svg.setAttribute("stroke-width", "2.5");
+        svg.setAttribute("stroke-linecap", "round");
+        svg.setAttribute("stroke-linejoin", "round");
+    
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("d", "M15 18l-6-6 6-6");
+        svg.appendChild(path);
+        return svg;
     }
     renderCameraIcon() {
         const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
