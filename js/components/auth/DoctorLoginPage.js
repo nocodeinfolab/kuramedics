@@ -167,6 +167,7 @@ export class DoctorLoginPage extends Component {
             onError: () => {
               this._illustrationFailed = true;
               this.update();
+              this.mountGoogleButton();
             }
           }),
       
