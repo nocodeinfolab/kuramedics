@@ -821,3 +821,206 @@
     color: #ef4444;
     font-size: 0.9rem;
 }
+/* =========================================================
+   Avatar card — mobile-first
+   Base styles are the phone layout.
+   Desktop is the enhancement (min-width, not max-width).
+   ========================================================= */
+
+.settings-avatar-card {
+    display: flex;
+    flex-direction: column;      /* phone: stack */
+    align-items: center;
+    text-align: center;
+    gap: var(--space-3, 0.75rem);
+    padding: var(--space-5, 1.25rem) var(--space-4, 1rem);
+}
+
+/* --- Avatar + badge --- */
+.settings-avatar-preview {
+    position: relative;
+    width: 96px;
+    height: 96px;
+    flex-shrink: 0;
+}
+
+.settings-profile-avatar {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    object-fit: cover;
+    display: block;
+    background: var(--color-surface, #f3f4f6);
+    border: 1px solid var(--color-border, #e5e7eb);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.settings-profile-avatar--placeholder {
+    background: var(--color-primary);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.25rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    border: none;
+}
+
+/* Camera badge — 44px hit area, 30px visual circle */
+.settings-avatar-badge {
+    position: absolute;
+    right: -4px;
+    bottom: -4px;
+
+    /* visual size */
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    padding: 0;
+
+    border: 2px solid var(--color-surface, #fff);
+    background: var(--color-primary);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+
+    /* tap feedback — hover is useless on touch */
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+/* expand the tap area to 44x44 without enlarging the visual */
+.settings-avatar-badge::before {
+    content: "";
+    position: absolute;
+    inset: -7px;
+    border-radius: 50%;
+}
+
+.settings-avatar-badge:active:not(:disabled) {
+    transform: scale(0.94);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
+}
+
+.settings-avatar-badge:disabled {
+    opacity: 0.65;
+    cursor: default;
+}
+
+/* --- Text + actions column --- */
+.settings-avatar-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+    width: 100%;
+}
+
+.settings-avatar-name {
+    margin: 0;
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--color-text, #111827);
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.settings-avatar-hint {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--color-muted, #6b7280);
+    font-family: var(--font-mono);
+    letter-spacing: 0.01em;
+}
+
+.settings-avatar-actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: var(--space-1, 0.25rem);
+    margin-top: var(--space-2, 0.5rem);
+    width: 100%;
+}
+
+/* ---- Text buttons that are actually tappable ---- */
+.btn-link {
+    appearance: none;
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--color-primary);
+    cursor: pointer;
+    line-height: 1.2;
+
+    /* 44px minimum tap height */
+    min-height: 44px;
+    padding: 0 var(--space-3, 0.75rem);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md, 8px);
+
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    transition: background-color 0.12s ease;
+}
+
+.btn-link:active:not(:disabled) {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.btn-link:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.btn-link--danger {
+    color: #dc2626;
+}
+
+.btn-spinner--sm {
+    width: 12px;
+    height: 12px;
+    border-width: 2px;
+}
+
+/* =========================================================
+   Larger screens — enhance, don't rebuild
+   ========================================================= */
+@media (min-width: 640px) {
+    .settings-avatar-card {
+        flex-direction: row;
+        align-items: center;
+        text-align: left;
+        gap: var(--space-5, 1.25rem);
+        padding: var(--space-5, 1.25rem);
+    }
+    .settings-avatar-info {
+        align-items: flex-start;
+        width: auto;
+    }
+    .settings-avatar-actions {
+        justify-content: flex-start;
+        width: auto;
+    }
+    .btn-link {
+        padding: 0;          /* desktop doesn't need the big hit area */
+        min-height: 0;
+    }
+    .btn-link:hover:not(:disabled) {
+        text-decoration: underline;
+        background: none;
+    }
+}
