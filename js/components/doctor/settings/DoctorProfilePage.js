@@ -1,6 +1,7 @@
 import { Component } from "../../../core/component.js";
 import { h } from "../../../utils/dom.js";
 import doctorProfileService from "../../../services/doctorProfileService.js";
+import apiService from "../../../services/api.js";
 
 export default class DoctorProfilePage extends Component {
     constructor(doctor = {}, onBack = () => {}) {
@@ -143,7 +144,7 @@ export default class DoctorProfilePage extends Component {
     }
 
     renderAvatarCard() {
-        const avatar = this.profile.avatar_url;
+        const avatar = this.resolveAvatarUrl(this.profile.avatar_url);
         const initial = this.profile.full_name
             ? this.profile.full_name.charAt(0).toUpperCase()
             : "D";
@@ -441,6 +442,9 @@ export default class DoctorProfilePage extends Component {
                 this.profile[field] || ""
             )
         );
+    }
+    resolveAvatarUrl(url) {
+        return apiService.resolveUrl(url);
     }
 
     formatVerificationStatus(status) {
