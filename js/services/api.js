@@ -13,7 +13,17 @@ class ApiService {
         this.csrfToken = null;
 
     }
-    
+
+    getBaseOrigin() {
+        return new URL(API_BASE_URL).origin;
+    }
+
+    resolveUrl(path) {
+        if (!path) return null;
+        if (/^https?:\/\//i.test(path)) return path;
+        const origin = this.getBaseOrigin();
+        return `${origin}${path.startsWith("/") ? "" : "/"}${path}`;
+    }
 
     getAccessToken() {
 
