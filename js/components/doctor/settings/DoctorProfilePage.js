@@ -156,18 +156,18 @@ export default class DoctorProfilePage extends Component {
             onchange: e => this.handleAvatarChange(e)
         });
     
-        const src = this.avatarPreviewUrl || avatar;
-    
         return h(
             "div",
             { class: "dashboard-card settings-avatar-card" },
+    
+            // --- Avatar + camera badge ---
             h(
                 "div",
                 { class: "settings-avatar-preview" },
-                src
+                avatar
                     ? h("img", {
                           class: "settings-profile-avatar",
-                          src,
+                          src: avatar,
                           alt: "Doctor avatar"
                       })
                     : h(
@@ -178,49 +178,95 @@ export default class DoctorProfilePage extends Component {
                           },
                           initial
                       ),
-                this.uploadingAvatar
-                    ? h(
-                          "div",
-                          { class: "settings-avatar-overlay" },
-                          h("span", { class: "btn-spinner" })
-                      )
-                    : null
-            ),
-            h(
-                "div",
-                { class: "settings-avatar-actions" },
-                fileInput,
                 h(
                     "button",
                     {
                         type: "button",
-                        class: "btn btn-outline",
+                        class: "settings-avatar-badge",
                         disabled: this.uploadingAvatar,
+                        title: "Change photo",
+                        "aria-label": "Change photo",
                         onclick: () => fileInput.click()
                     },
-                    this.uploadingAvatar ? "Uploading..." : "Change Photo"
+                    this.uploadingAvatar
+                        ? h("span", { class: "btn-spinner btn-spinner--sm" })
+                        : this.renderCameraIcon()
+                )
+            ),
+    
+            // --- Text block + actions ---
+            h(
+                "div",
+                { class: "settings-avatar-info" },
+                h(
+                    "p",
+                    { class: "settings-avatar-name" },
+                    this.profile.full_name || "Profile photo"
                 ),
-                avatar && !this.uploadingAvatar
-                    ? h(
-                          "button",
-                          {
-                              type: "button",
-                              class: "btn btn-ghost",
-                              onclick: () => this.handleRemoveAvatar()
-                          },
-                          "Remove"
-                      )
-                    : null,
                 h(
                     "p",
                     { class: "settings-avatar-hint" },
                     "JPG, PNG or WebP · max 2 MB"
+                ),
+                h(
+                    "div",
+                    { class: "settings-avatar-actions" },
+                    fileInput,
+                    h(
+                        "button",
+                        {
+                            type: "button",
+                            class: "btn-link",
+                            disabled: this.uploadingAvatar,
+                            onclick: () => fileInput.click()
+                        },
+                        this.uploadingAvatar ? "Uploading…" : "Change photo"
+                    ),
+                    avatar && !this.uploadingAvatar
+                        ? h(
+                              "button",
+                              {
+                                  type: "button",
+                                  class: "btn-link btn-link--danger",
+                                  onclick: () => this.handleRemoveAvatar()
+                              },
+                              "Remove"
+                          )
+                        : null
                 ),
                 this.avatarError
                     ? h("p", { class: "form-error" }, this.avatarError)
                     : null
             )
         );
+    }
+    renderCameraIcon() {
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("width", "14");
+        svg.setAttribute("height", "14");
+        svg.setAttribute("viewBox", "0 0 24 24");
+        svg.setAttribute("fill", "none");
+        svg.setAttribute("stroke", "currentColor");
+        svg.setAttribute("stroke-width", "2.2");
+        svg.setAttribute("stroke-linecap", "round");
+        svg.setAttribute("stroke-linejoin", "round");
+    
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute(
+            "d",
+            "M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"
+        );
+        const circle = document.createElementNS(
+            "http://www.w3.org/2000/svg",
+            "circle"
+        );
+        circle.setAttribute("cx", "12");
+        circle.setAttribute("cy", "13");
+        circle.setAttribute("r", "4");
+    
+        svg.appendChild(path);
+        svg.appendChild(circle);
+        return svg;
     }
 
     async handleAvatarChange(e) {
