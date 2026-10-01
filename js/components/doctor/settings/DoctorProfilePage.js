@@ -119,7 +119,7 @@ export default class DoctorProfilePage extends Component {
         );
     }
 
-    renderForm() {
+   renderForm() {
         return h(
             "form",
             {
@@ -128,6 +128,7 @@ export default class DoctorProfilePage extends Component {
                     this.handleSave();
                 }
             },
+            this.renderCompletenessCard(),
             this.renderAvatarCard(),
             this.renderPersonalInfoCard(),
             this.renderProfessionalInfoCard(),
@@ -136,7 +137,6 @@ export default class DoctorProfilePage extends Component {
             this.renderActions()
         );
     }
-
     renderAvatarCard() {
         const avatar =
             this.avatarPreviewUrl || this.resolveAvatarUrl(this.profile.avatar_url);
