@@ -32,7 +32,6 @@ export default class SettingsPage extends Component {
             "div",
             { class: "dashboard-page settings-page" },
             this.renderHero(),
-            this.renderProfileHeader(),
             h(
                 "div",
                 { 
@@ -61,37 +60,6 @@ export default class SettingsPage extends Component {
                 { class: "dashboard-subtitle" },
                 "Manage your professional profile, consultation services, subscription, and account security."
             )
-        );
-    }
-
-    renderProfileHeader() {
-        const profile = this.profile || {};
-        const name = profile.full_name?.trim() || "Complete your profile";
-        const avatar = profile.avatar_url;
-        const initial = name.charAt(0).toUpperCase() || "D";
-
-        return h(
-            "div",
-            { 
-                class: "settings-profile-header",
-                style: "display: flex; align-items: center; gap: var(--space-3); margin-top: var(--space-4); margin-bottom: var(--space-2);"
-            },
-            avatar
-                ? h("img", {
-                      class: "settings-profile-avatar",
-                      src: avatar,
-                      alt: name,
-                      style: "width: 50px; height: 50px; border-radius: 50%; object-fit: cover;"
-                  })
-                : h(
-                      "div",
-                      {
-                          class: "settings-profile-avatar settings-profile-avatar--placeholder",
-                          style: "width: 50px; height: 50px; border-radius: 50%; background: var(--color-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; font-weight: bold;"
-                      },
-                      initial
-                  ),
-            h("h2", { style: "margin: 0; font-size: var(--step-2);" }, name)
         );
     }
 
