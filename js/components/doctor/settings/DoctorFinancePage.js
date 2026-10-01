@@ -117,23 +117,47 @@ export default class DoctorFinancePage extends Component {
     renderHeader() {
         return h(
             "section",
-            { class: "dashboard-header" },
+            { class: "dashboard-header page-hero" },
+    
             h(
                 "button",
                 {
-                    class: "btn btn-outline",
-                    style: "margin-bottom: var(--space-3); color: var(--color-white); border-color: rgba(255,255,255,0.4);",
+                    type: "button",
+                    class: "page-hero__back",
                     onclick: () => this.onBack()
                 },
-                "← Back to Settings"
+                this.renderChevronIcon(),
+                h("span", {}, "Settings")
             ),
-            h("h1", { class: "dashboard-title" }, "Finance"),
+    
+            h(
+                "h1",
+                { class: "page-hero__title" },
+                "Finance"
+            ),
+    
             h(
                 "p",
-                { class: "dashboard-subtitle" },
+                { class: "page-hero__subtitle" },
                 "Track your earnings, manage your payout account, and review past transactions."
             )
         );
+    }
+    renderChevronIcon() {
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("width", "14");
+        svg.setAttribute("height", "14");
+        svg.setAttribute("viewBox", "0 0 24 24");
+        svg.setAttribute("fill", "none");
+        svg.setAttribute("stroke", "currentColor");
+        svg.setAttribute("stroke-width", "2.5");
+        svg.setAttribute("stroke-linecap", "round");
+        svg.setAttribute("stroke-linejoin", "round");
+    
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("d", "M15 18l-6-6 6-6");
+        svg.appendChild(path);
+        return svg;
     }
 
     renderAlerts() {
