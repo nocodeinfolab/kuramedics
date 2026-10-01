@@ -151,7 +151,6 @@ export default class DoctorProfilePage extends Component {
         const fileInput = h("input", {
             type: "file",
             accept: "image/png,image/jpeg,image/webp",
-            capture: "user",              // opens camera directly on mobile
             style: "display:none",
             onchange: e => this.handleAvatarChange(e)
         });
