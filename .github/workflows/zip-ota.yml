@@ -23,7 +23,7 @@ jobs:
       - name: Stage web assets into www/
         run: |
           mkdir -p www
-          cp -r index.html css js www/
+          cp -r index.html css js assets www/
 
       - name: Zip www/ for OTA upload (index.html at the zip root)
         run: |
