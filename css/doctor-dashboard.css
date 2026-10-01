@@ -967,7 +967,7 @@
     flex-direction: column;
     justify-content: flex-start;      /* content anchors to top */
     gap: var(--space-3);
-    padding-top: calc(var(--safe-area-top) + var(--space-5));
+    padding-top: calc(var(--safe-area-top) + 2rem);
     padding-bottom: var(--space-5);
 }
 
