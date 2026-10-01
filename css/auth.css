@@ -148,7 +148,7 @@
   align-items: center;
 }
 
-.auth-input-icon {
+.auth-input-group .auth-input-icon {
   position: absolute;
   left: var(--space-3);
   width: 18px;
