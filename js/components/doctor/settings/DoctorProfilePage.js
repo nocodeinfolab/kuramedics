@@ -533,6 +533,7 @@ export default class DoctorProfilePage extends Component {
     
     renderCompletenessCard() {
       const { pct, missing } = this.getCompleteness();
+      console.log("completeness:", pct, missing);
       if (pct === 100) return null;
     
       return h(
