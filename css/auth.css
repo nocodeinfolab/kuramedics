@@ -554,6 +554,9 @@
 .google-btn-container iframe {
   width: 100% !important;
 }
+.auth-provider-list .google-btn-container {
+  margin-bottom: 0;
+}
 
 /* Labeled divider ("Doctor login") ------------------------------------------- */
 .auth-labeled-divider {
