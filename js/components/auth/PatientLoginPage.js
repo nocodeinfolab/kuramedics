@@ -12,17 +12,40 @@ const OTP_VERIFY_ENDPOINT = "/auth/otp/verify";
 const RESEND_COOLDOWN_SECONDS = 30;
 const OTP_DIGIT_COUNT = 6;
 
-const EnvelopeIcon = () =>
+const PATIENT_ILLUSTRATION_SRC = "/assets/patient_illustration.png";
+
+const EnvelopeIcon = (cls = "provider-btn-icon") =>
   h(
     "svg",
-    { class: "auth-input-icon", viewBox: "0 0 24 24", fill: "none", "aria-hidden": "true" },
+    { class: cls, viewBox: "0 0 24 24", fill: "none", "aria-hidden": "true" },
     h("path", {
-      d: "M3 6.5 12 13l9-6.5M4 5h16a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1Z",
+      d: "M3.5 6.5h17a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-17a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1zM3 7l9 6.5L21 7",
       stroke: "currentColor",
-      "stroke-width": "1.6",
+      "stroke-width": "1.8",
       "stroke-linecap": "round",
       "stroke-linejoin": "round"
     })
+  );
+
+const AppleIcon = () =>
+  h(
+    "svg",
+    { class: "provider-btn-icon", viewBox: "0 0 24 24", "aria-hidden": "true" },
+    h("path", {
+      fill: "currentColor",
+      d: "M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.03 1.52-.06 2.098-.98 3.938-.98 1.837 0 2.35.98 3.96.95 1.637-.03 2.676-1.48 3.676-2.94 1.156-1.687 1.636-3.32 1.666-3.404-.036-.017-3.19-1.226-3.223-4.86-.028-3.036 2.478-4.49 2.59-4.554-1.42-2.08-3.617-2.31-4.39-2.36-2-.16-3.67 1.083-4.62 1.083zm3.42-3.11c.837-1.012 1.4-2.42 1.25-3.83-1.21.05-2.68.81-3.55 1.82-.78.9-1.46 2.33-1.28 3.7 1.34.1 2.72-.68 3.58-1.7z"
+    })
+  );
+
+const StethoscopeIcon = () =>
+  h(
+    "svg",
+    { class: "auth-hero-fallback-icon", viewBox: "0 0 24 24", fill: "none", "aria-hidden": "true" },
+    h("path", { d: "M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1", stroke: "currentColor", "stroke-width": "1.6", "stroke-linecap": "round", "stroke-linejoin": "round" }),
+    h("path", { d: "M11 2v2", stroke: "currentColor", "stroke-width": "1.6", "stroke-linecap": "round" }),
+    h("path", { d: "M5 2v2", stroke: "currentColor", "stroke-width": "1.6", "stroke-linecap": "round" }),
+    h("path", { d: "M8 15a6 6 0 0 0 12 0v-3", stroke: "currentColor", "stroke-width": "1.6", "stroke-linecap": "round", "stroke-linejoin": "round" }),
+    h("circle", { cx: "20", cy: "10", r: "2", stroke: "currentColor", "stroke-width": "1.6" })
   );
 
 const ArrowIcon = () =>
@@ -50,6 +73,8 @@ export class PatientLoginPage extends Component {
     this.error = "";
     this.resendCooldown = 0;
     this._resendInterval = null;
+    this._focusTimeout = null;
+    this._illustrationFailed = false;
 
     // Inputs are re-created (not patched) on every update(), so their
     // values live here in state and get handed back as `value` on
@@ -61,97 +86,200 @@ export class PatientLoginPage extends Component {
   }
 
   render() {
+    const isHero = this.view === "google";
+  
     return h(
       "main",
       { class: "auth-page" },
       h(
         "div",
-        { class: "auth-card" },
-        h(
-          "div",
-          { class: "auth-header" },
-          h("span", { class: "auth-badge" }, "For patients"),
-          h("h1", { class: "auth-title" }, "Welcome to YerosCare"),
-          h(
-            "p",
-            { class: "auth-subtitle" },
-            "Sign in to begin AI triage, manage appointments and access your medical records."
-          )
-        ),
-
-        this.view === "google" && this.renderGoogleView(),
-        this.view === "otp-email" && this.renderOtpEmailStep(),
-        this.view === "otp-code" && this.renderOtpCodeStep(),
-
-        h(
-          "div",
-          { class: "doctor-info" },
-          h("h3", {}, "New to YerosCare?"),
-          h(
-            "p",
-            {},
-            "Signing in creates your patient account automatically — you can start a triage or book an appointment right away."
-          )
-        ),
-        h(
-          "p",
-          { class: "auth-note" },
-          "By continuing, you agree to our Terms of Service and Privacy Policy."
-        ),
-        h(
-          "div",
-          { class: "auth-footer" },
-          h("a", { href: "#/", class: "auth-back" }, "Back to Home")
-        )
+        { class: isHero ? "auth-hero" : "auth-card" },
+        isHero ? this.renderHeroView() : this.renderFormView()
       )
     );
   }
-
-  renderGoogleView() {
+  
+  renderHeroView() {
     return h(
       "div",
-      { id: "google-auth-section" },
+      {},
+      this.renderBrand(),
+      this.renderIllustration(),
       h(
-        "div",
-        { class: "google-btn-container" },
-        h("div", { id: "google-login-btn" })
+        "h1",
+        { class: "auth-hero-title" },
+        h("span", {}, "Welcome to"),
+        h("span", { class: "auth-hero-title-accent" }, "YerosCare")
       ),
       h(
         "p",
-        { class: "auth-switch" },
-        "Prefer a code? ",
+        { class: "auth-hero-lead" },
+        "Sign in to begin AI triage, manage appointments and access your medical records."
+      ),
+      this.renderProviderButtons(),
+      this.renderDivider(),
+      this.renderFooterSwitch()
+    );
+  }
+  
+  renderBrand() {
+    return h(
+      "div",
+      { class: "auth-brand" },
+      h("img", {
+        class: "auth-brand-mark",
+        src: "/assets/yeroscarelogo.png",
+        alt: "YerosCare"
+      }),
+      h("p", { class: "auth-brand-tagline" }, "Care moves closer")
+    );
+  }
+  
+  renderIllustration() {
+    return h(
+      "div",
+      { class: "auth-hero-illustration" },
+      this._illustrationFailed
+        ? h("div", { class: "auth-hero-fallback" }, StethoscopeIcon())
+        : h("img", {
+            class: "auth-hero-illustration__photo",
+            src: PATIENT_ILLUSTRATION_SRC,
+            alt: "",
+            onError: () => {
+              this._illustrationFailed = true;
+              this.update();
+              this.mountGoogleButton(); // update() recreates the Google slot
+            }
+          })
+    );
+  }
+  
+  renderProviderButtons() {
+    return h(
+      "div",
+      { class: "auth-provider-list" },
+      h("div", { id: "google-login-btn", class: "google-btn-container" }),
+      h(
+        "button",
+        {
+          type: "button",
+          class: "auth-provider-btn",
+          disabled: true,
+          "aria-disabled": "true",
+          title: "Sign in with Apple — coming soon"
+        },
+        AppleIcon(),
+        h("span", { class: "auth-provider-btn__label" }, "Sign in with Apple"),
+        h("span", { class: "auth-provider-btn__arrow" }, ArrowIcon())
+      ),
+      h(
+        "button",
+        {
+          type: "button",
+          class: "auth-provider-btn auth-provider-btn--primary",
+          onClick: () => {
+            this.error = "";
+            this.view = "otp-email";
+            this.update();
+            this.focusSoon("#otp-email");
+          }
+        },
+        EnvelopeIcon(),
+        h("span", { class: "auth-provider-btn__label" }, "Sign in with Email"),
+        h("span", { class: "auth-provider-btn__arrow" }, ArrowIcon())
+      )
+    );
+  }
+  
+  renderDivider() {
+    return h(
+      "div",
+      { class: "auth-labeled-divider", "aria-hidden": "true" },
+      h("span", { class: "auth-labeled-divider__rule" }),
+      h("span", { class: "auth-labeled-divider__label" }, "Patient login"),
+      h("span", { class: "auth-labeled-divider__rule" })
+    );
+  }
+  
+  renderFooterSwitch() {
+    return h(
+      "p",
+      { class: "auth-role-switch" },
+      "Are you a doctor? ",
+      h("a", { href: "#/doctor/login", class: "auth-link" }, "Sign in here"),
+      " ",
+      h(
+        "svg",
+        { class: "auth-role-switch__arrow", viewBox: "0 0 24 24", fill: "none", "aria-hidden": "true" },
+        h("path", { d: "M5 12h14M13 6l6 6-6 6", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" })
+      )
+    );
+  }
+  
+  renderFormView() {
+    return h(
+      "div",
+      {},
+      h(
+        "div",
+        { class: "auth-header" },
+        h("span", { class: "auth-badge" }, "For patients"),
+        h("h2", { class: "auth-title" }, this.view === "otp-code" ? "Enter your code" : "Sign in with email"),
+        this.view !== "otp-code" &&
+          h("p", { class: "auth-subtitle" }, "We'll email you a 6-digit code. No password needed.")
+      ),
+  
+      this.view === "otp-email" && this.renderOtpEmailStep(),
+      this.view === "otp-code" && this.renderOtpCodeStep(),
+  
+      h(
+        "div",
+        { class: "doctor-info" },
+        h("h3", {}, "New to YerosCare?"),
+        h(
+          "p",
+          {},
+          "Signing in creates your patient account automatically. You can start a triage or book an appointment right away."
+        )
+      ),
+      h("p", { class: "auth-note" }, "By continuing, you agree to our Terms of Service and Privacy Policy."),
+      h(
+        "div",
+        { class: "auth-footer" },
         h(
           "a",
           {
             href: "#",
-            class: "auth-link",
+            class: "auth-back",
             onClick: (e) => {
               e.preventDefault();
               this.error = "";
-              this.view = "otp-email";
+              this.view = "google";
               this.update();
+              this.mountGoogleButton();
             }
           },
-          "Sign in with email instead"
+          "← Back to sign-in options"
         )
       )
     );
   }
-
+  
+  focusSoon(selector) {
+    clearTimeout(this._focusTimeout);
+    this._focusTimeout = setTimeout(() => {
+      this.el?.querySelector(selector)?.focus();
+    }, 0);
+  }
   renderOtpEmailStep() {
     return h(
       "div",
       { id: "otp-auth-section", class: "otp-auth-section" },
-      h(
-        "div",
-        { class: "otp-step-intro" },
-        h("p", { class: "auth-subtitle" }, "We'll email you a 6-digit code to sign in.")
-      ),
+      h("label", { class: "sr-only", for: "otp-email" }, "Email address"),
       h(
         "div",
         { class: "auth-input-group" },
-        h("label", { class: "sr-only", for: "otp-email" }, "Email address"),
-        EnvelopeIcon(),
+        EnvelopeIcon("auth-input-icon"),
         h("input", {
           type: "email",
           id: "otp-email",
@@ -178,26 +306,7 @@ export class PatientLoginPage extends Component {
         h("span", {}, this.loading ? "Sending…" : "Send code"),
         !this.loading && ArrowIcon()
       ),
-      this.error && h("p", { class: "auth-error" }, this.error),
-      h(
-        "p",
-        { class: "auth-switch" },
-        h(
-          "a",
-          {
-            href: "#",
-            class: "auth-link",
-            onClick: (e) => {
-              e.preventDefault();
-              this.error = "";
-              this.view = "google";
-              this.update();
-              this.mountGoogleButton();
-            }
-          },
-          "← Back to Google sign-in"
-        )
-      )
+      this.error && h("p", { class: "auth-error" }, this.error)
     );
   }
 
