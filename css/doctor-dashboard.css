@@ -953,3 +953,106 @@
         background: none;
     }
 }
+/* =========================================================
+   Page hero — Doctor dashboard sub-pages only
+   (DoctorProfilePage, DoctorConsultationServicesPage,
+   DoctorSubscriptionPage, DoctorCardPage, etc.)
+   The .doctor-dashboard prefix keeps these rules off any
+   other screen that happens to use .dashboard-header.
+   ========================================================= */
+
+.doctor-dashboard .dashboard-header.page-hero {
+    /* specificity (0,3,0) — beats the mobile @media rule at (0,2,0) */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;      /* content anchors to top */
+    gap: var(--space-3);
+    padding-top: calc(var(--safe-area-top) + var(--space-5));
+    padding-bottom: var(--space-5);
+}
+
+/* Compact chevron back control */
+.doctor-dashboard .page-hero__back {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    align-self: flex-start;
+
+    background: rgba(255, 255, 255, 0.14);
+    border: none;
+    border-radius: 999px;
+    color: #fff;
+
+    font-family: var(--font-body);
+    font-size: 0.8rem;
+    font-weight: 600;
+    line-height: 1;
+
+    padding: 7px 12px 7px 9px;
+    cursor: pointer;
+
+    -webkit-tap-highlight-color: transparent;
+    transition: background-color 0.12s ease;
+}
+
+.doctor-dashboard .page-hero__back:active {
+    background: rgba(255, 255, 255, 0.26);
+}
+
+/* Title + status pill on one row */
+.doctor-dashboard .page-hero__title-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    flex-wrap: wrap;
+    margin-top: var(--space-2);
+}
+
+.doctor-dashboard .page-hero__title {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(1.45rem, 5vw, 1.85rem);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+    color: #fff;
+}
+
+/* Status pill — class-driven, no inline hex */
+.doctor-dashboard .page-hero__status {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+
+    font-family: var(--font-mono);
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+    white-space: nowrap;
+}
+
+.doctor-dashboard .page-hero__status--verified {
+    background: rgba(16, 185, 129, 0.9);
+}
+
+.doctor-dashboard .page-hero__status--pending_review {
+    background: rgba(245, 158, 11, 0.95);
+}
+
+.doctor-dashboard .page-hero__status--suspended {
+    background: rgba(239, 68, 68, 0.95);
+}
+
+/* Subtitle */
+.doctor-dashboard .page-hero__subtitle {
+    margin: 0;
+    font-size: 0.86rem;
+    line-height: 1.45;
+    color: rgba(255, 255, 255, 0.78);
+    max-width: 40ch;
+}
