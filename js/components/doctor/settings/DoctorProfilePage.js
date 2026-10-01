@@ -14,6 +14,8 @@ export default class DoctorProfilePage extends Component {
         this.uploadingAvatar = false;
         this.saveError = null;
         this.saveSuccess = false;
+        this.avatarError = null;
+        this.avatarPreviewUrl = null; // local object URL for instant preview
 
         this.profile = {
             full_name: "",
@@ -142,78 +144,145 @@ export default class DoctorProfilePage extends Component {
 
     renderAvatarCard() {
         const avatar = this.profile.avatar_url;
+        const initial = this.profile.full_name
+            ? this.profile.full_name.charAt(0).toUpperCase()
+            : "D";
     
         const fileInput = h("input", {
             type: "file",
-            accept: "image/*",
+            accept: "image/png,image/jpeg,image/webp",
+            capture: "user",              // opens camera directly on mobile
             style: "display:none",
             onchange: e => this.handleAvatarChange(e)
         });
     
+        const src = this.avatarPreviewUrl || avatar;
+    
         return h(
             "div",
-            {},
-    
+            { class: "dashboard-card settings-avatar-card" },
             h(
                 "div",
-                {
-                    class: "dashboard-card",
-                    style: "display: flex; align-items: center; gap: var(--space-4);"
-                },
-                avatar
+                { class: "settings-avatar-preview" },
+                src
                     ? h("img", {
                           class: "settings-profile-avatar",
-                          src: avatar,
-                          alt: "Doctor Avatar",
-                          style: "width: 80px; height: 80px; border-radius: 50%; object-fit: cover;"
+                          src,
+                          alt: "Doctor avatar"
                       })
                     : h(
                           "div",
                           {
-                              class: "settings-profile-avatar settings-profile-avatar--placeholder",
-                              style: "width: 80px; height: 80px; border-radius: 50%; background: var(--color-primary); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: bold;"
+                              class:
+                                  "settings-profile-avatar settings-profile-avatar--placeholder"
                           },
-                          this.profile.full_name
-                              ? this.profile.full_name.charAt(0)
-                              : "D"
+                          initial
                       ),
+                this.uploadingAvatar
+                    ? h(
+                          "div",
+                          { class: "settings-avatar-overlay" },
+                          h("span", { class: "btn-spinner" })
+                      )
+                    : null
+            ),
+            h(
+                "div",
+                { class: "settings-avatar-actions" },
+                fileInput,
                 h(
-                    "div",
-                    {},
-                    fileInput,
-                    h(
-                        "button",
-                        {
-                            type: "button",
-                            class: "btn btn-outline",
-                            disabled: this.uploadingAvatar,
-                            onclick: () => fileInput.click()
-                        },
-                        this.uploadingAvatar
-                            ? h("span", { class: "btn-spinner" })
-                            : null,
-                        this.uploadingAvatar
-                            ? "Uploading..."
-                            : "Change Photo"
-                    )
-                )
+                    "button",
+                    {
+                        type: "button",
+                        class: "btn btn-outline",
+                        disabled: this.uploadingAvatar,
+                        onclick: () => fileInput.click()
+                    },
+                    this.uploadingAvatar ? "Uploading..." : "Change Photo"
+                ),
+                avatar && !this.uploadingAvatar
+                    ? h(
+                          "button",
+                          {
+                              type: "button",
+                              class: "btn btn-ghost",
+                              onclick: () => this.handleRemoveAvatar()
+                          },
+                          "Remove"
+                      )
+                    : null,
+                h(
+                    "p",
+                    { class: "settings-avatar-hint" },
+                    "JPG, PNG or WebP · max 2 MB"
+                ),
+                this.avatarError
+                    ? h("p", { class: "form-error" }, this.avatarError)
+                    : null
             )
         );
     }
 
     async handleAvatarChange(e) {
         const file = e.target.files?.[0];
+        e.target.value = ""; // ← critical: allows re-selecting the same file
         if (!file) return;
-
+    
+        this.avatarError = null;
+    
+        const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
+        const MAX_BYTES = 2 * 1024 * 1024;
+    
+        if (!ALLOWED.includes(file.type)) {
+            this.avatarError = "Please choose a JPG, PNG, or WebP image.";
+            this.update();
+            return;
+        }
+        if (file.size > MAX_BYTES) {
+            this.avatarError = "Image must be under 2 MB.";
+            this.update();
+            return;
+        }
+    
+        // Instant local preview
+        this.avatarPreviewUrl = URL.createObjectURL(file);
         this.uploadingAvatar = true;
         this.update();
-
+    
         try {
             const result = await doctorProfileService.uploadAvatar(file);
-            this.profile.avatar_url = result.data?.avatar_url ?? this.profile.avatar_url;
+            const newUrl = result?.data?.avatar_url;
+            if (newUrl) {
+                // Cache-bust so the browser doesn't show the old image
+                this.profile.avatar_url = newUrl.includes("?")
+                    ? `${newUrl}&t=${Date.now()}`
+                    : `${newUrl}?t=${Date.now()}`;
+            }
         } catch (error) {
             console.error("Avatar upload failed:", error);
-            alert(error.message || "Avatar upload failed.");
+            this.avatarError = error.message || "Avatar upload failed.";
+        } finally {
+            if (this.avatarPreviewUrl) {
+                URL.revokeObjectURL(this.avatarPreviewUrl);
+                this.avatarPreviewUrl = null;
+            }
+            this.uploadingAvatar = false;
+            this.update();
+        }
+    }
+    async handleRemoveAvatar() {
+        if (!confirm("Remove your profile photo?")) return;
+    
+        this.avatarError = null;
+        this.uploadingAvatar = true;
+        this.update();
+    
+        try {
+            await doctorProfileService.removeAvatar?.();
+            this.profile.avatar_url = null;
+        } catch (error) {
+            console.error("Avatar removal failed:", error);
+            this.avatarError = error.message || "Could not remove photo.";
         } finally {
             this.uploadingAvatar = false;
             this.update();
