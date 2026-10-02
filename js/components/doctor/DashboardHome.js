@@ -53,6 +53,12 @@ const ICONS = {
         "M9 12l2 2 4-4"
     ],
     check: ["M5 12.5l4.5 4.5L19 7.5"],
+    calendar: [
+        "M5 5h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z",
+        "M4 9h16",
+        "M8 3v4",
+        "M16 3v4"
+    ],
     chevron: ["M9 6l6 6-6 6"]
 };
 
@@ -467,22 +473,55 @@ renderStatusBanner() {
     }
 
     renderRecentActivity() {
+        let body;
+    
+        if (this.summaryLoading) {
+            body = h(
+                "div",
+                { class: "activity-list", "aria-busy": "true", "aria-label": "Loading recent activity" },
+                ...[0, 1, 2].map(() =>
+                    h(
+                        "div",
+                        { class: "activity-row" },
+                        h("div", { class: "skeleton skeleton--circle" }),
+                        h(
+                            "div",
+                            { class: "activity-row__body" },
+                            h("div", { class: "skeleton skeleton--line-sm" }),
+                            h("div", { class: "skeleton skeleton--line-sm skeleton--short" })
+                        )
+                    )
+                )
+            );
+        } else if (this.recentBookings.length === 0) {
+            body = h(
+                "div",
+                { class: "activity-empty" },
+                h("span", { class: "activity-empty__icon" }, icon(ICONS.calendar, 22)),
+                h("p", { class: "activity-empty__title" }, "No recent activity yet"),
+                h("p", { class: "activity-empty__text" }, "New booking requests and updates will appear here.")
+            );
+        } else {
+            body = h(
+                "div",
+                { class: "activity-list" },
+                ...this.recentBookings.map(booking => this.renderActivityRow(booking))
+            );
+        }
+    
         return h(
             "section",
-            { class: "dashboard-card" },
-            h("h3", {}, "Recent Activity"),
-            this.summaryLoading
-                ? h("p", { class: "dashboard-muted" }, "Loading recent activity...")
-                : this.recentBookings.length === 0
-                    ? h("p", { class: "dashboard-muted" }, "No recent activity yet.")
-                    : h(
-                          "div",
-                          { style: "display: flex; flex-direction: column; gap: 10px; margin-top: var(--space-2);" },
-                          this.recentBookings.map(booking => this.renderActivityRow(booking))
-                      )
+            { class: "dashboard-card status-card" },
+            h(
+                "div",
+                { class: "status-card__head" },
+                h("span", { class: "status-card__icon" }, icon(ICONS.calendar, 20)),
+                h("span", { class: "status-card__eyebrow" }, "Recent activity")
+            ),
+            body
         );
     }
-
+    
     renderActivityRow(booking) {
         const statusText = {
             pending: "New booking request",
@@ -490,42 +529,69 @@ renderStatusBanner() {
             reschedule_requested: "You suggested a new time",
             confirmed: "Appointment confirmed",
             completed: "Consultation completed",
-            cancelled: "Booking cancelled",
+            cancelled: "Booking cancelled"
         }[booking.status] || booking.status;
-
+    
+        const tone = this.getBookingTone(booking.status);
+        const name = booking.patient_name || "Patient";
+    
         return h(
             "div",
-            {
-                style: "display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 0.6rem 0; border-bottom: 1px solid var(--color-line);",
-            },
+            { class: "activity-row" },
+            h("div", { class: "activity-row__avatar" }, this.getInitials(name)),
             h(
                 "div",
-                { style: "min-width: 0;" },
+                { class: "activity-row__body" },
+                h("p", { class: "activity-row__name" }, name),
                 h(
                     "p",
-                    { style: "margin: 0; font-size: 0.88rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" },
-                    booking.patient_name || "Patient"
-                ),
-                h(
-                    "p",
-                    { class: "dashboard-muted", style: "margin: 2px 0 0; font-size: 0.78rem;" },
+                    { class: "activity-row__status" },
+                    h("span", { class: `activity-row__dot activity-row__dot--${tone}` }),
                     statusText
                 )
             ),
-            h(
-                "p",
-                { class: "dashboard-muted", style: "margin: 0; font-size: 0.75rem; white-space: nowrap; flex-shrink: 0;" },
-                this.formatDate(booking.booking_date)
-            )
+            h("p", { class: "activity-row__date" }, this.formatRelativeDate(booking.booking_date))
         );
     }
-
     formatDate(dateString) {
         if (!dateString) return "";
         return new Date(dateString).toLocaleDateString(undefined, {
             month: "short",
             day: "numeric",
         });
+    }
+    getInitials(name) {
+        const parts = (name || "").trim().split(/\s+/).filter(Boolean);
+        if (parts.length === 0) return "P";
+        if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+        return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+    }
+    
+    getBookingTone(status) {
+        return {
+            pending: "warning",
+            pending_confirmation: "warning",
+            reschedule_requested: "info",
+            confirmed: "success",
+            completed: "neutral",
+            cancelled: "danger"
+        }[status] || "neutral";
+    }
+    
+    formatRelativeDate(dateString) {
+        if (!dateString) return "";
+        const date = new Date(dateString);
+        if (isNaN(date)) return "";
+    
+        const startOfDay = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        const diffDays = Math.round(
+            (startOfDay(date) - startOfDay(new Date())) / 86400000
+        );
+    
+        if (diffDays === 0) return "Today";
+        if (diffDays === 1) return "Tomorrow";
+        if (diffDays === -1) return "Yesterday";
+        return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
     }
     statCard(title, value) {
         return h(
