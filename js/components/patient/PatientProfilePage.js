@@ -41,6 +41,7 @@ export default class PatientProfilePage extends Component {
         this.saving = false;
         this.saveError = "";
         this.saveSuccess = false;
+        this.loggingOut = false;
     }
 
     // ---------- Actions ----------
@@ -84,12 +85,21 @@ export default class PatientProfilePage extends Component {
     }
 
     async logout() {
+        if (this.loggingOut) return;
+    
+        this.loggingOut = true;
+        this.update();
+    
         try {
             await api.post("/auth/logout", {});
         } catch (error) {
             console.error("Logout request failed:", error);
         } finally {
-            await pushNotifications.unregister(); 
+            try {
+                await pushNotifications.unregister();
+            } catch (error) {
+                console.error("Push unregister failed:", error);
+            }
             api.clearSession();
         }
     }
@@ -307,11 +317,15 @@ export default class PatientProfilePage extends Component {
                     h(
                         "button",
                         {
+                            type: "button",
                             class: "btn btn-outline",
-                            style: "padding: 0.55rem 1rem; font-size: 0.85rem; border-radius: 8px; color: #ef4444; border-color: #ef4444;",
+                            style: "padding: 0.55rem 1rem; font-size: 0.85rem; border-radius: 8px; color: #ef4444; border-color: #ef4444; min-width: 7.5rem;",
+                            disabled: this.loggingOut,
+                            "aria-busy": String(this.loggingOut),
                             onclick: () => this.logout(),
                         },
-                        "Log out"
+                        this.loggingOut ? h("span", { class: "btn-spinner btn-spinner--danger" }) : null,
+                        this.loggingOut ? "Logging out…" : "Log out"
                     )
                 )
             )
