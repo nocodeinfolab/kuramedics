@@ -665,3 +665,7 @@
 .patient-home .ph-skel--line { height: 12px; margin-bottom: 8px; }
 .patient-home .ph-skel--short { width: 60%; margin-bottom: 0; }
 @keyframes ph-shimmer { to { background-position: -200% 0; } }
+.btn-spinner--danger {
+  border-color: rgba(239, 68, 68, 0.25);
+  border-top-color: #ef4444;
+}
