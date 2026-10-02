@@ -19,6 +19,50 @@ const STATUS_LABELS = {
 };
 
 const PAGE_LIMIT = 20;
+const icon = (paths, size = 18) =>
+    h(
+        "svg",
+        { viewBox: "0 0 24 24", fill: "none", width: String(size), height: String(size), "aria-hidden": "true" },
+        ...paths.map(d =>
+            h("path", {
+                d,
+                stroke: "currentColor",
+                "stroke-width": "1.8",
+                "stroke-linecap": "round",
+                "stroke-linejoin": "round"
+            })
+        )
+    );
+
+const QI = {
+    search: ["M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z", "M21 21l-4.3-4.3"],
+    calendar: [
+        "M5 5h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z",
+        "M4 9h16", "M8 3v4", "M16 3v4"
+    ],
+    service: [
+        "M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1",
+        "M11 2v2", "M5 2v2", "M8 15a6 6 0 0 0 12 0v-3"
+    ],
+    lock: ["M6 11h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1z", "M8 11V8a4 4 0 0 1 8 0v3"],
+    alert: ["M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z", "M12 9v4", "M12 17h.01"],
+    check: ["M5 12.5l4.5 4.5L19 7.5"]
+};
+
+const STATUS_TONES = {
+    pending: "info",
+    pending_confirmation: "info",
+    reschedule_requested: "warning",
+    confirmed: "success",
+    completed: "neutral"
+};
+
+const getInitials = name => {
+    const parts = (name || "").trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return "P";
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+};
 
 export default class DoctorQueuePage extends Component {
     constructor(doctor, onOpenConversation) {
@@ -571,16 +615,39 @@ export default class DoctorQueuePage extends Component {
             this.renderHeader(),
             this.renderAlerts(),
             this.tabs[this.activeTab].loading
-                ? h(
-                      "div",
-                      { class: "dashboard-card text-center py-4" },
-                      h("p", { class: "dashboard-muted" }, "Loading appointment queue...")
-                  )
+                ? this.renderSkeleton()
                 : this.renderContent()
         );
     }
-
+    
+    renderSkeleton() {
+        return h(
+            "div",
+            { "aria-busy": "true", "aria-label": "Loading appointment queue" },
+            ...[0, 1, 2].map(() =>
+                h(
+                    "div",
+                    { class: "dashboard-card booking-card" },
+                    h(
+                        "div",
+                        { class: "booking-card__head" },
+                        h("div", { class: "skeleton skeleton--circle" }),
+                        h(
+                            "div",
+                            { class: "booking-card__who" },
+                            h("div", { class: "skeleton skeleton--line-sm" }),
+                            h("div", { class: "skeleton skeleton--line-sm skeleton--short" })
+                        )
+                    ),
+                    h("div", { class: "skeleton skeleton--line" })
+                )
+            )
+        );
+    }
     renderHeader() {
+        const pending = this.getTabCount("pending");
+        const confirmed = this.getTabCount("confirmed");
+    
         return h(
             "section",
             { class: "dashboard-header" },
@@ -590,6 +657,14 @@ export default class DoctorQueuePage extends Component {
                 "p",
                 { class: "dashboard-subtitle" },
                 "Review, confirm, and manage appointments booked by your patients."
+            ),
+            h(
+                "div",
+                { class: "dashboard-hero-meta" },
+                h("span", { class: `hero-chip ${pending > 0 ? "hero-chip--warning" : ""}` },
+                    h("span", { class: "hero-chip__dot" }), `${pending} pending`),
+                h("span", { class: `hero-chip ${confirmed > 0 ? "hero-chip--success" : ""}` },
+                    h("span", { class: "hero-chip__dot" }), `${confirmed} confirmed`)
             )
         );
     }
@@ -598,20 +673,16 @@ export default class DoctorQueuePage extends Component {
         const alerts = [];
         if (this.errorMessage) {
             alerts.push(
-                h(
-                    "div",
-                    { class: "dashboard-card", style: "border-left: 4px solid #ef4444;" },
-                    h("p", { style: "color: #ef4444; margin: 0;" }, this.errorMessage)
-                )
+                h("div", { class: "q-alert q-alert--error", role: "alert" },
+                    icon(QI.alert, 18),
+                    h("span", {}, this.errorMessage))
             );
         }
         if (this.successMessage) {
             alerts.push(
-                h(
-                    "div",
-                    { class: "dashboard-card", style: "border-left: 4px solid #10b981;" },
-                    h("p", { style: "color: #10b981; margin: 0;" }, this.successMessage)
-                )
+                h("div", { class: "q-alert q-alert--success", role: "status" },
+                    icon(QI.check, 18),
+                    h("span", {}, this.successMessage))
             );
         }
         return alerts;
@@ -631,27 +702,30 @@ export default class DoctorQueuePage extends Component {
     renderControls() {
         return h(
             "div",
-            {
-                class: "dashboard-card",
-                style: "display: flex; flex-direction: column; gap: 10px; padding: 0.85rem 1rem; margin-bottom: var(--space-3);",
-            },
-            h("input", {
-                type: "text",
-                placeholder: "Search by patient name...",
-                value: this.searchTerm,
-                style: "width: 100%; padding: 0.55rem 0.7rem; border: 1px solid var(--color-line); border-radius: 6px; font-size: 0.88rem; box-sizing: border-box;",
-                oninput: e => this.setSearchTerm(e.target.value),
-            }),
+            { class: "queue-controls" },
+            h(
+                "div",
+                { class: "queue-search" },
+                icon(QI.search, 18),
+                h("input", {
+                    type: "text",
+                    class: "queue-search__input",
+                    placeholder: "Search by patient name...",
+                    "aria-label": "Search by patient name",
+                    value: this.searchTerm,
+                    oninput: e => this.setSearchTerm(e.target.value),
+                })
+            ),
             this.activeTab === "completed" && this.getTabCount("completed") > 0
                 ? h(
                       "button",
                       {
-                          class: "btn btn-outline",
-                          style: "padding: 0.4rem 0.75rem; font-size: 0.8rem; border-radius: 6px; align-self: flex-start;",
+                          type: "button",
+                          class: "btn btn-outline queue-archive-all",
                           disabled: this.archivingAll,
                           onclick: () => this.handleArchiveAllCompleted(),
                       },
-                      this.archivingAll ? "Archiving..." : "Archive All Completed"
+                      this.archivingAll ? "Archiving..." : "Archive all completed"
                   )
                 : null
         );
@@ -663,24 +737,25 @@ export default class DoctorQueuePage extends Component {
             { key: "confirmed", label: "Confirmed" },
             { key: "completed", label: "Completed" },
         ];
-
+    
         return h(
             "div",
-            {
-                class: "dashboard-card",
-                style: "display: flex; gap: 8px; padding: 0.65rem 0.75rem; overflow-x: auto; margin-bottom: var(--space-3);",
-            },
-            tabs.map(tab =>
-                h(
+            { class: "seg-tabs", role: "tablist" },
+            tabs.map(tab => {
+                const active = this.activeTab === tab.key;
+                return h(
                     "button",
                     {
-                        class: `btn ${this.activeTab === tab.key ? "btn-primary" : "btn-outline"}`,
-                        style: "padding: 0.42rem 0.8rem; font-size: 0.8rem; border-radius: 6px; white-space: nowrap; flex-shrink: 0;",
+                        type: "button",
+                        role: "tab",
+                        "aria-selected": String(active),
+                        class: `seg-tab${active ? " seg-tab--active" : ""}`,
                         onclick: () => this.setTab(tab.key),
                     },
-                    `${tab.label} (${this.getTabCount(tab.key)})`
-                )
-            )
+                    h("span", {}, tab.label),
+                    h("span", { class: "seg-tab__count" }, String(this.getTabCount(tab.key)))
+                );
+            })
         );
     }
 
@@ -690,13 +765,19 @@ export default class DoctorQueuePage extends Component {
         if (filtered.length === 0) {
             return h(
                 "div",
-                { class: "dashboard-card text-center py-4" },
+                { class: "dashboard-card queue-empty" },
+                h("span", { class: "queue-empty__icon" }, icon(QI.calendar, 22)),
                 h(
                     "p",
-                    { class: "dashboard-muted" },
+                    { class: "queue-empty__title" },
+                    this.searchTerm ? "No matches" : `No ${this.activeTab} appointments`
+                ),
+                h(
+                    "p",
+                    { class: "queue-empty__text" },
                     this.searchTerm
-                        ? `No ${this.activeTab} appointments match "${this.searchTerm}".`
-                        : `No ${this.activeTab} appointments right now.`
+                        ? `Nothing matches "${this.searchTerm}".`
+                        : "New appointments will appear here."
                 )
             );
         }
@@ -712,64 +793,51 @@ export default class DoctorQueuePage extends Component {
         const isExpanded = this.expandedBookingId === booking.id;
         const isProcessing = this.actionLoadingId === booking.id;
         const statusLabel = STATUS_LABELS[booking.status] || booking.status;
-
-        const badgeColor =
-            booking.status === "confirmed"
-                ? "#10b981"
-                : booking.status === "completed"
-                ? "var(--color-ink-faint)"
-                : booking.status === "reschedule_requested"
-                ? "#f59e0b"
-                : "#0284c7";
-
+        const tone = STATUS_TONES[booking.status] || "info";
+        const name = booking.patient_name || "Unknown Patient";
+    
         return h(
             "div",
-            { class: "dashboard-card service-item-card", style: "padding: 1rem 1.1rem; margin-bottom: var(--space-3);" },
+            { class: "dashboard-card service-item-card booking-card" },
             h(
                 "div",
-                { style: "display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-3);" },
+                { class: "booking-card__head" },
+                h("div", { class: "booking-card__avatar" }, getInitials(name)),
                 h(
                     "div",
-                    { style: "min-width: 0;" },
-                    h(
-                        "h3",
-                        { style: "margin: 0 0 4px; font-size: 1.02rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" },
-                        booking.patient_name || "Unknown Patient"
-                    ),
-                    h(
-                        "p",
-                        { class: "dashboard-muted", style: "margin: 0; font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" },
-                        booking.patient_email || ""
-                    )
+                    { class: "booking-card__who" },
+                    h("h3", { class: "booking-card__name" }, name),
+                    h("p", { class: "booking-card__email" }, booking.patient_email || "")
                 ),
-                h(
-                    "span",
-                    {
-                        class: "dashboard-badge",
-                        style: `background: ${badgeColor}; font-size: 0.7rem; padding: 3px 9px; border-radius: 5px; white-space: nowrap; flex-shrink: 0;`,
-                    },
-                    statusLabel
-                )
+                h("span", { class: `status-chip status-chip--${tone}` }, statusLabel)
             ),
             h(
                 "div",
-                {
-                    style: "margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--color-line); display: flex; flex-direction: column; gap: 7px;",
-                },
+                { class: "booking-card__details" },
                 h(
-                    "p",
-                    { style: "margin: 0; font-size: 0.86rem;" },
-                    h("span", { class: "dashboard-muted", style: "font-size: 0.78rem;" }, "Requested: "),
-                    h("span", { style: "font-weight: 600;" }, this.formatDateTime(booking.booking_date))
+                    "div",
+                    { class: "booking-detail" },
+                    h("span", { class: "booking-detail__icon" }, icon(QI.calendar, 16)),
+                    h(
+                        "div",
+                        {},
+                        h("span", { class: "booking-detail__label" }, "Requested"),
+                        h("span", { class: "booking-detail__value" }, this.formatDateTime(booking.booking_date))
+                    )
                 ),
                 h(
-                    "p",
-                    { style: "margin: 0; font-size: 0.86rem;" },
-                    h("span", { class: "dashboard-muted", style: "font-size: 0.78rem;" }, "Consult: "),
+                    "div",
+                    { class: "booking-detail" },
+                    h("span", { class: "booking-detail__icon" }, icon(QI.service, 16)),
                     h(
-                        "span",
-                        { style: "font-weight: 600;" },
-                        `${booking.consultation_service_name || "General"} · ${this.formatCurrency(booking.consultation_fee_amount)}`
+                        "div",
+                        {},
+                        h("span", { class: "booking-detail__label" }, "Consultation"),
+                        h(
+                            "span",
+                            { class: "booking-detail__value" },
+                            `${booking.consultation_service_name || "General"} · ${this.formatCurrency(booking.consultation_fee_amount)}`
+                        )
                     )
                 )
             ),
@@ -778,64 +846,42 @@ export default class DoctorQueuePage extends Component {
             CONFIRMED_STATUSES.includes(booking.status) && booking.payment_status !== "paid"
                 ? h(
                       "p",
-                      { style: "margin: 8px 0 0; font-size: 0.76rem; color: #b45309;" },
-                      "Messaging, clinical notes and call unlock once the patient completes payment."
+                      { class: "booking-card__note" },
+                      icon(QI.lock, 14),
+                      h("span", {}, "Messaging, clinical notes and call unlock once the patient completes payment.")
                   )
                 : null,
             isExpanded ? this.renderActionForm(booking, isProcessing) : null
         );
     }
-
     renderReasonSection(booking) {
         const parsed = this.parseReason(booking.reason);
         if (!parsed) return null;
-
+    
         const { type, tags, notes } = parsed;
         if (!type && tags.length === 0 && !notes) return null;
-
+    
         return h(
             "div",
-            { style: "margin-top: var(--space-3);" },
-            type
-                ? h(
-                      "span",
-                      { style: "font-size: 0.82rem; font-weight: 600; color: var(--color-primary, #0284c7);" },
-                      type
-                  )
-                : null,
-            
+            { class: "booking-reason" },
+            type ? h("span", { class: "booking-reason__type" }, type) : null,
             tags.length > 0
                 ? h(
                       "div",
-                      { style: "display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px;" },
+                      { class: "booking-reason__tags" },
                       tags.map(tag =>
-                          h(
-                              "span",
-                              {
-                                  style: "font-size: 0.76rem; line-height: 1.4; padding: 3px 9px; border-radius: 10px; background: var(--color-bg-muted, #f1f5f9); color: var(--color-ink-faint, #64748b); white-space: normal; word-break: break-word; max-width: 100%;",
-                              },
-                              tag.label ? `${tag.label}: ${tag.value}` : tag.value
-                          )
+                          h("span", { class: "booking-reason__tag" },
+                              tag.label ? `${tag.label}: ${tag.value}` : tag.value)
                       )
                   )
                 : null,
-            notes
-                ? h(
-                      "p",
-                      {
-                          class: "dashboard-muted",
-                          style: "margin: 6px 0 0; font-size: 0.8rem; line-height: 1.45;",
-                      },
-                      notes
-                  )
-                : null
+            notes ? h("p", { class: "booking-reason__notes" }, notes) : null
         );
     }
-
     renderCardActions(booking, isProcessing) {
         const buttons = [];
 
-        const btnStyle = "padding: 0.4rem 0.75rem; font-size: 0.8rem; border-radius: 6px; line-height: 1.4;";
+        const btnStyle = "";
 
         if (PENDING_STATUSES.includes(booking.status)) {
             buttons.push(
@@ -888,7 +934,7 @@ export default class DoctorQueuePage extends Component {
                         title: isPaid ? undefined : "Available once the patient completes payment",
                         onclick: () => this.handleMessagePatient(booking),
                     },
-                    isMessaging ? "Opening..." : isPaid ? "Message" : "🔒 Message"
+                    isMessaging ? "Opening..." : "Message"
                 ),
                 h(
                     "button",
@@ -899,7 +945,7 @@ export default class DoctorQueuePage extends Component {
                         title: isPaid ? undefined : "Available once the patient completes payment",
                         onclick: () => this.openActionForm(booking.id, "clinical_notes"),
                     },
-                    isPaid ? "Clinical Notes" : "🔒 Clinical Notes"
+                    "Clinical Notes"
                 ),
                 isCallType
                     ? h(
@@ -911,7 +957,7 @@ export default class DoctorQueuePage extends Component {
                               title: isPaid ? undefined : "Available once the patient completes payment",
                               onclick: () => this.handleStartCall(booking),
                           },
-                          isPaid ? `Start ${callLabel}` : `🔒 ${callLabel}`
+                          isPaid ? `Start ${callLabel}` : callLabel
                       )
                     : null
             );
@@ -934,11 +980,7 @@ export default class DoctorQueuePage extends Component {
 
         if (buttons.length === 0) return null;
 
-        return h(
-            "div",
-            { style: "display: flex; gap: 8px; margin-top: var(--space-3); flex-wrap: wrap;" },
-            buttons
-        );
+        return h("div", { class: "card-actions" }, buttons);
     }
     
     
