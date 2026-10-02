@@ -48,6 +48,11 @@ const ICONS = {
         "M3 6h18a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1z",
         "M2 10h20"
     ],
+    shield: [
+        "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z",
+        "M9 12l2 2 4-4"
+    ],
+    check: ["M5 12.5l4.5 4.5L19 7.5"],
     chevron: ["M9 6l6 6-6 6"]
 };
 
@@ -171,6 +176,21 @@ export default class DashboardHome extends Component {
         if (status === "cancelled" || status === "expired") return "danger";
         return "neutral";
     }
+    getSubscriptionLabel() {
+        const status = (this.doctor?.subscription_status || "active").toLowerCase();
+        return {
+            active: "Active",
+            trialing: "Free trial",
+            past_due: "Payment overdue",
+            expiring: "Expiring soon",
+            cancelled: "Cancelled",
+            expired: "Expired"
+        }[status] || "Active";
+    }
+    
+    chip(text, tone = "neutral") {
+        return h("span", { class: `status-chip status-chip--${tone}` }, text);
+    }
 
     render() {
         return h(
@@ -280,32 +300,43 @@ renderStatusBanner() {
 
     renderSubscription() {
         const planName = this.doctor.subscription_plan_name || "Starter";
-        const status = this.doctor.subscription_status || "Active";
+        const status = (this.doctor.subscription_status || "active").toLowerCase();
         const tone = this.getSubscriptionTone();
-
+        const needsAttention = status === "past_due" || status === "expiring" || status === "expired";
+    
+        const note = {
+            past_due: "Your last payment didn't go through. Resolve it to keep your plan benefits.",
+            expiring: "Your plan is about to expire. Renew to avoid losing your benefits.",
+            expired: "Your plan has expired. Renew to restore your benefits."
+        }[status];
+    
         return h(
             "section",
-            { class: "dashboard-card" },
+            { class: "dashboard-card status-card" },
             h(
                 "div",
-                { style: "display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);" },
-                h("h3", { style: "margin: 0;" }, "Subscription"),
-                this.badge(status, tone)
+                { class: "status-card__head" },
+                h("span", { class: "status-card__icon" }, icon(ICONS.card, 20)),
+                h("span", { class: "status-card__eyebrow" }, "Subscription"),
+                this.chip(this.getSubscriptionLabel(), tone)
             ),
-            h("p", { class: "dashboard-value", style: "margin-top: var(--space-2);" }, planName),
-            h(
-                "p",
-                { class: "dashboard-muted" },
-                "Your plan determines commission rates and platform visibility for new patients."
-            ),
+            h("p", { class: "status-card__value" }, planName),
+            needsAttention && note
+                ? h("p", { class: `status-card__note status-card__note--${tone}` }, note)
+                : h(
+                      "p",
+                      { class: "status-card__text" },
+                      "Your plan determines commission rates and platform visibility for new patients."
+                  ),
             h(
                 "button",
                 {
-                    class: "btn btn-outline",
-                    style: "margin-top: var(--space-3); padding: 0.4rem 0.9rem; font-size: var(--step-small);",
+                    type: "button",
+                    class: "status-card__link",
                     onclick: () => this.onNavigate("settings", "subscription")
                 },
-                "Manage Subscription"
+                h("span", {}, needsAttention ? "Resolve now" : "Manage plan"),
+                icon(ICONS.chevron, 16)
             )
         );
     }
@@ -313,37 +344,60 @@ renderStatusBanner() {
     renderVerification() {
         const tone = this.getVerificationTone();
         const label = this.getFormattedVerificationStatus();
-
+    
         const copy = {
             success: "Your profile is verified. Patients can find and book you with confidence.",
             warning: "Your submission is under review. We'll notify you as soon as it's approved.",
             danger: "Your last submission needs attention before it can be approved. Please review and resubmit.",
             neutral: "A verified badge builds trust with patients and improves your visibility in search results."
         }[tone];
-
+    
+        // Which step is current: 0 = Profile, 1 = Review, 3 = everything done
+        const current = { neutral: 0, danger: 0, warning: 1, success: 3 }[tone];
+        const steps = ["Profile", "Review", "Verified"];
+    
         return h(
             "section",
-            { class: "dashboard-card" },
+            { class: "dashboard-card status-card" },
             h(
                 "div",
-                { style: "display: flex; align-items: center; justify-content: space-between; gap: var(--space-3);" },
-                h("h3", { style: "margin: 0;" }, "Verification"),
-                this.badge(label, tone)
+                { class: "status-card__head" },
+                h("span", { class: "status-card__icon" }, icon(ICONS.shield, 20)),
+                h("span", { class: "status-card__eyebrow" }, "Verification"),
+                this.chip(label, tone)
             ),
             h(
-                "p",
-                { class: "dashboard-muted", style: "margin-top: var(--space-2);" },
-                copy
+                "ol",
+                { class: "step-tracker", "aria-label": "Verification progress" },
+                ...steps.map((name, i) => {
+                    const state = i < current ? "done" : i === current ? "current" : "todo";
+                    return h(
+                        "li",
+                        {
+                            class: `step-tracker__item step-tracker__item--${state}${
+                                state === "current" && tone === "danger" ? " step-tracker__item--danger" : ""
+                            }`
+                        },
+                        h(
+                            "span",
+                            { class: "step-tracker__dot" },
+                            state === "done" ? icon(ICONS.check, 12) : String(i + 1)
+                        ),
+                        h("span", { class: "step-tracker__label" }, name)
+                    );
+                })
             ),
+            h("p", { class: "status-card__text" }, copy),
             tone !== "success"
                 ? h(
                       "button",
                       {
-                          class: "btn btn-outline",
-                          style: "margin-top: var(--space-3); padding: 0.4rem 0.9rem; font-size: var(--step-small);",
+                          type: "button",
+                          class: "status-card__link",
                           onclick: () => this.onNavigate("settings")
                       },
-                      tone === "danger" ? "Review Submission" : "Complete Profile"
+                      h("span", {}, tone === "danger" ? "Review submission" : tone === "warning" ? "View profile" : "Complete profile"),
+                      icon(ICONS.chevron, 16)
                   )
                 : null
         );
