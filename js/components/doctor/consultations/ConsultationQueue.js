@@ -795,6 +795,14 @@ export default class DoctorQueuePage extends Component {
         const statusLabel = STATUS_LABELS[booking.status] || booking.status;
         const tone = STATUS_TONES[booking.status] || "info";
         const name = booking.patient_name || "Unknown Patient";
+        const gender = booking.patient_gender
+            ? booking.patient_gender.charAt(0).toUpperCase() + booking.patient_gender.slice(1).toLowerCase()
+            : null;
+        
+        const demographics = [
+            booking.patient_age != null ? `${booking.patient_age} yrs` : null,
+            gender
+        ].filter(Boolean).join(" · ");
     
         return h(
             "div",
@@ -807,7 +815,7 @@ export default class DoctorQueuePage extends Component {
                     "div",
                     { class: "booking-card__who" },
                     h("h3", { class: "booking-card__name" }, name),
-                    h("p", { class: "booking-card__email" }, booking.patient_email || "")
+                    h("p", { class: "booking-card__email" }, demographics || "Age and gender not provided"),
                 ),
                 h("span", { class: `status-chip status-chip--${tone}` }, statusLabel)
             ),
