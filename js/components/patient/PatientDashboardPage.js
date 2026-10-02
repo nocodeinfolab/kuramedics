@@ -49,6 +49,9 @@ const Icons = {
         h("circle", { cx: "12", cy: "12", r: "10" }),
         h("line", { x1: "12", y1: "8", x2: "12", y2: "12" }),
         h("line", { x1: "12", y1: "16", x2: "12.01", y2: "16" })
+    ),
+    chevron: () => h("svg", { width: "16", height: "16", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" },
+        h("path", { d: "M9 6l6 6-6 6" })
     )
 };
 
@@ -757,168 +760,161 @@ export default class PatientDashboardPage extends Component {
             );
         });
     }
+    homeChip(text, tone = "neutral") {
+        return h("span", { class: `ph-chip ph-chip--${tone}` }, text);
+    }
+    
+    renderHomeCard({ tone = "primary", icon, eyebrow, title, text, note, chip, actionLabel, onAction }) {
+        return h(
+            "section",
+            { class: "ph-card" },
+            h(
+                "div",
+                { class: "ph-card__row" },
+                h("span", { class: `ph-card__icon ph-card__icon--${tone}` }, icon),
+                h(
+                    "div",
+                    { class: "ph-card__body" },
+                    eyebrow ? h("p", { class: "ph-card__eyebrow" }, eyebrow) : null,
+                    title ? h("p", { class: "ph-card__title" }, title) : null,
+                    text ? h("p", { class: "ph-card__text" }, text) : null,
+                    note ? h("p", { class: "ph-card__note" }, note) : null
+                ),
+                chip || null
+            ),
+            actionLabel
+                ? h(
+                      "button",
+                      { type: "button", class: "ph-card__link", onclick: onAction },
+                      h("span", {}, actionLabel),
+                      Icons.chevron()
+                  )
+                : null
+        );
+    }
+    
+    renderHomeSkeleton() {
+        return h(
+            "div",
+            { "aria-busy": "true", "aria-label": "Loading your dashboard" },
+            ...[0, 1, 2].map(() =>
+                h(
+                    "div",
+                    { class: "ph-card" },
+                    h(
+                        "div",
+                        { class: "ph-card__row" },
+                        h("div", { class: "ph-skel ph-skel--circle" }),
+                        h(
+                            "div",
+                            { class: "ph-card__body" },
+                            h("div", { class: "ph-skel ph-skel--line" }),
+                            h("div", { class: "ph-skel ph-skel--line ph-skel--short" })
+                        )
+                    )
+                )
+            )
+        );
+    }
     renderHomeTab() {
         const summary = this.dashboardSummary;
         const hasProfileGaps =
             !this.patient?.blood_group && !this.patient?.allergies && !this.patient?.chronic_conditions;
-
-        // Determine if the patient has any appointments at all (upcoming or past)
+    
         const hasAnyAppointment = summary?.next_appointment || summary?.recent_consultation;
-
+        const firstName = this.getFirstName(this.patient?.full_name);
+        const initial = (firstName || "P").charAt(0).toUpperCase();
+    
         return h(
             "div",
-            { class: "dashboard-page" },
+            { class: "dashboard-page patient-home" },
             h(
                 "section",
                 { class: "dashboard-header" },
                 h(
                     "div",
-                    { class: "dashboard-header__content" },
+                    { class: "ph-hero" },
+                    h("div", { class: "ph-hero__avatar" }, initial),
                     h(
-                        "h1",
-                        { class: "dashboard-title" },
-                        `${this.getGreeting()}, ${this.getFirstName(this.patient?.full_name)}`
-                    ),
-                    h(
-                        "p",
-                        { class: "dashboard-subtitle" },
-                        "Your personal healthcare hub."
-                    ),
-                    h("div", { class: "dashboard-header__divider" }),
-                    h(
-                        "p",
-                        { class: "dashboard-date" },
-                        this.getTodayLabel()
+                        "div",
+                        { class: "ph-hero__text" },
+                        h("p", { class: "dashboard-greeting" }, this.getGreeting()),
+                        h("h1", { class: "dashboard-title" }, firstName || "Welcome"),
+                        h("p", { class: "dashboard-subtitle" }, this.getTodayLabel())
                     )
                 )
             ),
             this.dashboardLoading
-                ? h(
-                      "div",
-                      { class: "dashboard-card text-center py-4" },
-                      h("p", { class: "dashboard-muted" }, "Loading your dashboard...")
-                  )
+                ? this.renderHomeSkeleton()
                 : h(
                       "div",
                       { class: "services-list" },
                       this.dashboardError
                           ? h(
                                 "div",
-                                { class: "dashboard-card", style: "border-left: 4px solid #ef4444;" },
-                                h("p", { style: "color: #ef4444; margin: 0;" }, this.dashboardError)
+                                { class: "ph-alert", role: "alert" },
+                                Icons.alert(),
+                                h("span", {}, this.dashboardError)
                             )
                           : null,
-
-                      // 1. Messages card (unread count or empty state)
+    
                       summary?.unread_message_count > 0
                           ? this.renderUnreadMessagesCard(summary.unread_message_count)
                           : this.renderNoMessagesCard(),
-
-                      // 2. Appointment card (next appointment, or "Book your first appointment" if none at all)
+    
                       summary?.next_appointment
                           ? this.renderNextAppointmentCard(summary.next_appointment)
                           : hasAnyAppointment
-                              ? null // If there is a recent consultation but no upcoming, we skip the appointment card (the consultation card will show past visit)
+                              ? null
                               : this.renderBookFirstAppointmentCard(),
-
-                      // 3. Recent consultation card (actual or empty state)
+    
                       summary?.recent_consultation
                           ? this.renderRecentConsultationCard(summary.recent_consultation)
                           : this.renderNoConsultationCard(),
-
-                      // 4. Profile nudge (always if gaps)
+    
                       hasProfileGaps ? this.renderProfileNudgeCard() : null,
-
-                      // 5. Symptom check (always)
+    
                       this.renderSymptomCheckCard()
                   )
         );
     }
-
     // ---------- Card renderers for empty states ----------
 
     renderNoMessagesCard() {
-        return h(
-            "div",
-            { class: "dashboard-card", style: "padding: 1rem 1.1rem; display: flex; justify-content: space-between; align-items: center; gap: 10px;" },
-            h(
-                "div",
-                { style: "display: flex; align-items: center; gap: 12px;" },
-                h(
-                    "div",
-                    { style: "padding: 8px; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" },
-                    Icons.message()
-                ),
-                h(
-                    "p",
-                    { style: "margin: 0; font-size: 0.9rem; color: #6b7280;" },
-                    "No new messages."
-                )
-            ),
-            h(
-                "button",
-                {
-                    class: "btn btn-outline",
-                    style: "padding: 0.4rem 0.8rem; font-size: 0.78rem; border-radius: 6px; flex-shrink: 0;",
-                    onclick: () => this.setTab("messages"),
-                },
-                "Open"
-            )
-        );
+        return this.renderHomeCard({
+            tone: "info",
+            icon: Icons.message(),
+            eyebrow: "Messages",
+            title: "No new messages",
+            actionLabel: "Open messages",
+            onAction: () => this.setTab("messages")
+        });
     }
-
-    renderNoConsultationCard() {
-        return h(
-            "div",
-            { class: "dashboard-card", style: "padding: 1rem 1.1rem;" },
-            h(
-                "div",
-                { style: "display: flex; gap: 12px; align-items: center;" },
-                h(
-                    "div",
-                    { style: "padding: 8px; background: rgba(99, 102, 241, 0.1); color: #6366f1; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" },
-                    Icons.stethoscope()
-                ),
-                h(
-                    "p",
-                    { style: "margin: 0; font-size: 0.9rem; color: #6b7280;" },
-                    "You haven't had a consultation yet."
-                )
-            )
-        );
+    
+    renderUnreadMessagesCard(count) {
+        return this.renderHomeCard({
+            tone: "info",
+            icon: Icons.message(),
+            eyebrow: "Messages",
+            title: `You have ${count} new message${count === 1 ? "" : "s"}`,
+            chip: this.homeChip(count > 9 ? "9+" : String(count), "warning"),
+            actionLabel: "Open messages",
+            onAction: () => this.setTab("messages")
+        });
     }
-
+    
     renderBookFirstAppointmentCard() {
-        return h(
-            "div",
-            { class: "dashboard-card", style: "padding: 1rem 1.1rem; display: flex; justify-content: space-between; align-items: center; gap: 10px;" },
-            h(
-                "div",
-                { style: "display: flex; align-items: center; gap: 12px;" },
-                h(
-                    "div",
-                    { style: "padding: 8px; background: rgba(16, 185, 129, 0.1); color: #10b981; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" },
-                    Icons.calendar()
-                ),
-                h(
-                    "p",
-                    { style: "margin: 0; font-size: 0.9rem;" },
-                    "Book your first appointment."
-                )
-            ),
-            h(
-                "button",
-                {
-                    class: "btn btn-primary",
-                    style: "padding: 0.4rem 0.8rem; font-size: 0.78rem; border-radius: 6px; flex-shrink: 0;",
-                    onclick: () => this.setTab("find"),
-                },
-                "Find Care"
-            )
-        );
+        return this.renderHomeCard({
+            tone: "success",
+            icon: Icons.calendar(),
+            eyebrow: "Get started",
+            title: "Book your first appointment",
+            text: "Find a doctor and book a consultation in a few taps.",
+            actionLabel: "Find care",
+            onAction: () => this.setTab("find")
+        });
     }
-
-
+    
     renderNextAppointmentCard(appointment) {
         const statusLabel =
             {
@@ -928,200 +924,88 @@ export default class PatientDashboardPage extends Component {
                 confirmed: "Confirmed",
             }[appointment.status] || appointment.status;
     
-        const badgeColor = appointment.status === "confirmed" ? "#10b981" : "#f59e0b";
+        const chipTone = appointment.status === "confirmed" ? "success" : "warning";
         const extraCount = (this.dashboardSummary?.upcoming_appointment_count || 1) - 1;
     
-        return h(
-            "div",
-            { class: "dashboard-card", style: "padding: 1rem 1.1rem;" },
-            h(
-                "div",
-                { style: "display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;" },
-                h(
-                    "div",
-                    { style: "display: flex; gap: 12px; align-items: flex-start;" },
-                    h(
-                        "div",
-                        { style: "padding: 8px; background: rgba(16, 185, 129, 0.1); color: #10b981; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" },
-                        Icons.calendar()
-                    ),
-                    h(
-                        "div",
-                        {},
-                        h("p", { class: "dashboard-muted", style: "margin: 0 0 4px; font-size: 0.78rem;" }, "Upcoming Appointment"),
-                        h("p", { style: "margin: 0 0 4px; font-size: 1rem; font-weight: 600;" }, appointment.doctor_name || "Your doctor"),
-                        h(
-                            "p",
-                            { class: "dashboard-muted", style: "margin: 0; font-size: 0.85rem;" },
-                            this.formatDateTime(appointment.booking_date)
-                        ),
-                        extraCount > 0
-                            ? h(
-                                  "p",
-                                  { class: "dashboard-muted", style: "margin: 4px 0 0; font-size: 0.78rem;" },
-                                  `+${extraCount} more upcoming`
-                              )
-                            : null
-                    )
-                ),
-                h(
-                    "span",
-                    {
-                        class: "dashboard-badge",
-                        style: `background: ${badgeColor}; font-size: 0.7rem; padding: 3px 9px; border-radius: 5px; white-space: nowrap; color: #ffffff;`,
-                    },
-                    statusLabel
-                )
-            )
-        );
+        return this.renderHomeCard({
+            tone: "success",
+            icon: Icons.calendar(),
+            eyebrow: "Upcoming appointment",
+            title: appointment.doctor_name || "Your doctor",
+            text: this.formatDateTime(appointment.booking_date),
+            note: extraCount > 0 ? `+${extraCount} more upcoming` : null,
+            chip: this.homeChip(statusLabel, chipTone),
+            actionLabel: "View my care",
+            onAction: () => this.setTab("care")
+        });
     }
-
-    renderUnreadMessagesCard(count) {
+    
+    renderRecentConsultationCard(consultation) {
+        const extraVisits = (this.dashboardSummary?.total_consultation_count || 1) - 1;
+    
+        return this.renderHomeCard({
+            tone: "violet",
+            icon: Icons.stethoscope(),
+            eyebrow: "Recent visit",
+            title: `Your consultation with ${consultation.doctor_name || "your doctor"} is complete.`,
+            note: extraVisits > 0 ? `+${extraVisits} more past visit${extraVisits === 1 ? "" : "s"}` : null,
+            actionLabel: "View consultation notes",
+            onAction: () => this.setTab("care")
+        });
+    }
+    
+    renderNoConsultationCard() {
+        return this.renderHomeCard({
+            tone: "violet",
+            icon: Icons.stethoscope(),
+            eyebrow: "Consultations",
+            title: "No consultations yet",
+            text: "Your visit summaries will appear here after your first consultation."
+        });
+    }
+    
+    renderProfileNudgeCard() {
+        return this.renderHomeCard({
+            tone: "primary",
+            icon: Icons.userCheck(),
+            eyebrow: "Complete your profile",
+            text: "Add your allergies and health history so doctors and AI triage understand your situation better.",
+            actionLabel: "Complete profile",
+            onAction: () => this.setTab("profile")
+        });
+    }
+    
+    renderSymptomCheckCard() {
         return h(
-            "div",
-            {
-                class: "dashboard-card",
-                style: "padding: 1rem 1.1rem; display: flex; justify-content: space-between; align-items: center; gap: 10px; cursor: pointer;",
-                onclick: () => this.setTab("messages"),
-            },
+            "section",
+            { class: "ph-feature" },
             h(
                 "div",
-                { style: "display: flex; align-items: center; gap: 12px;" },
+                { class: "ph-feature__row" },
+                h("span", { class: "ph-feature__icon" }, Icons.activity()),
                 h(
                     "div",
-                    { style: "padding: 8px; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" },
-                    Icons.message()
-                ),
-                h(
-                    "p",
-                    { style: "margin: 0; font-size: 0.9rem;" },
-                    `You have ${count} new message${count === 1 ? "" : "s"}`
+                    { class: "ph-feature__body" },
+                    h("p", { class: "ph-feature__eyebrow" }, "Not feeling well?"),
+                    h(
+                        "p",
+                        { class: "ph-feature__text" },
+                        "Describe your symptoms and we'll help you find the right doctor."
+                    )
                 )
             ),
             h(
                 "button",
                 {
-                    class: "btn btn-outline",
-                    style: "padding: 0.4rem 0.8rem; font-size: 0.78rem; border-radius: 6px; flex-shrink: 0;",
+                    type: "button",
+                    class: "ph-feature__btn",
+                    onclick: () => this.setTab("find")
                 },
-                "Open"
+                h("span", {}, "Start symptom check"),
+                Icons.chevron()
             )
         );
     }
-
-    renderRecentConsultationCard(consultation) {
-        const extraVisits = (this.dashboardSummary?.total_consultation_count || 1) - 1;
-    
-        return h(
-            "div",
-            { class: "dashboard-card", style: "padding: 1rem 1.1rem;" },
-            h(
-                "div",
-                { style: "display: flex; gap: 12px; align-items: flex-start;" },
-                h(
-                    "div",
-                    { style: "padding: 8px; background: rgba(99, 102, 241, 0.1); color: #6366f1; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" },
-                    Icons.stethoscope()
-                ),
-                h(
-                    "div",
-                    {},
-                    h("p", { class: "dashboard-muted", style: "margin: 0 0 4px; font-size: 0.78rem;" }, "Recent Visit"),
-                    h(
-                        "p",
-                        { style: "margin: 0 0 4px; font-size: 0.9rem;" },
-                        `Your consultation with ${consultation.doctor_name || "your doctor"} is complete.`
-                    ),
-                    extraVisits > 0
-                        ? h(
-                              "p",
-                              { class: "dashboard-muted", style: "margin: 0 0 10px; font-size: 0.78rem;" },
-                              `+${extraVisits} more past visit${extraVisits === 1 ? "" : "s"}`
-                          )
-                        : h("div", { style: "margin-bottom: 10px;" }), // keep spacing consistent before the button
-                    h(
-                        "button",
-                        {
-                            class: "btn btn-outline",
-                            style: "padding: 0.45rem 0.85rem; font-size: 0.8rem; border-radius: 6px;",
-                            onclick: () => this.setTab("care"),
-                        },
-                        "View my consultation notes"
-                    )
-                )
-            )
-        );
-    }
-
-    renderProfileNudgeCard() {
-        return h(
-            "div",
-            { class: "dashboard-card", style: "padding: 1rem 1.1rem; background: rgba(2,132,199,0.04);" },
-            h(
-                "div",
-                { style: "display: flex; gap: 12px; align-items: flex-start;" },
-                h(
-                    "div",
-                    { style: "padding: 8px; background: rgba(2, 132, 199, 0.1); color: #0284c7; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" },
-                    Icons.userCheck()
-                ),
-                h(
-                    "div",
-                    {},
-                    h(
-                        "p",
-                        { style: "margin: 0 0 10px; font-size: 0.87rem;" },
-                        "Add your allergies and health history so doctors and AI triage understand your situation better."
-                    ),
-                    h(
-                        "button",
-                        {
-                            class: "btn btn-outline",
-                            style: "padding: 0.45rem 0.85rem; font-size: 0.8rem; border-radius: 6px;",
-                            onclick: () => this.setTab("profile"),
-                        },
-                        "Complete your profile"
-                    )
-                )
-            )
-        );
-    }
-
-    renderSymptomCheckCard() {
-        return h(
-            "div",
-            { class: "dashboard-card", style: "padding: 1rem 1.1rem;" },
-            h(
-                "div",
-                { style: "display: flex; gap: 12px; align-items: flex-start;" },
-                h(
-                    "div",
-                    { style: "padding: 8px; background: rgba(236, 72, 153, 0.1); color: #ec4899; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0;" },
-                    Icons.activity()
-                ),
-                h(
-                    "div",
-                    {},
-                    h("p", { class: "dashboard-muted", style: "margin: 0 0 4px; font-size: 0.8rem;" }, "Not feeling well?"),
-                    h(
-                        "p",
-                        { style: "margin: 0 0 12px; font-size: 0.92rem;" },
-                        "Describe your symptoms and we'll help you find the right doctor."
-                    ),
-                    h(
-                        "button",
-                        {
-                            class: "btn btn-primary",
-                            style: "padding: 0.55rem 1rem; font-size: 0.85rem; border-radius: 8px;",
-                            onclick: () => this.setTab("find"),
-                        },
-                        "Start symptom check"
-                    )
-                )
-            )
-        );
-    }
-
     renderComingSoon(title, description) {
         return h(
             "div",
