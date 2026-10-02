@@ -7,6 +7,46 @@ import api from "../../../services/api.js";
 const SECTION_ORDER = ["Outcome", "Plan", "Follow-up"];
 const PATIENTS_PAGE_LIMIT = 20;
 const NOTES_PAGE_LIMIT = 5;
+const icon = (paths, size = 18) =>
+    h(
+        "svg",
+        { viewBox: "0 0 24 24", fill: "none", width: String(size), height: String(size), "aria-hidden": "true" },
+        ...paths.map(d =>
+            h("path", {
+                d,
+                stroke: "currentColor",
+                "stroke-width": "1.8",
+                "stroke-linecap": "round",
+                "stroke-linejoin": "round"
+            })
+        )
+    );
+
+const PI = {
+    search: ["M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z", "M21 21l-4.3-4.3"],
+    phone: ["M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"],
+    user: ["M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2", "M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"],
+    calendar: [
+        "M5 5h14a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z",
+        "M4 9h16", "M8 3v4", "M16 3v4"
+    ],
+    people: [
+        "M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2",
+        "M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z",
+        "M23 21v-2a4 4 0 0 0-3-3.9", "M16 3.1a4 4 0 0 1 0 7.8"
+    ],
+    chevron: ["M6 9l6 6 6-6"],
+    download: ["M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4", "M7 10l5 5 5-5", "M12 15V3"],
+    alert: ["M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z", "M12 9v4", "M12 17h.01"],
+    file: ["M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z", "M14 2v6h6", "M8 13h8", "M8 17h5"]
+};
+
+const getInitials = name => {
+    const parts = (name || "").trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return "P";
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+};
 
 export default class PatientRecords extends Component {
     constructor(doctor) {
@@ -201,19 +241,37 @@ export default class PatientRecords extends Component {
     render() {
         return h(
             "div",
-            { class: "dashboard-page queue-page" },
+            { class: "dashboard-page queue-page doctor-records" },
             this.renderHeader(),
             this.renderAlerts(),
-            this.loading
-                ? h(
-                      "div",
-                      { class: "dashboard-card text-center py-4" },
-                      h("p", { class: "dashboard-muted" }, "Loading patient records...")
-                  )
-                : this.renderContent()
+            this.loading ? this.renderSkeleton() : this.renderContent()
         );
     }
-
+    
+    renderSkeleton() {
+        return h(
+            "div",
+            { "aria-busy": "true", "aria-label": "Loading patient records" },
+            ...[0, 1, 2].map(() =>
+                h(
+                    "div",
+                    { class: "dashboard-card pr-card" },
+                    h(
+                        "div",
+                        { class: "pr-card__head" },
+                        h("div", { class: "skeleton skeleton--circle" }),
+                        h(
+                            "div",
+                            { class: "pr-card__who" },
+                            h("div", { class: "skeleton skeleton--line-sm" }),
+                            h("div", { class: "skeleton skeleton--line-sm skeleton--short" })
+                        )
+                    ),
+                    h("div", { class: "skeleton skeleton--line" })
+                )
+            )
+        );
+    }
     renderHeader() {
         return h(
             "section",
@@ -224,24 +282,29 @@ export default class PatientRecords extends Component {
                 "p",
                 { class: "dashboard-subtitle" },
                 "Review patients you have attended to and their consultation notes."
-            )
+            ),
+            this.loading
+                ? null
+                : h(
+                      "div",
+                      { class: "dashboard-hero-meta" },
+                      h("span", { class: "hero-chip" },
+                          h("span", { class: "hero-chip__dot" }),
+                          `${this.totalCount} patient${this.totalCount === 1 ? "" : "s"}`)
+                  )
         );
     }
-
     renderAlerts() {
         const alerts = [];
         if (this.errorMessage) {
             alerts.push(
-                h(
-                    "div",
-                    { class: "dashboard-card", style: "border-left: 4px solid #ef4444;" },
-                    h("p", { style: "color: #ef4444; margin: 0;" }, this.errorMessage)
-                )
+                h("div", { class: "pr-alert", role: "alert" },
+                    icon(PI.alert, 18),
+                    h("span", {}, this.errorMessage))
             );
         }
         return alerts;
     }
-
     renderContent() {
         return h(
             "div",
@@ -255,15 +318,14 @@ export default class PatientRecords extends Component {
     renderSearch() {
         return h(
             "div",
-            {
-                class: "dashboard-card",
-                style: "padding: 0.85rem 1rem; margin-bottom: var(--space-3);",
-            },
+            { class: "pr-search" },
+            icon(PI.search, 18),
             h("input", {
                 type: "text",
+                class: "pr-search__input",
                 placeholder: "Search by patient name or email...",
+                "aria-label": "Search patients",
                 value: this.searchTerm,
-                style: "width: 100%; padding: 0.55rem 0.7rem; border: 1px solid var(--color-line); border-radius: 6px; font-size: 0.88rem; box-sizing: border-box;",
                 oninput: e => this.setSearchTerm(e.target.value),
             })
         );
@@ -273,17 +335,23 @@ export default class PatientRecords extends Component {
         if (this.patients.length === 0) {
             return h(
                 "div",
-                { class: "dashboard-card text-center py-4" },
+                { class: "dashboard-card pr-empty" },
+                h("span", { class: "pr-empty__icon" }, icon(PI.people, 22)),
                 h(
                     "p",
-                    { class: "dashboard-muted" },
+                    { class: "pr-empty__title" },
+                    this.searchTerm ? "No matches" : "No patients yet"
+                ),
+                h(
+                    "p",
+                    { class: "pr-empty__text" },
                     this.searchTerm
                         ? `No patients match "${this.searchTerm}".`
-                        : "You haven't attended to any patients yet."
+                        : "Patients you have attended to will appear here."
                 )
             );
         }
-
+    
         return h(
             "div",
             { class: "services-list" },
@@ -295,16 +363,16 @@ export default class PatientRecords extends Component {
         if (!this.hasMore) return null;
         return h(
             "div",
-            { class: "text-center", style: "margin-top: var(--space-2);" },
+            { class: "pr-more-wrap" },
             h(
                 "button",
                 {
-                    class: "btn btn-outline",
-                    style: "padding: 0.35rem 0.8rem; font-size: 0.75rem; border-radius: 5px;",
+                    type: "button",
+                    class: "btn btn-outline pr-more",
                     disabled: this.loadingMore,
                     onclick: () => this.loadPatients({ reset: false }),
                 },
-                this.loadingMore ? "Loading..." : "Load More"
+                this.loadingMore ? "Loading..." : "Load more patients"
             )
         );
     }
@@ -312,124 +380,114 @@ export default class PatientRecords extends Component {
     renderPatientCard(patient) {
         const isExpanded = this.selectedPatientId === patient.patient_id;
         const count = patient.consultations_count ?? 0;
-
-        return h(
-            "div",
-            { class: "dashboard-card service-item-card", style: "padding: 1rem 1.1rem; margin-bottom: var(--space-3);" },
+        const name = patient.full_name || "Unknown Patient";
+        const gender = patient.gender
+            ? patient.gender.charAt(0).toUpperCase() + patient.gender.slice(1).toLowerCase()
+            : null;
+    
+        const detail = (iconPaths, label, value) =>
             h(
                 "div",
-                {
-                    style: "display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-3); cursor: pointer;",
-                    onclick: () => this.selectPatient(patient.patient_id),
-                },
+                { class: "pr-detail" },
+                h("span", { class: "pr-detail__icon" }, icon(iconPaths, 16)),
                 h(
                     "div",
-                    { style: "min-width: 0;" },
-                    h(
-                        "h3",
-                        { style: "margin: 0 0 4px; font-size: 1.02rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" },
-                        patient.full_name || "Unknown Patient"
-                    ),
-                    h(
-                        "p",
-                        { class: "dashboard-muted", style: "margin: 0; font-size: 0.8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" },
-                        patient.email || ""
-                    )
-                ),
-                h(
-                    "span",
-                    {
-                        class: "dashboard-badge",
-                        style: "background: var(--color-primary, #0284c7); font-size: 0.7rem; padding: 3px 9px; border-radius: 5px; white-space: nowrap; flex-shrink: 0;",
-                    },
-                    `${count} consult${count === 1 ? "" : "s"}`
+                    {},
+                    h("span", { class: "pr-detail__label" }, label),
+                    h("span", { class: "pr-detail__value" }, value)
                 )
-            ),
+            );
+    
+        return h(
+            "div",
+            { class: "dashboard-card service-item-card pr-card" },
             h(
                 "div",
                 {
-                    style: "margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--color-line); display: flex; flex-direction: column; gap: 7px;",
+                    class: "pr-card__head",
+                    role: "button",
+                    tabindex: "0",
+                    "aria-expanded": String(isExpanded),
+                    onclick: () => this.selectPatient(patient.patient_id),
+                    onkeydown: e => {
+                        if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            this.selectPatient(patient.patient_id);
+                        }
+                    },
                 },
-                patient.phone_number
-                    ? h(
-                          "p",
-                          { style: "margin: 0; font-size: 0.86rem;" },
-                          h("span", { class: "dashboard-muted", style: "font-size: 0.78rem;" }, "Phone: "),
-                          h("span", { style: "font-weight: 600;" }, patient.phone_number)
-                      )
-                    : null,
-                patient.gender
-                    ? h(
-                          "p",
-                          { style: "margin: 0; font-size: 0.86rem;" },
-                          h("span", { class: "dashboard-muted", style: "font-size: 0.78rem;" }, "Gender: "),
-                          h("span", { style: "font-weight: 600;" }, patient.gender)
-                      )
-                    : null,
+                h("div", { class: "pr-card__avatar" }, getInitials(name)),
                 h(
-                    "p",
-                    { style: "margin: 0; font-size: 0.86rem;" },
-                    h("span", { class: "dashboard-muted", style: "font-size: 0.78rem;" }, "Last seen: "),
-                    h("span", { style: "font-weight: 600;" }, this.formatShortDate(patient.last_consultation_at))
-                )
+                    "div",
+                    { class: "pr-card__who" },
+                    h("h3", { class: "pr-card__name" }, name),
+                    h("p", { class: "pr-card__email" }, patient.email || "")
+                ),
+                h("span", { class: "pr-count" }, `${count} consult${count === 1 ? "" : "s"}`)
             ),
             h(
                 "div",
-                { style: "margin-top: var(--space-3);" },
-                h(
-                    "button",
-                    {
-                        class: "btn btn-outline",
-                        style: "padding: 0.4rem 0.75rem; font-size: 0.8rem; border-radius: 6px;",
-                        onclick: () => this.selectPatient(patient.patient_id),
-                    },
-                    isExpanded ? "Hide Notes" : "View Notes"
-                )
+                { class: "pr-card__details" },
+                patient.phone_number ? detail(PI.phone, "Phone", patient.phone_number) : null,
+                gender ? detail(PI.user, "Gender", gender) : null,
+                detail(PI.calendar, "Last seen", this.formatShortDate(patient.last_consultation_at))
+            ),
+            h(
+                "button",
+                {
+                    type: "button",
+                    class: `pr-toggle${isExpanded ? " pr-toggle--open" : ""}`,
+                    onclick: () => this.selectPatient(patient.patient_id),
+                },
+                h("span", {}, isExpanded ? "Hide notes" : "View notes"),
+                icon(PI.chevron, 16)
             ),
             isExpanded ? this.renderPatientNotes(patient) : null
         );
     }
-
     renderPatientNotes(patient) {
         const state = this.notesByPatient[patient.patient_id];
-
+    
         if (!state || state.loading) {
             return h(
                 "div",
-                { style: "margin-top: var(--space-3); padding: 0.85rem;" },
-                h("p", { class: "dashboard-muted" }, "Loading consultation notes...")
+                { class: "pr-notes", "aria-busy": "true" },
+                h("div", { class: "skeleton skeleton--line" }),
+                h("div", { class: "skeleton skeleton--line skeleton--short" })
             );
         }
-
+    
         if (this.notesError) {
             return h(
                 "div",
-                { style: "margin-top: var(--space-3); padding: 0.85rem;" },
-                h("p", { style: "color: #ef4444; margin: 0;" }, this.notesError)
+                { class: "pr-notes" },
+                h("div", { class: "pr-alert", role: "alert" },
+                    icon(PI.alert, 18),
+                    h("span", {}, this.notesError))
             );
         }
-
+    
         if (!state.rows || state.rows.length === 0) {
             return h(
                 "div",
-                { style: "margin-top: var(--space-3); padding: 0.85rem;" },
-                h("p", { class: "dashboard-muted" }, "No consultation notes recorded for this patient yet.")
+                { class: "pr-notes" },
+                h("p", { class: "pr-notes__empty" }, "No consultation notes recorded for this patient yet.")
             );
         }
-
+    
         return h(
             "div",
-            { style: "margin-top: var(--space-3); display: flex; flex-direction: column; gap: var(--space-3);" },
+            { class: "pr-notes" },
             state.rows.map(note => this.renderConsultationNote(note)),
             state.hasMore
                 ? h(
                       "div",
-                      { class: "text-center" },
+                      { class: "pr-more-wrap" },
                       h(
                           "button",
                           {
-                              class: "btn btn-outline",
-                              style: "padding: 0.35rem 0.8rem; font-size: 0.75rem; border-radius: 5px;",
+                              type: "button",
+                              class: "btn btn-outline pr-more",
                               disabled: state.loadingMore,
                               onclick: () => this.loadNotesForPatient(patient.patient_id, { reset: false }),
                           },
@@ -443,44 +501,35 @@ export default class PatientRecords extends Component {
     renderConsultationNote(note) {
         const sections = this.parseDoctorNotes(note.doctor_notes);
         const medications = Array.isArray(note.medications) ? note.medications : [];
-
+    
         return h(
             "div",
-            {
-                style: "padding: 0.9rem 1rem; background: rgba(2,132,199,0.04); border-radius: 8px; border: 1px solid var(--color-line);",
-            },
+            { class: "pr-note" },
             h(
-                "p",
-                { class: "dashboard-muted", style: "margin: 0 0 10px; font-size: 0.78rem; font-weight: 600;" },
-                `Consultation · ${this.formatDate(note.booking_date || note.created_at)}`
+                "div",
+                { class: "pr-note__head" },
+                h("span", { class: "pr-note__icon" }, icon(PI.file, 16)),
+                h(
+                    "span",
+                    { class: "pr-note__date" },
+                    this.formatDate(note.booking_date || note.created_at)
+                )
             ),
             note.follow_up_date
                 ? h(
                       "p",
-                      {
-                          style: "margin: 0 0 10px; font-size: 0.8rem; font-weight: 600; color: #b45309; display: flex; align-items: center; gap: 5px;",
-                      },
-                      h("span", {}, "📅"),
-                      `Follow-up due: ${this.formatShortDate(note.follow_up_date)}`
+                      { class: "pr-followup" },
+                      icon(PI.calendar, 14),
+                      h("span", {}, `Follow-up due ${this.formatShortDate(note.follow_up_date)}`)
                   )
                 : null,
             sections.map(section =>
                 h(
                     "div",
-                    { style: "margin-bottom: 12px;" },
-                    h(
-                        "h4",
-                        {
-                            style: "margin: 0 0 6px; font-size: 0.86rem; font-weight: 700; color: var(--color-primary, #0284c7); text-transform: uppercase; letter-spacing: 0.03em;",
-                        },
-                        section.title
-                    ),
+                    { class: "pr-section" },
+                    h("h4", { class: "pr-section__title" }, section.title),
                     this.splitParagraphs(section.body).map(paragraph =>
-                        h(
-                            "p",
-                            { style: "margin: 0 0 8px; font-size: 0.88rem; line-height: 1.55;" },
-                            paragraph
-                        )
+                        h("p", { class: "pr-section__text" }, paragraph)
                     ),
                     section.title === "Plan" && medications.length > 0
                         ? this.renderMedicationsList(medications, note)
@@ -493,42 +542,38 @@ export default class PatientRecords extends Component {
     renderMedicationsList(medications, note) {
         return h(
             "div",
-            { style: "margin-top: 4px; display: flex; flex-direction: column; gap: 8px;" },
+            { class: "pr-meds" },
             h(
                 "div",
-                { style: "display: flex; justify-content: space-between; align-items: center;" },
-                h(
-                    "p",
-                    { class: "dashboard-muted", style: "margin: 0; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em;" },
-                    "Prescription"
-                ),
+                { class: "pr-meds__head" },
+                h("span", { class: "pr-meds__title" }, "Prescription"),
                 h(
                     "button",
                     {
-                        style: "font-size: 0.74rem; color: var(--color-primary, #0284c7); font-weight: 600; background: none; border: none; cursor: pointer; padding: 0;",
+                        type: "button",
+                        class: "pr-meds__download",
                         onclick: e => {
                             e.stopPropagation();
                             this.downloadPrescription(note);
                         },
                     },
-                    "Download prescription"
+                    icon(PI.download, 14),
+                    h("span", {}, "Download")
                 )
             ),
             medications.map(med => this.renderMedicationCard(med))
         );
     }
-
+    
     renderMedicationCard(med) {
         const details = [med.dose, med.frequency, med.duration].filter(Boolean).join(" · ");
-
+    
         return h(
             "div",
-            { style: "padding: 8px 10px; background: var(--color-bg-muted, #f1f5f9); border-radius: 6px;" },
-            h("p", { style: "margin: 0 0 2px; font-size: 0.86rem; font-weight: 600;" }, med.medication || "Unnamed medication"),
-            details ? h("p", { class: "dashboard-muted", style: "margin: 0; font-size: 0.78rem;" }, details) : null,
-            med.instructions
-                ? h("p", { style: "margin: 4px 0 0; font-size: 0.78rem; font-style: italic; line-height: 1.4;" }, med.instructions)
-                : null
+            { class: "pr-med" },
+            h("p", { class: "pr-med__name" }, med.medication || "Unnamed medication"),
+            details ? h("p", { class: "pr-med__details" }, details) : null,
+            med.instructions ? h("p", { class: "pr-med__instructions" }, med.instructions) : null
         );
     }
 
