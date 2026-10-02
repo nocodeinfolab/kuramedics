@@ -168,6 +168,21 @@ export default class DashboardHome extends Component {
         const firstWord = withoutTitle.split(/\s+/)[0];
         return firstWord || "Doctor";
     }
+    getGreeting() {
+        const hour = new Date().getHours();
+        if (hour < 12) return "Good morning";
+        if (hour < 17) return "Good afternoon";
+        return "Good evening";
+    }
+    
+    heroChip(text, tone = "neutral") {
+        return h(
+            "span",
+            { class: `hero-chip hero-chip--${tone}` },
+            h("span", { class: "hero-chip__dot" }),
+            text
+        );
+    }
 
     getSubscriptionTone() {
         const status = (this.doctor?.subscription_status || "active").toLowerCase();
@@ -209,22 +224,40 @@ export default class DashboardHome extends Component {
 
     renderHero() {
         const firstName = this.getFirstName();
-
+        const title = firstName ? `Dr. ${firstName}` : "Welcome, Doctor";
+        const avatarUrl = this.doctor.avatar_url ? api.resolveUrl(this.doctor.avatar_url) : null;
+        const initial = (firstName || "D").charAt(0).toUpperCase();
+    
         return h(
             "section",
             { class: "dashboard-header" },
-            h("p", { class: "dashboard-greeting" }, "Welcome back"),
-            h("h1", { class: "dashboard-title" }, `Dr. ${firstName}`),
             h(
-                "p",
-                { class: "dashboard-subtitle" },
-                this.doctor.specialization || "Complete your professional profile to start receiving bookings."
+                "div",
+                { class: "hero-top" },
+                h(
+                    "div",
+                    { class: "hero-avatar" },
+                    avatarUrl
+                        ? h("img", { class: "hero-avatar__img", src: avatarUrl, alt: "" })
+                        : h("span", { class: "hero-avatar__initial" }, initial)
+                ),
+                h(
+                    "div",
+                    { class: "hero-text" },
+                    h("p", { class: "dashboard-greeting" }, this.getGreeting()),
+                    h("h1", { class: "dashboard-title" }, title),
+                    h(
+                        "p",
+                        { class: "dashboard-subtitle" },
+                        this.doctor.specialization || "Complete your professional profile to start receiving bookings."
+                    )
+                )
             ),
             h(
                 "div",
                 { class: "dashboard-hero-meta" },
-                this.badge(this.getFormattedVerificationStatus(), this.getVerificationTone()),
-                this.badge(this.doctor.subscription_plan_name || "Starter Plan", this.getSubscriptionTone())
+                this.heroChip(this.getFormattedVerificationStatus(), this.getVerificationTone()),
+                this.heroChip(this.doctor.subscription_plan_name || "Starter Plan", "plan")
             )
         );
     }
