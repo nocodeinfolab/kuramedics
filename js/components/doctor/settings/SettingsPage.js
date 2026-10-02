@@ -264,11 +264,15 @@ export default class SettingsPage extends Component {
             h(
                 "button",
                 {
+                    type: "button",
                     class: "btn btn-outline",
-                    style: "margin-top: var(--space-4); padding: 0.55rem 1rem; font-size: 0.85rem; border-radius: 8px; color: #ef4444; border-color: #ef4444; width: fit-content;",
+                    style: "margin-top: var(--space-4); padding: 0.55rem 1rem; font-size: 0.85rem; border-radius: 8px; color: #ef4444; border-color: #ef4444; width: fit-content; min-width: 7.5rem;",
+                    disabled: this.loggingOut,
+                    "aria-busy": String(this.loggingOut),
                     onclick: () => this.logout()
                 },
-                "Log out"
+                this.loggingOut ? h("span", { class: "btn-spinner btn-spinner--danger" }) : null,
+                this.loggingOut ? "Logging out…" : "Log out"
             )
         );
     }
