@@ -4,6 +4,53 @@ import { Component } from "../../core/component.js";
 import { h } from "../../utils/dom.js";
 import api from "../../services/api.js";
 
+const icon = (paths, size = 20) =>
+    h(
+        "svg",
+        { viewBox: "0 0 24 24", fill: "none", width: String(size), height: String(size), "aria-hidden": "true" },
+        ...paths.map(d =>
+            h("path", {
+                d,
+                stroke: "currentColor",
+                "stroke-width": "1.8",
+                "stroke-linecap": "round",
+                "stroke-linejoin": "round"
+            })
+        )
+    );
+
+const ICONS = {
+    alert: [
+        "M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z",
+        "M12 9v4",
+        "M12 17h.01"
+    ],
+    stethoscope: [
+        "M5 3H4a2 2 0 0 0-2 2v4a6 6 0 0 0 12 0V5a2 2 0 0 0-2-2h-1",
+        "M11 2v2",
+        "M5 2v2",
+        "M8 15a6 6 0 0 0 12 0v-3",
+        "M18 10a2 2 0 1 0 4 0 2 2 0 1 0-4 0"
+    ],
+    user: [
+        "M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2",
+        "M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"
+    ],
+    fees: [
+        "M3 7h18a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1z",
+        "M12 14.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z"
+    ],
+    link: [
+        "M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7",
+        "M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"
+    ],
+    card: [
+        "M3 6h18a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1z",
+        "M2 10h20"
+    ],
+    chevron: ["M9 6l6 6-6 6"]
+};
+
 export default class DashboardHome extends Component {
 
     constructor(doctor, onNavigate) {
@@ -162,101 +209,62 @@ export default class DashboardHome extends Component {
         );
     }
 
-    renderStatusBanner() {
+    renderActionBanner({ tone, iconPaths, title, text, onClick }) {
+    return h(
+        "button",
+        {
+            type: "button",
+            class: `action-banner action-banner--${tone}`,
+            onclick: onClick
+        },
+        h("span", { class: "action-banner__icon" }, icon(iconPaths, 20)),
+        h(
+            "span",
+            { class: "action-banner__body" },
+            h("span", { class: "action-banner__title" }, title),
+            h("span", { class: "action-banner__text" }, text)
+        ),
+        h("span", { class: "action-banner__chevron" }, icon(ICONS.chevron, 18))
+    );
+}
+
+renderStatusBanner() {
         const status = (
-            this.doctor?.verification_status || 
-            this.doctor?.status || 
+            this.doctor?.verification_status ||
+            this.doctor?.status ||
             ""
         ).toLowerCase();
-
+    
         // Only show banner if status is unsubmitted or draft
         if (status !== "unsubmitted" && status !== "draft") {
             return null;
         }
-
-        return h(
-            "div",
-            {
-                class: "dashboard-card alert-banner",
-                style: `
-                    margin-top: var(--space-4);
-                    background: rgba(234, 179, 8, 0.1);
-                    border: 1px solid rgba(234, 179, 8, 0.4);
-                    border-left: 4px solid #eab308;
-                    cursor: pointer;
-                    transition: transform 0.2s ease, box-shadow 0.2s ease;
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    gap: var(--space-3);
-                `,
-                onclick: () => this.onNavigate("settings") // Navigates directly to settings
-            },
-            h(
-                "div",
-                { style: "display: flex; align-items: center; gap: var(--space-3);" },
-                h("span", { style: "font-size: 1.5rem;" }, "⚠️"),
-                h(
-                    "div",
-                    {},
-                    h(
-                        "h4",
-                        { style: "margin: 0 0 var(--space-1); color: var(--color-ink); font-weight: 600;" },
-                        "Complete your profile and submit for verification"
-                    ),
-                    h(
-                        "p",
-                        { class: "dashboard-muted", style: "margin: 0; font-size: var(--step-small);" },
-                        "Only verified doctor profiles are published and visible to prospective patients."
-                    )
-                )
-            ),
-            h(
-                "span",
-                { style: "font-weight: 600; color: var(--color-primary); font-size: 0.9rem; white-space: nowrap;" },
-                "Open Settings →"
-            )
-        );
+    
+        return this.renderActionBanner({
+            tone: "warning",
+            iconPaths: ICONS.alert,
+            title: "Complete your profile and submit for verification",
+            text: "Only verified doctor profiles are published and visible to prospective patients.",
+            onClick: () => this.onNavigate("settings")
+        });
     }
+    
     renderServicesSetupBanner() {
         const verificationStatus = (this.doctor?.verification_status || this.doctor?.status || "").toLowerCase();
         const isVerified = verificationStatus === "verified" || verificationStatus === "approved";
         const hasServices = Boolean(this.doctor?.has_enabled_consultation_service);
-
+    
         if (!isVerified || hasServices) {
             return null;
         }
-
-        return h(
-            "div",
-            {
-                class: "dashboard-card alert-banner",
-                style: `
-                    margin-top: var(--space-4);
-                    background: rgba(2, 132, 199, 0.06);
-                    border: 1px solid rgba(2, 132, 199, 0.25);
-                    border-left: 4px solid #0284c7;
-                    cursor: pointer;
-                    display: flex;
-                    align-items: center;
-                    justify-content: space-between;
-                    gap: var(--space-3);
-                `,
-                onclick: () => this.onNavigate("settings", "consultation-services"),
-            },
-            h(
-                "div",
-                { style: "display: flex; align-items: center; gap: var(--space-3);" },
-                h("span", { style: "font-size: 1.5rem;" }, "🩺"),
-                h(
-                    "div",
-                    {},
-                    h("h4", { style: "margin: 0 0 var(--space-1); color: var(--color-ink); font-weight: 600;" }, "Set up your consultation services"),
-                    h("p", { class: "dashboard-muted", style: "margin: 0; font-size: var(--step-small);" }, "Add pricing and enable at least one consultation type so patients can book you.")
-                )
-            ),
-            h("span", { style: "font-weight: 600; color: var(--color-primary); font-size: 0.9rem; white-space: nowrap;" }, "Set Up →")
-        );
+    
+        return this.renderActionBanner({
+            tone: "info",
+            iconPaths: ICONS.stethoscope,
+            title: "Set up your consultation services",
+            text: "Add pricing and enable at least one consultation type so patients can book you.",
+            onClick: () => this.onNavigate("settings", "consultation-services")
+        });
     }
 
     renderStatistics() {
@@ -348,12 +356,26 @@ export default class DashboardHome extends Component {
             h("h3", {}, "Quick Actions"),
             h(
                 "div",
-                { class: "quick-actions" },
-                this.actionButton("Edit Profile", () => this.onNavigate("settings", "profile")),
-                this.actionButton("Consultation Fees", () => this.onNavigate("settings", "consultation-services")),
-                this.actionButton("Availability", () => this.onNavigate("settings", "consultation-services")),
-                this.actionButton("Booking Link", () => this.onNavigate("settings", "doctor-card"))
+                { class: "quick-tiles" },
+                this.actionTile("Edit Profile", "Photo, bio, licence", ICONS.user,
+                    () => this.onNavigate("settings", "profile")),
+                this.actionTile("Services & Fees", "Pricing and availability", ICONS.fees,
+                    () => this.onNavigate("settings", "consultation-services")),
+                this.actionTile("Booking Link", "Share your page", ICONS.link,
+                    () => this.onNavigate("settings", "doctor-card")),
+                this.actionTile("Subscription", "Plan and billing", ICONS.card,
+                    () => this.onNavigate("settings", "subscription"))
             )
+        );
+    }
+    
+    actionTile(label, hint, iconPaths, onClick) {
+        return h(
+            "button",
+            { type: "button", class: "quick-tile", onclick: onClick },
+            h("span", { class: "quick-tile__icon" }, icon(iconPaths, 22)),
+            h("span", { class: "quick-tile__label" }, label),
+            h("span", { class: "quick-tile__hint" }, hint)
         );
     }
 
