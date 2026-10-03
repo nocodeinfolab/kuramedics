@@ -523,12 +523,14 @@ export default class PatientDashboardPage extends Component {
         const fieldInputStyle = "padding: 0.6rem 0.7rem; border: 1px solid var(--color-line); border-radius: 6px; width: 100%; font-size: 0.9rem; box-sizing: border-box; font-family: inherit;";
 
         return h(
-            "main",
-            { class: "dashboard-page patient-home patient-onboarding", style: "max-width: 480px; margin: 0 auto; padding: calc(var(--safe-area-top) + var(--space-8)) var(--space-3) var(--space-3);" },
+            "div",
+            { class: "patient-dashboard patient-dashboard--onboarding" },
             h(
-                "section",
-                { class: "dashboard-header" },
-            
+            "main",
+            { class: "patient-dashboard__content" },
+            h(
+            "div",
+            { class: "dashboard-page patient-home" },
             h(
                 "section",
                 { class: "dashboard-header" },
@@ -545,7 +547,7 @@ export default class PatientDashboardPage extends Component {
                         { class: "ph-hero__text" },
                         h("p", { class: "dashboard-greeting" }, this.getGreeting()),
                         h("h1", { class: "dashboard-title" }, this.getFirstName(this.patient?.full_name) || "Welcome"),
-                        h("p", { class: "dashboard-subtitle" }, "Let's finish setting up your profile")
+                        h("p", { class: "dashboard-subtitle" }, this.getTodayLabel())
                     )
                 )
             ),
@@ -647,6 +649,8 @@ export default class PatientDashboardPage extends Component {
                     this.onboardingSaving ? "Saving..." : "Continue to dashboard"
                 )
             )
+            )
+            )    
         );
     }
 
