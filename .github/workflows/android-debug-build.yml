@@ -42,6 +42,14 @@ jobs:
           DEBUG_KEY_ALIAS: ${{ secrets.DEBUG_KEY_ALIAS }}
           DEBUG_KEY_PASSWORD: ${{ secrets.DEBUG_KEY_PASSWORD }}
         run: ./gradlew assembleDebug
+      - name: Inspect APK contents
+        run: |
+          unzip -q android/app/build/outputs/apk/debug/app-debug.apk "assets/public/*" -d apk-check
+          echo "--- assets folder ---"
+          ls apk-check/assets/public apk-check/assets/public/assets
+          echo "--- new CSS present? ---"
+          grep -c "action-banner" apk-check/assets/public/css/*.css || true
+          grep -c "ph-card" apk-check/assets/public/css/*.css || true
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
