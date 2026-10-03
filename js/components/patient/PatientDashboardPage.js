@@ -518,6 +518,71 @@ export default class PatientDashboardPage extends Component {
 
     // ---------- Onboarding view ----------
 
+    renderDobSelects(value, onChange, selectStyle) {
+        const [y = "", m = "", d = ""] = (value || "").split("-");
+        const state = { y, m, d };
+    
+        const emit = () => {
+            const { y, m, d } = state;
+            if (y && m && d) {
+                // clamp the day to the month's length (e.g. 31 Feb -> 28/29)
+                const maxDay = new Date(Number(y), Number(m), 0).getDate();
+                const day = String(Math.min(Number(d), maxDay)).padStart(2, "0");
+                onChange(`${y}-${m}-${day}`);
+            } else {
+                onChange("");
+            }
+        };
+    
+        const thisYear = new Date().getFullYear();
+        const years = Array.from({ length: 120 }, (_, i) => String(thisYear - i));
+        const months = [
+            "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+        ];
+    
+        return h(
+            "div",
+            { style: "display: grid; grid-template-columns: 1fr 1.4fr 1.2fr; gap: 8px;" },
+            h(
+                "select",
+                {
+                    "aria-label": "Day",
+                    style: selectStyle,
+                    onchange: e => { state.d = e.target.value; emit(); }
+                },
+                h("option", { value: "" }, "Day"),
+                Array.from({ length: 31 }, (_, i) => {
+                    const v = String(i + 1).padStart(2, "0");
+                    return h("option", { value: v, selected: v === d }, String(i + 1));
+                })
+            ),
+            h(
+                "select",
+                {
+                    "aria-label": "Month",
+                    style: selectStyle,
+                    onchange: e => { state.m = e.target.value; emit(); }
+                },
+                h("option", { value: "" }, "Month"),
+                months.map((label, i) => {
+                    const v = String(i + 1).padStart(2, "0");
+                    return h("option", { value: v, selected: v === m }, label);
+                })
+            ),
+            h(
+                "select",
+                {
+                    "aria-label": "Year",
+                    style: selectStyle,
+                    onchange: e => { state.y = e.target.value; emit(); }
+                },
+                h("option", { value: "" }, "Year"),
+                years.map(yr => h("option", { value: yr, selected: yr === y }, yr))
+            )
+        );
+    }
+
     renderOnboarding() {
         const fieldLabelStyle = "display: block; margin-bottom: 5px; font-size: 0.82rem; font-weight: 600;";
         const fieldInputStyle = "padding: 0.6rem 0.7rem; border: 1px solid var(--color-line); border-radius: 6px; width: 100%; font-size: 0.9rem; box-sizing: border-box; font-family: inherit;";
@@ -568,12 +633,11 @@ export default class PatientDashboardPage extends Component {
                     "div",
                     {},
                     h("label", { style: fieldLabelStyle }, "Date of birth"),
-                    h("input", {
-                        type: "date",
-                        value: this.onboardingDraft.date_of_birth,
-                        style: fieldInputStyle,
-                        oninput: e => this.setOnboardingField("date_of_birth", e.target.value),
-                    })
+                    this.renderDobSelects(
+                        this.onboardingDraft.date_of_birth,
+                        v => this.setOnboardingField("date_of_birth", v),
+                        fieldInputStyle
+                    )
                 ),
 
                 h(
