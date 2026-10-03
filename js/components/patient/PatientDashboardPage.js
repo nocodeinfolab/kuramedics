@@ -524,7 +524,7 @@ export default class PatientDashboardPage extends Component {
 
         return h(
             "main",
-            { class: "dashboard-page", style: "max-width: 480px; margin: 0 auto; padding: var(--space-3);" },
+            { class: "dashboard-page", style: "max-width: 480px; margin: 0 auto; padding: calc(var(--safe-area-top) + var(--space-5)) var(--space-3) var(--space-3);" },
             h(
                 "section",
                 { class: "dashboard-header" },
