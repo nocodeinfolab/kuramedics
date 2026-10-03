@@ -524,31 +524,28 @@ export default class PatientDashboardPage extends Component {
 
         return h(
             "main",
-            { class: "dashboard-page", style: "max-width: 480px; margin: 0 auto; padding: calc(var(--safe-area-top) + var(--space-5)) var(--space-3) var(--space-3);" },
+            { class: "dashboard-page patient-home patient-onboarding", style: "max-width: 480px; margin: 0 auto; padding: calc(var(--safe-area-top) + var(--space-8)) var(--space-3) var(--space-3);" },
             h(
                 "section",
                 { class: "dashboard-header" },
             
+            h(
+                "section",
+                { class: "dashboard-header" },
                 h(
                     "div",
-                    { class: "dashboard-header__content" },
-            
+                    { class: "ph-hero" },
                     h(
-                        "h1",
-                        { class: "dashboard-title" },
-                        `${this.getGreeting()}, ${this.getFirstName(this.patient?.full_name)}`
+                        "div",
+                        { class: "ph-hero__avatar" },
+                        (this.getFirstName(this.patient?.full_name) || "P").charAt(0).toUpperCase()
                     ),
-            
                     h(
-                        "p",
-                        { class: "dashboard-subtitle" },
-                        "Your personal healthcare hub."
-                    ),
-            
-                    h(
-                        "p",
-                        { class: "dashboard-date" },
-                        this.getTodayLabel()
+                        "div",
+                        { class: "ph-hero__text" },
+                        h("p", { class: "dashboard-greeting" }, this.getGreeting()),
+                        h("h1", { class: "dashboard-title" }, this.getFirstName(this.patient?.full_name) || "Welcome"),
+                        h("p", { class: "dashboard-subtitle" }, "Let's finish setting up your profile")
                     )
                 )
             ),
