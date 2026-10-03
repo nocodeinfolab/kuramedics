@@ -18,7 +18,7 @@ jobs:
       - name: Stage web assets into www/
         run: |
           mkdir -p www
-          cp -r index.html css js www/
+          cp -r index.html css js assets www/
       - name: Upload raw www/ for the OTA bundling job
         uses: actions/upload-artifact@v4
         with:
