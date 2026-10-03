@@ -669,3 +669,6 @@
   border-color: rgba(239, 68, 68, 0.25);
   border-top-color: #ef4444;
 }
+.patient-onboarding .dashboard-header {
+  position: relative;
+}
