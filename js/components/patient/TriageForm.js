@@ -254,7 +254,7 @@ export default class TriageForm extends Component {
                     h(
                         "p",
                         { class: "dashboard-subtitle" },
-                        "A few quick questions to help us suggest the right type of doctor — this is a starting point, not a diagnosis."
+                        "Quick questions — not a diagnosis."
                     )
                 )
             )
