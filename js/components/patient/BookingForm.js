@@ -290,7 +290,16 @@ export default class BookingForm extends Component {
                           h(
                               "div",
                               { class: "bf-fee-icon" },
-                              icon(["M12 1v22", "M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"], 18)
+                              icon(
+                                  [
+                                      "M7 5v14",
+                                      "M17 5v14",
+                                      "M7 5l10 14",
+                                      "M4 10h16",
+                                      "M4 14h16",
+                                  ],
+                                  18
+                              )
                           ),
                           h(
                               "div",
