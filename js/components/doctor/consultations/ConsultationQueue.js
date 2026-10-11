@@ -3,6 +3,7 @@
 import { Component } from "../../../core/component.js";
 import api from "../../../services/api.js";
 import { h, autoGrow } from "../../../utils/dom.js";
+import { captureFocus, restoreFocus } from "../../../utils/focus.js";
 import VideoCallRoom from "../../shared/VideoCallRoom.js";
 
 const PENDING_STATUSES = ["pending", "pending_confirmation", "reschedule_requested"];
@@ -521,11 +522,9 @@ export default class DoctorQueuePage extends Component {
 
     setSearchTerm(term) {
         this.searchTerm = term;
-        this.update(); // reflect typing in the input immediately
     
         clearTimeout(this._searchDebounceTimer);
         this._searchDebounceTimer = setTimeout(() => {
-            // Search only needs to hit the tab currently in view.
             this.loadBookings(this.activeTab, { reset: true });
         }, 350);
     }
@@ -615,8 +614,14 @@ export default class DoctorQueuePage extends Component {
             this.renderHeader(),
             this.renderAlerts(),
             this.tabs[this.activeTab].loading
-                ? this.renderSkeleton()
-                : this.renderContent()
+            ? h(
+                  "div",
+                  { class: "services-list" },
+                  this.renderControls(),
+                  this.renderTabs(),
+                  this.renderSkeleton()
+              )
+            : this.renderContent()
         );
     }
     
@@ -710,6 +715,7 @@ export default class DoctorQueuePage extends Component {
                 h("input", {
                     type: "text",
                     class: "queue-search__input",
+                    "data-focus-key": "search",
                     placeholder: "Search by patient name...",
                     "aria-label": "Search by patient name",
                     value: this.searchTerm,
@@ -1295,8 +1301,10 @@ export default class DoctorQueuePage extends Component {
 
     update() {
         if (!this.el) return;
+        const focus = captureFocus(this.el);
         const newTree = this.render();
         this.el.replaceChildren(...(Array.isArray(newTree) ? newTree : [newTree]).flat());
         this.el.querySelectorAll(".autogrow-textarea").forEach(autoGrow);
+        restoreFocus(this.el, focus);
     }
 }
