@@ -7,6 +7,9 @@ import DoctorList from "./DoctorList.js";
 import DoctorProfile from "./DoctorProfile.js";
 import BookingForm from "./BookingForm.js";
 
+const icon = (paths, size = 18) => h("svg", { viewBox: "0 0 24 24", fill: "none", width: String(size), height: String(size), "aria-hidden": "true" }, ...paths.map(d => h("path", { d, stroke: "currentColor", "stroke-width": "1.8", "stroke-linecap": "round", "stroke-linejoin": "round" })));
+
+
 export default class PatientFindCare extends Component {
     constructor(patient, pendingDoctorId) {
         super();
@@ -146,57 +149,76 @@ export default class PatientFindCare extends Component {
     renderPlaceholder(title, description, onBack) {
         return h(
             "div",
-            { class: "dashboard-page" },
+            { class: "pfc-page" },
             h(
-                "section",
-                { class: "dashboard-header" },
+                "div",
+                { class: "pfc-header" },
                 h(
                     "button",
-                    {
-                        class: "btn btn-outline",
-                        style: "padding: 0.4rem 0.6rem; font-size: 0.8rem; border-radius: 6px; margin-bottom: 10px;",
-                        onclick: onBack,
-                    },
-                    "← Back"
-                ),
-                h("h1", { class: "dashboard-title" }, title)
+                    { class: "pfc-back-btn", type: "button", onclick: onBack },
+                    icon(["M15 18l-6-6 6-6"], 16),
+                    h("span", null, "Back")
+                )
             ),
             h(
                 "div",
-                { class: "dashboard-card text-center py-4" },
-                h("p", { class: "dashboard-muted" }, description),
-                h("p", { class: "dashboard-muted", style: "margin-top: 6px; font-size: 0.8rem;" }, "Coming soon.")
+                { class: "pfc-empty" },
+                h(
+                    "div",
+                    { class: "pfc-empty-icon" },
+                    icon(["M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16", "M21 21l-4.35-4.35"], 22)
+                ),
+                h("h2", { class: "pfc-empty-title" }, title),
+                h("p", { class: "pfc-empty-text" }, description),
+                h("span", { class: "pfc-chip pfc-chip--info" }, "Coming soon")
             )
         );
     }
-
     renderConfirmation() {
+        const doctorName = this.completedBooking?.doctor_name || "the doctor";
         return h(
             "div",
-            { class: "dashboard-page" },
-            h(
-                "section",
-                { class: "dashboard-header" },
-                h("h1", { class: "dashboard-title" }, "Appointment requested")
-            ),
+            { class: "pfc-page" },
             h(
                 "div",
-                { class: "dashboard-card", style: "padding: 1.1rem; display: flex; flex-direction: column; gap: 10px;" },
+                { class: "pfc-confirm" },
+                h(
+                    "div",
+                    { class: "pfc-confirm-icon" },
+                    icon(["M20 6L9 17l-5-5"], 28)
+                ),
+                h("p", { class: "pfc-eyebrow" }, "Request sent"),
+                h("h2", { class: "pfc-confirm-title" }, "Appointment requested"),
                 h(
                     "p",
-                    { style: "margin: 0; font-size: 0.92rem;" },
-                    `Your appointment request with ${this.completedBooking?.doctor_name || "the doctor"} has been sent.`
+                    { class: "pfc-confirm-text" },
+                    `Your appointment request with ${doctorName} has been sent.`
                 ),
                 h(
-                    "p",
-                    { class: "dashboard-muted", style: "margin: 0; font-size: 0.85rem; line-height: 1.5;" },
-                    "The doctor will review your request and confirm the time. Once confirmed, you'll be able to complete payment for your consultation."
+                    "div",
+                    { class: "pfc-info-card" },
+                    h(
+                        "div",
+                        { class: "pfc-info-icon" },
+                        icon(
+                            [
+                                "M12 8v4l3 2",
+                                "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20"
+                            ],
+                            18
+                        )
+                    ),
+                    h(
+                        "p",
+                        { class: "pfc-info-text" },
+                        "The doctor will review your request and confirm the time. Once confirmed, you'll be able to complete payment for your consultation."
+                    )
                 ),
                 h(
                     "button",
                     {
-                        class: "btn btn-primary",
-                        style: "padding: 0.6rem 1rem; font-size: 0.88rem; border-radius: 8px;",
+                        class: "pfc-primary-btn",
+                        type: "button",
                         onclick: () => this.startOver(),
                     },
                     "Find another doctor"
