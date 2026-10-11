@@ -25,6 +25,14 @@ jobs:
           mkdir -p www
           cp -r index.html css js assets www/
 
+      - name: Syntax check
+        run: |
+          failed=0
+          for f in $(find js -name "*.js"); do
+            npx --yes esbuild "$f" --log-level=error > /dev/null || { echo "FAILED: $f"; failed=1; }
+          done
+          exit $failed
+
       - name: Zip www/ for OTA upload (index.html at the zip root)
         run: |
           cd www
