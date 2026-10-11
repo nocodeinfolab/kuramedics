@@ -261,6 +261,11 @@ export default class TriageForm extends Component {
         return h(
             "div",
             { class: "tf-stack" },
+            h(
+                "p",
+                { class: "tf-intro" },
+                "A few quick questions to help us suggest the right type of doctor — this is a starting point, not a diagnosis."
+            ),
             this.error ? this.renderError(this.error) : null,
             h(
                 "div",
