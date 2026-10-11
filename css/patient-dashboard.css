@@ -1297,3 +1297,492 @@
     0% { background-position: 200% 0; }
     100% { background-position: -200% 0; }
 }
+/* ============================================================
+   Patient Triage — conversational premium form
+   Scoped under .triage-form with the tf- prefix.
+   ============================================================ */
+
+.triage-form {
+    --tf-border: rgba(15, 23, 42, 0.08);
+    --tf-card: #ffffff;
+    --tf-danger: #ef4444;
+    --tf-danger-soft: color-mix(in srgb, #ef4444 10%, transparent);
+    --tf-warning: #f59e0b;
+    --tf-warning-soft: color-mix(in srgb, #f59e0b 14%, transparent);
+    --tf-success: #10b981;
+    --tf-success-soft: color-mix(in srgb, #10b981 14%, transparent);
+    --tf-primary-soft: color-mix(in srgb, var(--color-primary) 10%, transparent);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-bottom: 24px;
+}
+
+/* -------- Header -------- */
+.triage-form .tf-header { display: flex; flex-direction: column; gap: 4px; }
+
+.triage-form .tf-eyebrow {
+    margin: 0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+}
+
+.triage-form .tf-title {
+    margin: 0;
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    color: var(--color-ink);
+}
+
+.triage-form .tf-subtitle {
+    margin: 4px 0 0;
+    font-size: 0.86rem;
+    line-height: 1.5;
+    color: var(--color-muted);
+}
+
+/* -------- Stack -------- */
+.triage-form .tf-stack { display: flex; flex-direction: column; gap: 14px; }
+
+/* -------- Chat card -------- */
+.triage-form .tf-chat-card {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 16px 16px 18px;
+    background: var(--tf-card);
+    border: 1px solid var(--tf-border);
+    border-radius: var(--radius-lg, 18px);
+    box-shadow: var(--shadow-card);
+}
+
+/* -------- Step pill -------- */
+.triage-form .tf-step-pill {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--tf-primary-soft);
+    color: var(--color-primary);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+/* -------- Transcript scroller -------- */
+.triage-form .tf-transcript {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 50vh;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+    padding-right: 4px;
+}
+.triage-form .tf-transcript::-webkit-scrollbar { width: 6px; }
+.triage-form .tf-transcript::-webkit-scrollbar-thumb {
+    background: rgba(15, 23, 42, 0.12);
+    border-radius: 3px;
+}
+
+/* -------- Bubble groups -------- */
+.triage-form .tf-exchange { display: flex; flex-direction: column; gap: 8px; }
+
+.triage-form .tf-bubble-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    max-width: 88%;
+}
+.triage-form .tf-bubble-row--ai { align-self: flex-start; }
+.triage-form .tf-bubble-row--user { align-self: flex-end; flex-direction: row-reverse; }
+
+.triage-form .tf-avatar {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+}
+.triage-form .tf-avatar--ai {
+    background: var(--tf-primary-soft);
+    color: var(--color-primary);
+}
+
+.triage-form .tf-bubble {
+    padding: 10px 13px;
+    font-size: 0.88rem;
+    line-height: 1.5;
+    border-radius: 16px;
+    word-wrap: break-word;
+}
+.triage-form .tf-bubble--ai {
+    background: rgba(15, 23, 42, 0.045);
+    color: var(--color-ink);
+    border-bottom-left-radius: 6px;
+}
+.triage-form .tf-bubble--user {
+    background: var(--color-primary);
+    color: #ffffff;
+    border-bottom-right-radius: 6px;
+    box-shadow: 0 6px 16px -10px color-mix(in srgb, var(--color-primary) 60%, transparent);
+}
+
+/* -------- Typing -------- */
+.triage-form .tf-bubble--typing {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 14px;
+}
+.triage-form .tf-typing-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--color-muted);
+    opacity: 0.6;
+    animation: tf-typing-bounce 1.1s ease-in-out infinite;
+}
+.triage-form .tf-typing-dot:nth-child(2) { animation-delay: 0.15s; }
+.triage-form .tf-typing-dot:nth-child(3) { animation-delay: 0.3s; }
+@keyframes tf-typing-bounce {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.45; }
+    30% { transform: translateY(-4px); opacity: 0.9; }
+}
+
+/* -------- Bubble enter -------- */
+.triage-form .tf-bubble-in {
+    animation: tf-bubble-in 320ms var(--ease-out, cubic-bezier(0.16, 1, 0.3, 1)) both;
+}
+@keyframes tf-bubble-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* -------- Input row -------- */
+.triage-form .tf-input-row {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 4px;
+    padding-top: 12px;
+    border-top: 1px solid var(--tf-border);
+}
+.triage-form .tf-textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 14px;
+    border: 1px solid var(--tf-border);
+    border-radius: var(--radius-md, 14px);
+    background: #fff;
+    color: var(--color-ink);
+    font-family: inherit;
+    font-size: 0.9rem;
+    line-height: 1.5;
+    resize: vertical;
+    transition: border-color var(--duration-fast) var(--ease-out),
+                box-shadow var(--duration-fast) var(--ease-out);
+}
+.triage-form .tf-textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--tf-primary-soft);
+}
+.triage-form .tf-textarea::placeholder { color: var(--color-muted); }
+
+.triage-form .tf-input-actions { display: flex; gap: 8px; }
+
+/* -------- Back / Next buttons -------- */
+.triage-form .tf-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px 10px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--tf-border);
+    background: #fff;
+    color: var(--color-ink);
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background var(--duration-fast) var(--ease-out);
+}
+.triage-form .tf-back-btn:hover { background: rgba(15, 23, 42, 0.04); }
+.triage-form .tf-back-btn svg { color: var(--color-muted); }
+
+.triage-form .tf-next-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 999px;
+    background: var(--color-primary);
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    box-shadow: 0 10px 22px -10px color-mix(in srgb, var(--color-primary) 60%, transparent);
+    transition: transform var(--duration-fast) var(--ease-out),
+                box-shadow var(--duration-fast) var(--ease-out),
+                background var(--duration-fast) var(--ease-out);
+}
+.triage-form .tf-next-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 26px -10px color-mix(in srgb, var(--color-primary) 65%, transparent);
+}
+.triage-form .tf-next-btn:disabled {
+    background: color-mix(in srgb, var(--color-ink) 8%, transparent);
+    color: color-mix(in srgb, var(--color-ink) 40%, transparent);
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+/* -------- Skip -------- */
+.triage-form .tf-skip-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    align-self: center;
+    padding: 10px 18px;
+    border-radius: 999px;
+    border: 1px solid var(--tf-border);
+    background: #fff;
+    color: var(--color-muted);
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: color var(--duration-fast) var(--ease-out),
+                background var(--duration-fast) var(--ease-out);
+}
+.triage-form .tf-skip-btn:hover {
+    color: var(--color-ink);
+    background: rgba(15, 23, 42, 0.04);
+}
+
+/* -------- Analyzing -------- */
+.triage-form .tf-analyzing {
+    align-items: center;
+    text-align: center;
+    padding: 32px 22px;
+    gap: 8px;
+}
+.triage-form .tf-analyzing-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--tf-primary-soft);
+    color: var(--color-primary);
+    margin-bottom: 4px;
+}
+.triage-form .tf-analyzing-title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-ink);
+}
+.triage-form .tf-analyzing-text {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--color-muted);
+}
+.triage-form .tf-analyzing-bar {
+    width: 100%;
+    max-width: 220px;
+    height: 4px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.06);
+    overflow: hidden;
+    margin-top: 12px;
+    position: relative;
+}
+.triage-form .tf-analyzing-bar > span {
+    position: absolute;
+    top: 0;
+    height: 100%;
+    width: 40%;
+    border-radius: 999px;
+    background: var(--color-primary);
+    animation: tf-analyzing 1.4s ease-in-out infinite;
+}
+@keyframes tf-analyzing {
+    0% { left: -40%; }
+    100% { left: 100%; }
+}
+
+/* -------- Alerts -------- */
+.triage-form .tf-alert {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 12px 14px;
+    border-radius: var(--radius-md, 14px);
+    border: 1px solid transparent;
+}
+.triage-form .tf-alert--danger {
+    background: var(--tf-danger-soft);
+    border-color: color-mix(in srgb, #ef4444 22%, transparent);
+}
+.triage-form .tf-alert-icon {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: #fff;
+    color: var(--tf-danger);
+}
+.triage-form .tf-alert-body { display: flex; flex-direction: column; gap: 2px; }
+.triage-form .tf-alert-title {
+    margin: 0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--tf-danger);
+}
+.triage-form .tf-alert-text {
+    margin: 0;
+    font-size: 0.86rem;
+    line-height: 1.5;
+    color: var(--color-ink);
+}
+
+/* -------- Result card -------- */
+.triage-form .tf-result-card {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 18px 18px 20px;
+    background: var(--tf-card);
+    border: 1px solid var(--tf-border);
+    border-radius: var(--radius-lg, 18px);
+    box-shadow: var(--shadow-card);
+}
+.triage-form .tf-result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+}
+.triage-form .tf-result-spec {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+}
+.triage-form .tf-result-label {
+    margin: 0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+}
+.triage-form .tf-result-value {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--color-ink);
+}
+.triage-form .tf-result-value-sm {
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.55;
+    color: var(--color-ink);
+}
+.triage-form .tf-result-block { display: flex; flex-direction: column; gap: 6px; }
+
+/* -------- Chips -------- */
+.triage-form .tf-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+.triage-form .tf-chip--success { background: var(--tf-success-soft); color: var(--tf-success); }
+.triage-form .tf-chip--warning { background: var(--tf-warning-soft); color: var(--tf-warning); }
+.triage-form .tf-chip--danger  { background: var(--tf-danger-soft);  color: var(--tf-danger); }
+.triage-form .tf-chip--info    { background: var(--tf-primary-soft); color: var(--color-primary); }
+
+/* -------- Symptom tags -------- */
+.triage-form .tf-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.triage-form .tf-tag {
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.05);
+    color: var(--color-ink);
+    font-size: 0.76rem;
+    font-weight: 500;
+}
+
+/* -------- Disclaimer -------- */
+.triage-form .tf-disclaimer {
+    margin: 0;
+    font-size: 0.72rem;
+    font-style: italic;
+    line-height: 1.5;
+    color: var(--color-muted);
+}
+
+/* -------- Actions -------- */
+.triage-form .tf-actions { display: flex; flex-direction: column; gap: 8px; }
+
+.triage-form .tf-primary-btn,
+.triage-form .tf-secondary-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 22px;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    transition: transform var(--duration-fast) var(--ease-out),
+                box-shadow var(--duration-fast) var(--ease-out),
+                background var(--duration-fast) var(--ease-out);
+}
+.triage-form .tf-primary-btn {
+    border: none;
+    background: var(--color-primary);
+    color: #fff;
+    box-shadow: 0 10px 22px -10px color-mix(in srgb, var(--color-primary) 60%, transparent);
+}
+.triage-form .tf-primary-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 26px -10px color-mix(in srgb, var(--color-primary) 65%, transparent);
+}
+.triage-form .tf-secondary-btn {
+    border: 1px solid var(--tf-border);
+    background: #fff;
+    color: var(--color-ink);
+}
+.triage-form .tf-secondary-btn:hover { background: rgba(15, 23, 42, 0.04); }
