@@ -240,7 +240,6 @@ export default class TriageForm extends Component {
     }
 
     renderHeader() {
-        const name = this.doctorProfile?.full_name || this.doctor.full_name || "Doctor";
         return h(
             "section",
             { class: "dashboard-header patient-home" },
@@ -248,20 +247,15 @@ export default class TriageForm extends Component {
                 "div",
                 { class: "ph-hero" },
                 h(
-                    "button",
-                    {
-                        class: "ph-hero__back",
-                        type: "button",
-                        "aria-label": "Back",
-                        onclick: () => this.onBack?.(),
-                    },
-                    icon(["M15 18l-6-6 6-6"], 18)
-                ),
-                h(
                     "div",
                     { class: "ph-hero__text" },
-                    h("p", { class: "dashboard-greeting" }, "Book appointment"),
-                    h("h1", { class: "dashboard-title" }, name)
+                    h("p", { class: "dashboard-greeting" }, "Find Care"),
+                    h("h1", { class: "dashboard-title" }, "Tell us what's going on"),
+                    h(
+                        "p",
+                        { class: "dashboard-subtitle" },
+                        "Quick questions — not a diagnosis."
+                    )
                 )
             )
         );
