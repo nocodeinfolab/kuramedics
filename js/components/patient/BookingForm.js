@@ -4,6 +4,8 @@ import { Component } from "../../core/component.js";
 import { h } from "../../utils/dom.js";
 import api from "../../services/api.js";
 
+const icon = (paths, size = 18) => h("svg", { viewBox: "0 0 24 24", fill: "none", width: String(size), height: String(size), "aria-hidden": "true" }, ...paths.map(d => h("path", { d, stroke: "currentColor", "stroke-width": "1.8", "stroke-linecap": "round", "stroke-linejoin": "round" })));
+
 export default class BookingForm extends Component {
     /**
      * @param {object} patient
@@ -153,174 +155,248 @@ export default class BookingForm extends Component {
     render() {
         return h(
             "div",
-            { class: "dashboard-page" },
+            { class: "booking-form" },
             this.renderHeader(),
             this.loading
-                ? h(
-                      "div",
-                      { class: "dashboard-card text-center py-4" },
-                      h("p", { class: "dashboard-muted" }, "Loading doctor details...")
-                  )
+                ? this.renderLoading()
                 : this.loadError
-                ? h(
-                      "div",
-                      { class: "dashboard-card", style: "border-left: 4px solid #ef4444;" },
-                      h("p", { style: "color: #ef4444; margin: 0;" }, this.loadError)
-                  )
+                ? this.renderLoadError()
                 : this.renderForm()
         );
     }
 
     renderHeader() {
+        const name = this.doctorProfile?.full_name || this.doctor.full_name || "Doctor";
         return h(
-            "section",
-            { class: "dashboard-header", style: "display: flex; align-items: flex-start; gap: 10px;" },
+            "div",
+            { class: "bf-header" },
             h(
                 "button",
-                {
-                    class: "btn btn-outline",
-                    style: "padding: 0.4rem 0.6rem; font-size: 0.8rem; border-radius: 6px; flex-shrink: 0;",
-                    onclick: () => this.onBack?.(),
-                },
-                "← Back"
+                { class: "bf-back-btn", type: "button", onclick: () => this.onBack?.() },
+                icon(["M15 18l-6-6 6-6"], 16),
+                h("span", null, "Back")
             ),
             h(
                 "div",
-                {},
-                h("p", { class: "dashboard-greeting" }, "Book Appointment"),
-                h("h1", { class: "dashboard-title", style: "font-size: 1.2rem;" }, this.doctorProfile?.full_name || this.doctor.full_name || "Doctor")
+                { class: "bf-header-text" },
+                h("p", { class: "bf-eyebrow" }, "Book appointment"),
+                h("h1", { class: "bf-title" }, name)
             )
         );
     }
 
-    renderForm() {
-        const fieldLabelStyle = "display: block; margin-bottom: 5px; font-size: 0.82rem; font-weight: 600;";
-        const fieldInputStyle = "padding: 0.6rem 0.7rem; border: 1px solid var(--color-line); border-radius: 6px; width: 100%; font-size: 0.9rem; box-sizing: border-box; font-family: inherit;";
-
+    renderLoading() {
         return h(
             "div",
-            { class: "services-list" },
+            { class: "bf-card" },
+            h("div", { class: "bf-skel bf-skel--line" }),
+            h("div", { class: "bf-skel bf-skel--field" }),
+            h("div", { class: "bf-skel bf-skel--field" }),
+            h("div", { class: "bf-skel bf-skel--field" }),
+            h("div", { class: "bf-skel bf-skel--btn" })
+        );
+    }
+
+    renderLoadError() {
+        return h(
+            "div",
+            { class: "bf-alert bf-alert--danger", role: "alert" },
+            h(
+                "div",
+                { class: "bf-alert-icon" },
+                icon(["M12 9v4", "M12 17h.01", "M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"], 18)
+            ),
+            h("p", { class: "bf-alert-text" }, this.loadError)
+        );
+    }
+    renderForm() {
+        const price = this.getSelectedPrice();
+        return h(
+            "div",
+            { class: "bf-stack" },
 
             this.submitError
                 ? h(
                       "div",
-                      { class: "dashboard-card", style: "border-left: 4px solid #ef4444; margin-bottom: var(--space-3);" },
-                      h("p", { style: "color: #ef4444; margin: 0;" }, this.submitError)
+                      { class: "bf-alert bf-alert--danger", role: "alert" },
+                      h(
+                          "div",
+                          { class: "bf-alert-icon" },
+                          icon(["M12 9v4", "M12 17h.01", "M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"], 18)
+                      ),
+                      h("p", { class: "bf-alert-text" }, this.submitError)
                   )
                 : null,
 
             h(
                 "div",
-                { class: "dashboard-card", style: "padding: 1.1rem; display: flex; flex-direction: column; gap: 14px;" },
+                { class: "bf-card" },
 
+                // Consultation type
                 h(
                     "div",
-                    {},
-                    h("label", { style: fieldLabelStyle }, "Consultation type"),
+                    { class: "bf-field" },
+                    h("label", { class: "bf-label", for: "bf-service" }, "Consultation type"),
                     this.services.length === 0
-                        ? h("p", { class: "dashboard-muted", style: "margin: 0; font-size: 0.85rem;" }, "This doctor has no consultation services available right now.")
+                        ? h("p", { class: "bf-empty-inline" }, "This doctor has no consultation services available right now.")
                         : h(
-                              "select",
-                              {
-                                  value: this.selectedServiceId,
-                                  style: fieldInputStyle,
-                                  onchange: e => this.setField("selectedServiceId", e.target.value),
-                              },
-                              h("option", { value: "" }, "Select a service..."),
-                              this.services.map(service =>
-                                  h("option", { value: service.id }, service.display_name)
-                              )
+                              "div",
+                              { class: "bf-select-wrap" },
+                              h(
+                                  "select",
+                                  {
+                                      id: "bf-service",
+                                      class: "bf-select",
+                                      value: this.selectedServiceId,
+                                      onchange: e => this.setField("selectedServiceId", e.target.value),
+                                  },
+                                  h("option", { value: "" }, "Select a service..."),
+                                  this.services.map(service =>
+                                      h("option", { value: service.id }, service.display_name)
+                                  )
+                              ),
+                              h("span", { class: "bf-select-chevron" }, icon(["M6 9l6 6 6-6"], 16))
                           )
                 ),
 
+                // Visit type
                 h(
                     "div",
-                    {},
-                    h("label", { style: fieldLabelStyle }, "Visit type"),
+                    { class: "bf-field" },
+                    h("label", { class: "bf-label", for: "bf-fee" }, "Visit type"),
                     h(
-                        "select",
-                        {
-                            value: this.feeType,
-                            style: fieldInputStyle,
-                            onchange: e => this.setField("feeType", e.target.value),
-                        },
-                        h("option", { value: "first_time" }, "First-time consultation"),
-                        h("option", { value: "follow_up" }, "Follow-up consultation")
+                        "div",
+                        { class: "bf-select-wrap" },
+                        h(
+                            "select",
+                            {
+                                id: "bf-fee",
+                                class: "bf-select",
+                                value: this.feeType,
+                                onchange: e => this.setField("feeType", e.target.value),
+                            },
+                            h("option", { value: "first_time" }, "First-time consultation"),
+                            h("option", { value: "follow_up" }, "Follow-up consultation")
+                        ),
+                        h("span", { class: "bf-select-chevron" }, icon(["M6 9l6 6 6-6"], 16))
                     )
                 ),
 
-                this.getSelectedPrice() != null
+                // Fee display
+                price != null
                     ? h(
-                          "p",
-                          { style: "margin: 0; font-size: 0.88rem; font-weight: 600;" },
-                          `Fee: ₦${Number(this.getSelectedPrice()).toLocaleString()}`
+                          "div",
+                          { class: "bf-fee-card" },
+                          h(
+                              "div",
+                              { class: "bf-fee-icon" },
+                              icon(["M12 1v22", "M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"], 18)
+                          ),
+                          h(
+                              "div",
+                              { class: "bf-fee-body" },
+                              h("span", { class: "bf-fee-label" }, "Consultation fee"),
+                              h("span", { class: "bf-fee-value" }, `₦${Number(price).toLocaleString()}`)
+                          )
                       )
                     : null,
 
+                // Preferred date / time
                 h(
                     "div",
-                    {},
-                    h("label", { style: fieldLabelStyle }, "Preferred date and time"),
-                    h("input", {
-                        type: "datetime-local",
-                        value: this.bookingDate,
-                        style: fieldInputStyle,
-                        oninput: e => this.setField("bookingDate", e.target.value),
-                    }),
+                    { class: "bf-field" },
+                    h("label", { class: "bf-label", for: "bf-date" }, "Preferred date and time"),
+                    h(
+                        "div",
+                        { class: "bf-input-wrap" },
+                        h(
+                            "span",
+                            { class: "bf-input-icon" },
+                            icon(["M8 2v4", "M16 2v4", "M3 10h18", "M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2"], 16)
+                        ),
+                        h("input", {
+                            id: "bf-date",
+                            type: "datetime-local",
+                            class: "bf-input bf-input--with-icon",
+                            value: this.bookingDate,
+                            oninput: e => this.setField("bookingDate", e.target.value),
+                        })
+                    ),
                     h(
                         "p",
-                        { class: "dashboard-muted", style: "margin: 6px 0 0; font-size: 0.76rem;" },
+                        { class: "bf-hint" },
                         "This is your requested time. The doctor may confirm it or suggest another time."
                     )
                 ),
 
+                // Triage summary
                 this.triageResult
                     ? h(
                           "div",
-                          {},
-                          h("label", { style: fieldLabelStyle }, "What you told us"),
+                          { class: "bf-field" },
+                          h("label", { class: "bf-label" }, "What you told us"),
                           h(
-                              "p",
-                              { class: "dashboard-muted", style: "margin: 0; font-size: 0.82rem; line-height: 1.5;" },
-                              this.buildReasonText() || "No additional details provided."
+                              "div",
+                              { class: "bf-note" },
+                              h(
+                                  "div",
+                                  { class: "bf-note-icon" },
+                                  icon(["M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z", "M14 2v6h6", "M16 13H8", "M16 17H8", "M10 9H8"], 16)
+                              ),
+                              h("p", { class: "bf-note-text" }, this.buildReasonText() || "No additional details provided.")
                           )
                       )
                     : null,
 
+                // Consent
                 h(
                     "label",
-                    { style: "display: flex; align-items: flex-start; gap: 8px; font-size: 0.82rem; cursor: pointer;" },
+                    { class: "bf-consent" },
                     h("input", {
                         type: "checkbox",
+                        class: "bf-checkbox",
                         checked: this.consentGiven,
-                        style: "margin-top: 2px; flex-shrink: 0;",
                         onchange: e => this.setField("consentGiven", e.target.checked),
                     }),
-                    "I consent to this online consultation and understand my information will be shared with the doctor I've selected."
+                    h("span", { class: "bf-consent-box" }, icon(["M20 6L9 17l-5-5"], 14)),
+                    h(
+                        "span",
+                        { class: "bf-consent-text" },
+                        "I consent to this online consultation and understand my information will be shared with the doctor I've selected."
+                    )
                 ),
 
                 h(
                     "label",
-                    { style: "display: flex; align-items: flex-start; gap: 8px; font-size: 0.82rem; cursor: pointer;" },
+                    { class: "bf-consent" },
                     h("input", {
                         type: "checkbox",
+                        class: "bf-checkbox",
                         checked: this.emergencyAcknowledged,
-                        style: "margin-top: 2px; flex-shrink: 0;",
                         onchange: e => this.setField("emergencyAcknowledged", e.target.checked),
                     }),
-                    "I understand this platform is not for medical emergencies, and I will seek emergency care directly if needed."
-                ),
-
-                h(
-                    "button",
-                    {
-                        class: "btn btn-primary",
-                        style: "padding: 0.65rem 1rem; font-size: 0.9rem; border-radius: 8px;",
-                        disabled: !this.isFormValid() || this.submitting,
-                        onclick: () => this.submitBooking(),
-                    },
-                    this.submitting ? "Sending request..." : "Request appointment"
+                    h("span", { class: "bf-consent-box" }, icon(["M20 6L9 17l-5-5"], 14)),
+                    h(
+                        "span",
+                        { class: "bf-consent-text" },
+                        "I understand this platform is not for medical emergencies, and I will seek emergency care directly if needed."
+                    )
                 )
+            ),
+
+            // Submit
+            h(
+                "button",
+                {
+                    class: "bf-submit",
+                    type: "button",
+                    disabled: !this.isFormValid() || this.submitting,
+                    onclick: () => this.submitBooking(),
+                },
+                this.submitting
+                    ? h("span", { class: "bf-spinner" })
+                    : icon(["M5 12h14", "M12 5l7 7-7 7"], 18),
+                h("span", null, this.submitting ? "Sending request…" : "Request appointment")
             )
         );
     }
