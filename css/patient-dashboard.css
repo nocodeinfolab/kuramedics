@@ -1786,3 +1786,30 @@
     color: var(--color-ink);
 }
 .triage-form .tf-secondary-btn:hover { background: rgba(15, 23, 42, 0.04); }
+/* Compact icon-only back button for gradient headers (mobile-first) */
+.patient-home .ph-hero__back {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.16);
+  color: var(--color-white);
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background var(--duration-fast) var(--ease-out),
+              transform var(--duration-fast) var(--ease-out);
+}
+.patient-home .ph-hero__back:hover {
+  background: rgba(255, 255, 255, 0.24);
+}
+.patient-home .ph-hero__back:active {
+  transform: scale(0.94);
+}
+.patient-home .ph-hero__back:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.9);
+  outline-offset: 2px;
+}
