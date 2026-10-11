@@ -4,6 +4,9 @@ import { Component } from "../../core/component.js";
 import { h } from "../../utils/dom.js";
 import api from "../../services/api.js";
 
+const icon = (paths, size = 18) => h("svg", { viewBox: "0 0 24 24", fill: "none", width: String(size), height: String(size), "aria-hidden": "true" }, ...paths.map(d => h("path", { d, stroke: "currentColor", "stroke-width": "1.8", "stroke-linecap": "round", "stroke-linejoin": "round" })));
+
+
 export default class DoctorProfile extends Component {
     /**
      * @param {object} patient
@@ -81,125 +84,169 @@ export default class DoctorProfile extends Component {
     render() {
         return h(
             "div",
-            { class: "dashboard-page" },
+            { class: "patient-doctor-profile" },
             this.renderHeader(),
-            this.loading
-                ? h(
-                      "div",
-                      { class: "dashboard-card text-center py-4" },
-                      h("p", { class: "dashboard-muted" }, "Loading doctor profile...")
-                  )
-                : this.loadError
-                ? h(
-                      "div",
-                      { class: "dashboard-card", style: "border-left: 4px solid #ef4444;" },
-                      h("p", { style: "color: #ef4444; margin: 0;" }, this.loadError)
-                  )
-                : this.renderProfile()
+            h(
+                "div",
+                { class: "dp-stack" },
+                this.loading
+                    ? this.renderLoading()
+                    : this.loadError
+                    ? this.renderLoadError()
+                    : this.renderProfile()
+            )
+        );
+    }
+
+    renderLoading() {
+        return h(
+            "div",
+            { "aria-busy": "true", "aria-label": "Loading doctor profile" },
+            h(
+                "div",
+                { class: "dp-card dp-hero-card" },
+                h("div", { class: "dp-skel dp-skel--avatar" }),
+                h(
+                    "div",
+                    { class: "dp-hero-body" },
+                    h("div", { class: "dp-skel dp-skel--line dp-skel--short" }),
+                    h("div", { class: "dp-skel dp-skel--line dp-skel--tiny" }),
+                    h("div", { class: "dp-skel dp-skel--line" })
+                )
+            ),
+            h(
+                "div",
+                { class: "dp-card" },
+                h("div", { class: "dp-skel dp-skel--line dp-skel--short" }),
+                h("div", { class: "dp-skel dp-skel--line" }),
+                h("div", { class: "dp-skel dp-skel--line" })
+            )
+        );
+    }
+
+    renderLoadError() {
+        return h(
+            "div",
+            { class: "dp-alert", role: "alert" },
+            h(
+                "div",
+                { class: "dp-alert-icon" },
+                icon(["M12 9v4", "M12 17h.01", "M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"], 18)
+            ),
+            h("p", { class: "dp-alert-text" }, this.loadError)
         );
     }
 
     renderHeader() {
+        const name = this.profile?.full_name || this.doctor.full_name || "Doctor";
         return h(
             "section",
-            { class: "dashboard-header", style: "display: flex; align-items: flex-start; gap: 10px;" },
-            h(
-                "button",
-                {
-                    class: "btn btn-outline",
-                    style: "padding: 0.4rem 0.6rem; font-size: 0.8rem; border-radius: 6px; flex-shrink: 0;",
-                    onclick: () => this.onBack?.(),
-                },
-                "← Back"
-            ),
+            { class: "dashboard-header patient-home" },
             h(
                 "div",
-                {},
-                h("p", { class: "dashboard-greeting" }, "Doctor Profile"),
-                h("h1", { class: "dashboard-title", style: "font-size: 1.2rem;" }, this.profile?.full_name || this.doctor.full_name || "Doctor")
+                { class: "ph-hero" },
+                h(
+                    "button",
+                    {
+                        class: "ph-hero__back",
+                        type: "button",
+                        "aria-label": "Back",
+                        onclick: () => this.onBack?.(),
+                    },
+                    icon(["M15 18l-6-6 6-6"], 18)
+                ),
+                h(
+                    "div",
+                    { class: "ph-hero__text" },
+                    h("p", { class: "dashboard-greeting" }, "Doctor profile"),
+                    h("h1", { class: "dashboard-title" }, name)
+                )
             )
         );
     }
 
     renderProfile() {
         const profile = this.profile;
+        const initial = (profile.full_name || "?").charAt(0).toUpperCase();
+        const services = Array.isArray(profile.services) ? profile.services : [];
+        const hasServices = services.length > 0;
 
         return h(
             "div",
-            { class: "services-list" },
+            { class: "dp-stack" },
 
+            // Hero card — avatar + identity
             h(
                 "div",
-                { class: "dashboard-card", style: "padding: 1.1rem; display: flex; gap: 14px; align-items: flex-start;" },
+                { class: "dp-card dp-hero-card" },
                 profile.avatar_url
                     ? h("img", {
+                          class: "dp-avatar",
                           src: profile.avatar_url,
                           alt: profile.full_name || "Doctor",
-                          style: "width: 64px; height: 64px; border-radius: 50%; object-fit: cover; flex-shrink: 0;",
                       })
-                    : h(
-                          "div",
-                          {
-                              style: "width: 64px; height: 64px; border-radius: 50%; background: var(--color-bg-muted, #f1f5f9); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 1.3rem; font-weight: 600; color: var(--color-primary, #0284c7);",
-                          },
-                          (profile.full_name || "?").charAt(0).toUpperCase()
-                      ),
+                    : h("div", { class: "dp-avatar dp-avatar--initial" }, initial),
                 h(
                     "div",
-                    { style: "min-width: 0; flex: 1;" },
-                    h("h2", { style: "margin: 0 0 6px; font-size: 1.1rem; font-weight: 600;" }, profile.full_name || "Unnamed Doctor"),
+                    { class: "dp-hero-body" },
+                    h("h2", { class: "dp-name" }, profile.full_name || "Unnamed Doctor"),
                     h(
                         "span",
-                        {
-                            class: "dashboard-badge",
-                            style: "background: var(--color-primary, #0284c7); font-size: 0.7rem; padding: 3px 9px; border-radius: 5px; white-space: nowrap;",
-                        },
+                        { class: "dp-chip" },
                         profile.specialization || "General Practice"
                     ),
                     profile.years_of_experience
                         ? h(
                               "p",
-                              { class: "dashboard-muted", style: "margin: 8px 0 0; font-size: 0.82rem;" },
+                              { class: "dp-meta" },
                               `${profile.years_of_experience} years of experience`
                           )
                         : null,
                     profile.clinic_name
-                        ? h(
-                              "p",
-                              { class: "dashboard-muted", style: "margin: 4px 0 0; font-size: 0.82rem;" },
-                              profile.clinic_name
-                          )
+                        ? h("p", { class: "dp-meta" }, profile.clinic_name)
                         : null
                 )
             ),
 
+            // About
             profile.bio
                 ? h(
                       "div",
-                      { class: "dashboard-card", style: "padding: 1.1rem;" },
-                      h("p", { class: "dashboard-muted", style: "margin: 0 0 6px; font-size: 0.78rem;" }, "About"),
-                      h("p", { style: "margin: 0; font-size: 0.88rem; line-height: 1.55;" }, profile.bio)
+                      { class: "dp-card" },
+                      h("p", { class: "dp-eyebrow" }, "About"),
+                      h("p", { class: "dp-bio" }, profile.bio)
                   )
                 : null,
 
+            // Services
             h(
                 "div",
-                { class: "dashboard-card", style: "padding: 1.1rem; display: flex; flex-direction: column; gap: 10px;" },
-                h("p", { class: "dashboard-muted", style: "margin: 0 0 4px; font-size: 0.78rem;" }, "Consultation options"),
-                profile.services?.length
-                    ? profile.services.map(service => this.renderServiceOption(service))
-                    : h("p", { class: "dashboard-muted", style: "margin: 0; font-size: 0.85rem;" }, "This doctor has no consultation services available right now.")
+                { class: "dp-card" },
+                h("p", { class: "dp-eyebrow" }, "Consultation options"),
+                hasServices
+                    ? h(
+                          "div",
+                          { class: "dp-service-list", role: "radiogroup" },
+                          services.map(service => this.renderServiceOption(service))
+                      )
+                    : h(
+                          "p",
+                          { class: "dp-empty-inline" },
+                          "This doctor has no consultation services available right now."
+                      )
             ),
 
+            // Continue
             h(
                 "button",
                 {
-                    class: "btn btn-primary",
-                    style: "padding: 0.65rem 1rem; font-size: 0.9rem; border-radius: 8px;",
-                    disabled: !profile.services?.length,
+                    class: "dp-continue",
+                    type: "button",
+                    disabled: !hasServices,
                     onclick: () => this.proceedToBooking(),
                 },
-                "Continue to booking"
+                h("span", null, "Continue to booking"),
+                icon(["M5 12h14", "M12 5l7 7-7 7"], 18)
             )
         );
     }
@@ -210,27 +257,46 @@ export default class DoctorProfile extends Component {
         const duration = this.formatDuration(service.duration_minutes);
 
         return h(
-            "div",
+            "button",
             {
-                style: `padding: 0.85rem; border: 1px solid ${isSelected ? "var(--color-primary, #0284c7)" : "var(--color-line)"}; background: ${isSelected ? "rgba(2,132,199,0.05)" : "transparent"}; border-radius: 8px; cursor: pointer;`,
+                class: `dp-service${isSelected ? " dp-service--selected" : ""}`,
+                type: "button",
+                role: "radio",
+                "aria-checked": isSelected ? "true" : "false",
                 onclick: () => this.selectService(service.id),
             },
             h(
                 "div",
-                { style: "display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;" },
+                { class: "dp-service-row" },
+                h(
+                    "span",
+                    { class: "dp-radio", "aria-hidden": "true" },
+                    h("span", { class: "dp-radio-dot" })
+                ),
                 h(
                     "div",
-                    {},
-                    h("p", { style: "margin: 0 0 4px; font-size: 0.9rem; font-weight: 600;" }, service.display_name),
-                    duration ? h("p", { class: "dashboard-muted", style: "margin: 0; font-size: 0.78rem;" }, duration) : null
-                ),
-                price ? h("p", { style: "margin: 0; font-size: 0.9rem; font-weight: 600; white-space: nowrap;" }, price) : null
+                    { class: "dp-service-body" },
+                    h(
+                        "div",
+                        { class: "dp-service-head" },
+                        h("span", { class: "dp-service-name" }, service.display_name),
+                        price ? h("span", { class: "dp-service-price" }, price) : null
+                    ),
+                    duration
+                        ? h("span", { class: "dp-service-duration" }, duration)
+                        : null
+                )
             ),
             service.description
-                ? h("p", { class: "dashboard-muted", style: "margin: 8px 0 0; font-size: 0.8rem; line-height: 1.45;" }, service.description)
+                ? h("p", { class: "dp-service-desc" }, service.description)
                 : null,
             service.availability_note
-                ? h("p", { style: "margin: 6px 0 0; font-size: 0.76rem; color: var(--color-primary, #0284c7);" }, service.availability_note)
+                ? h(
+                      "p",
+                      { class: "dp-service-note" },
+                      icon(["M12 8v4l3 2", "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20"], 14),
+                      h("span", null, service.availability_note)
+                  )
                 : null
         );
     }
