@@ -2579,3 +2579,148 @@
 }
 .doctor-messages .mp-send:active:not(:disabled) { transform: scale(0.94); }
 .doctor-messages .mp-send:disabled { opacity: 0.55; cursor: not-allowed; }
+/* ===== Doctor settings (scoped) ===== */
+.doctor-settings .sp-profile {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  margin-bottom: var(--space-5);
+  padding: var(--space-4);
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  background: var(--color-white);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform var(--duration-fast) var(--ease-out);
+}
+.doctor-settings .sp-profile:active { transform: scale(0.99); }
+.doctor-settings .sp-profile:focus-visible,
+.doctor-settings .sp-row:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.doctor-settings .sp-profile__avatar {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--color-white);
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  box-shadow: 0 0 0 3px var(--color-white), 0 0 0 5px var(--color-primary-soft);
+}
+.doctor-settings .sp-profile__img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.doctor-settings .sp-profile__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+.doctor-settings .sp-profile__name {
+  max-width: 100%;
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--color-ink);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.doctor-settings .sp-profile__spec {
+  max-width: 100%;
+  margin: 0 0 4px;
+  font-size: var(--step-small);
+  color: var(--color-ink-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Groups */
+.doctor-settings .sp-group { margin-bottom: var(--space-5); }
+.doctor-settings .sp-group__title {
+  margin: 0 0 var(--space-2) var(--space-2);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-ink-faint);
+}
+.doctor-settings .sp-list {
+  overflow: hidden;
+  background: var(--color-white);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+/* Rows */
+.doctor-settings .sp-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-4);
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--color-line);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--duration-fast) var(--ease-out);
+}
+.doctor-settings .sp-row:last-child { border-bottom: none; }
+.doctor-settings .sp-row:active:not(:disabled) { background: var(--color-bg-soft); }
+.doctor-settings .sp-row:disabled { opacity: 0.7; cursor: default; }
+
+.doctor-settings .sp-row__icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+.doctor-settings .sp-row__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.doctor-settings .sp-row__title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--color-ink);
+}
+.doctor-settings .sp-row__text {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--color-ink-faint);
+}
+.doctor-settings .sp-chevron { flex-shrink: 0; display: inline-flex; color: var(--color-ink-faint); }
+
+/* Log out */
+.doctor-settings .sp-row--danger .sp-row__icon { color: #b3261e; background: #fdecea; }
+.doctor-settings .sp-row--danger .sp-row__title { color: #b3261e; }
