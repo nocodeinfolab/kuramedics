@@ -672,3 +672,230 @@
 .patient-onboarding .dashboard-header {
   position: relative;
 }
+/* ============================================================
+   Patient Find Care — premium styles
+   Scoped under .patient-find-care with the pfc- prefix.
+   ============================================================ */
+
+.patient-find-care {
+    --pfc-border: rgba(15, 23, 42, 0.08);
+    --pfc-card: #ffffff;
+    --pfc-success: #16a34a;
+    --pfc-primary-soft: color-mix(in srgb, var(--color-primary) 10%, transparent);
+    --pfc-primary-soft-strong: color-mix(in srgb, var(--color-primary) 16%, transparent);
+    --pfc-success-soft: color-mix(in srgb, var(--pfc-success) 14%, transparent);
+}
+
+/* Layout shell for both placeholder + confirmation views */
+.patient-find-care .pfc-page {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.patient-find-care .pfc-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Back pill */
+.patient-find-care .pfc-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px 8px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--pfc-border);
+    background: #fff;
+    color: var(--color-ink);
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background var(--duration-fast) var(--ease-out),
+                transform var(--duration-fast) var(--ease-out);
+}
+
+.patient-find-care .pfc-back-btn svg {
+    color: var(--color-muted);
+    transition: transform var(--duration-fast) var(--ease-out);
+}
+
+.patient-find-care .pfc-back-btn:hover {
+    background: rgba(15, 23, 42, 0.04);
+}
+
+.patient-find-care .pfc-back-btn:hover svg {
+    transform: translateX(-2px);
+}
+
+/* Eyebrow label */
+.patient-find-care .pfc-eyebrow {
+    margin: 0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+}
+
+/* Status chip */
+.patient-find-care .pfc-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.patient-find-care .pfc-chip--info {
+    background: var(--pfc-primary-soft);
+    color: var(--color-primary);
+}
+
+/* Empty / placeholder state */
+.patient-find-care .pfc-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+    padding: 36px 22px 32px;
+    background: var(--pfc-card);
+    border: 1px solid var(--pfc-border);
+    border-radius: var(--radius-lg, 18px);
+    box-shadow: var(--shadow-card);
+}
+
+.patient-find-care .pfc-empty-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--pfc-primary-soft);
+    color: var(--color-primary);
+    margin-bottom: 2px;
+}
+
+.patient-find-care .pfc-empty-title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--color-ink);
+}
+
+.patient-find-care .pfc-empty-text {
+    margin: 0;
+    max-width: 320px;
+    font-size: 0.88rem;
+    line-height: 1.55;
+    color: var(--color-muted);
+}
+
+/* Confirmation card */
+.patient-find-care .pfc-confirm {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+    padding: 28px 22px 24px;
+    background: var(--pfc-card);
+    border: 1px solid var(--pfc-border);
+    border-radius: var(--radius-lg, 18px);
+    box-shadow: var(--shadow-card);
+}
+
+.patient-find-care .pfc-confirm-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--pfc-success-soft);
+    color: var(--pfc-success);
+    margin-bottom: 2px;
+}
+
+.patient-find-care .pfc-confirm-title {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--color-ink);
+}
+
+.patient-find-care .pfc-confirm-text {
+    margin: 0;
+    font-size: 0.92rem;
+    line-height: 1.5;
+    color: var(--color-ink);
+}
+
+/* Info callout inside the confirmation card */
+.patient-find-care .pfc-info-card {
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    text-align: left;
+    padding: 12px 14px;
+    border-radius: var(--radius-md, 14px);
+    background: var(--pfc-primary-soft);
+    border: 1px solid var(--pfc-primary-soft-strong);
+}
+
+.patient-find-care .pfc-info-icon {
+    flex-shrink: 0;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: #ffffff;
+    color: var(--color-primary);
+}
+
+.patient-find-care .pfc-info-text {
+    margin: 0;
+    font-size: 0.82rem;
+    line-height: 1.55;
+    color: var(--color-muted);
+}
+
+/* Primary pill button */
+.patient-find-care .pfc-primary-btn {
+    margin-top: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 22px;
+    border: none;
+    border-radius: 999px;
+    background: var(--color-primary);
+    color: #ffffff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    box-shadow: 0 10px 22px -10px color-mix(in srgb, var(--color-primary) 60%, transparent);
+    transition: transform var(--duration-fast) var(--ease-out),
+                box-shadow var(--duration-fast) var(--ease-out);
+}
+
+.patient-find-care .pfc-primary-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 26px -10px color-mix(in srgb, var(--color-primary) 65%, transparent);
+}
+
+.patient-find-care .pfc-primary-btn:active {
+    transform: translateY(0);
+}
