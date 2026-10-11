@@ -1813,3 +1813,11 @@
   outline: 2px solid rgba(255, 255, 255, 0.9);
   outline-offset: 2px;
 }
+/* Intro line under the fixed header — carries the full triage disclaimer
+   on the scrollable surface so it never clips on narrow viewports. */
+.triage-form .tf-intro {
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: var(--color-muted);
+}
