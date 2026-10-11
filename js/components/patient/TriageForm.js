@@ -241,18 +241,25 @@ export default class TriageForm extends Component {
 
     renderHeader() {
         return h(
-            "div",
-            { class: "tf-header" },
-            h("p", { class: "tf-eyebrow" }, "Find Care"),
-            h("h1", { class: "tf-title" }, "Tell us what's going on"),
+            "section",
+            { class: "dashboard-header patient-home" },
             h(
-                "p",
-                { class: "tf-subtitle" },
-                "A few quick questions to help us suggest the right type of doctor — this is a starting point, not a diagnosis."
+                "div",
+                { class: "ph-hero" },
+                h(
+                    "div",
+                    { class: "ph-hero__text" },
+                    h("p", { class: "dashboard-greeting" }, "Find Care"),
+                    h("h1", { class: "dashboard-title" }, "Tell us what's going on"),
+                    h(
+                        "p",
+                        { class: "dashboard-subtitle" },
+                        "A few quick questions to help us suggest the right type of doctor — this is a starting point, not a diagnosis."
+                    )
+                )
             )
         );
     }
-
     renderConversation() {
         if (this.submitting) return this.renderAnalyzing();
 
