@@ -899,3 +899,401 @@
 .patient-find-care .pfc-primary-btn:active {
     transform: translateY(0);
 }
+/* ============================================================
+   Patient Booking Form — premium styles
+   Scoped under .booking-form with the bf- prefix.
+   ============================================================ */
+
+.booking-form {
+    --bf-border: rgba(15, 23, 42, 0.08);
+    --bf-border-strong: rgba(15, 23, 42, 0.14);
+    --bf-card: #ffffff;
+    --bf-danger: #ef4444;
+    --bf-danger-soft: color-mix(in srgb, #ef4444 10%, transparent);
+    --bf-primary-soft: color-mix(in srgb, var(--color-primary) 10%, transparent);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding-bottom: 24px;
+}
+
+/* -------- Header -------- */
+.booking-form .bf-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.booking-form .bf-back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px 8px 10px;
+    border-radius: 999px;
+    border: 1px solid var(--bf-border);
+    background: #fff;
+    color: var(--color-ink);
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background var(--duration-fast) var(--ease-out);
+}
+
+.booking-form .bf-back-btn svg {
+    color: var(--color-muted);
+    transition: transform var(--duration-fast) var(--ease-out);
+}
+.booking-form .bf-back-btn:hover { background: rgba(15, 23, 42, 0.04); }
+.booking-form .bf-back-btn:hover svg { transform: translateX(-2px); }
+
+.booking-form .bf-header-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.booking-form .bf-eyebrow {
+    margin: 0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+}
+
+.booking-form .bf-title {
+    margin: 0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--color-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* -------- Stack -------- */
+.booking-form .bf-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+/* -------- Card -------- */
+.booking-form .bf-card {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 20px 18px;
+    background: var(--bf-card);
+    border: 1px solid var(--bf-border);
+    border-radius: var(--radius-lg, 18px);
+    box-shadow: var(--shadow-card);
+}
+
+/* -------- Fields -------- */
+.booking-form .bf-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.booking-form .bf-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--color-ink);
+    letter-spacing: 0.01em;
+}
+
+.booking-form .bf-hint {
+    margin: 0;
+    font-size: 0.76rem;
+    line-height: 1.5;
+    color: var(--color-muted);
+}
+
+.booking-form .bf-empty-inline {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--color-muted);
+}
+
+/* Select */
+.booking-form .bf-select-wrap { position: relative; }
+
+.booking-form .bf-select {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 38px 12px 14px;
+    border: 1px solid var(--bf-border);
+    border-radius: var(--radius-md, 14px);
+    background: #fff;
+    color: var(--color-ink);
+    font-size: 0.9rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color var(--duration-fast) var(--ease-out),
+                box-shadow var(--duration-fast) var(--ease-out);
+}
+.booking-form .bf-select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--bf-primary-soft);
+}
+.booking-form .bf-select-chevron {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    color: var(--color-muted);
+    pointer-events: none;
+    display: inline-flex;
+}
+
+/* Input */
+.booking-form .bf-input-wrap { position: relative; }
+
+.booking-form .bf-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 14px;
+    border: 1px solid var(--bf-border);
+    border-radius: var(--radius-md, 14px);
+    background: #fff;
+    color: var(--color-ink);
+    font-size: 0.9rem;
+    font-family: inherit;
+    transition: border-color var(--duration-fast) var(--ease-out),
+                box-shadow var(--duration-fast) var(--ease-out);
+}
+.booking-form .bf-input--with-icon { padding-left: 40px; }
+.booking-form .bf-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--bf-primary-soft);
+}
+.booking-form .bf-input-icon {
+    position: absolute;
+    top: 50%;
+    left: 12px;
+    transform: translateY(-50%);
+    color: var(--color-muted);
+    display: inline-flex;
+    pointer-events: none;
+}
+
+/* -------- Fee card -------- */
+.booking-form .bf-fee-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    border-radius: var(--radius-md, 14px);
+    background: var(--bf-primary-soft);
+    border: 1px solid color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
+.booking-form .bf-fee-icon {
+    flex-shrink: 0;
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: #fff;
+    color: var(--color-primary);
+}
+.booking-form .bf-fee-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+.booking-form .bf-fee-label {
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+.booking-form .bf-fee-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-ink);
+    letter-spacing: -0.01em;
+}
+
+/* -------- Triage note -------- */
+.booking-form .bf-note {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 12px 14px;
+    border-radius: var(--radius-md, 14px);
+    background: rgba(15, 23, 42, 0.03);
+    border: 1px solid var(--bf-border);
+}
+.booking-form .bf-note-icon {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: #fff;
+    color: var(--color-muted);
+    border: 1px solid var(--bf-border);
+}
+.booking-form .bf-note-text {
+    margin: 0;
+    font-size: 0.82rem;
+    line-height: 1.55;
+    color: var(--color-muted);
+}
+
+/* -------- Consent -------- */
+.booking-form .bf-consent {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 0.82rem;
+    line-height: 1.55;
+    color: var(--color-ink);
+    cursor: pointer;
+    padding: 2px 0;
+}
+.booking-form .bf-checkbox {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    width: 0;
+    height: 0;
+}
+.booking-form .bf-consent-box {
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    margin-top: 1px;
+    border-radius: 6px;
+    border: 1.5px solid var(--bf-border-strong);
+    background: #fff;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    transition: background var(--duration-fast) var(--ease-out),
+                border-color var(--duration-fast) var(--ease-out);
+}
+.booking-form .bf-consent-box svg {
+    opacity: 0;
+    transform: scale(0.6);
+    transition: opacity var(--duration-fast) var(--ease-out),
+                transform var(--duration-fast) var(--ease-out);
+}
+.booking-form .bf-checkbox:checked + .bf-consent-box {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+}
+.booking-form .bf-checkbox:checked + .bf-consent-box svg {
+    opacity: 1;
+    transform: scale(1);
+}
+.booking-form .bf-checkbox:focus-visible + .bf-consent-box {
+    box-shadow: 0 0 0 3px var(--bf-primary-soft);
+}
+.booking-form .bf-consent-text { flex: 1; }
+
+/* -------- Alerts -------- */
+.booking-form .bf-alert {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 12px 14px;
+    border-radius: var(--radius-md, 14px);
+}
+.booking-form .bf-alert--danger {
+    background: var(--bf-danger-soft);
+    border: 1px solid color-mix(in srgb, #ef4444 22%, transparent);
+}
+.booking-form .bf-alert-icon {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: #fff;
+    color: var(--bf-danger);
+}
+.booking-form .bf-alert-text {
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--color-ink);
+}
+
+/* -------- Submit -------- */
+.booking-form .bf-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 22px;
+    border: none;
+    border-radius: 999px;
+    background: var(--color-primary);
+    color: #fff;
+    font-size: 0.92rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    box-shadow: 0 10px 22px -10px color-mix(in srgb, var(--color-primary) 60%, transparent);
+    transition: transform var(--duration-fast) var(--ease-out),
+                box-shadow var(--duration-fast) var(--ease-out),
+                background var(--duration-fast) var(--ease-out);
+}
+.booking-form .bf-submit:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 26px -10px color-mix(in srgb, var(--color-primary) 65%, transparent);
+}
+.booking-form .bf-submit:active:not(:disabled) { transform: translateY(0); }
+.booking-form .bf-submit:disabled {
+    background: color-mix(in srgb, var(--color-ink) 8%, transparent);
+    color: color-mix(in srgb, var(--color-ink) 40%, transparent);
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+/* -------- Spinner -------- */
+.booking-form .bf-spinner {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.45);
+    border-top-color: #fff;
+    animation: bf-spin 0.7s linear infinite;
+    display: inline-block;
+}
+@keyframes bf-spin { to { transform: rotate(360deg); } }
+
+/* -------- Skeleton -------- */
+.booking-form .bf-skel {
+    border-radius: 8px;
+    background: linear-gradient(90deg,
+        rgba(15, 23, 42, 0.06) 0%,
+        rgba(15, 23, 42, 0.10) 50%,
+        rgba(15, 23, 42, 0.06) 100%);
+    background-size: 200% 100%;
+    animation: bf-skel-shine 1.4s ease-in-out infinite;
+}
+.booking-form .bf-skel--line { height: 14px; width: 40%; }
+.booking-form .bf-skel--field { height: 46px; border-radius: 14px; }
+.booking-form .bf-skel--btn { height: 48px; border-radius: 999px; margin-top: 4px; }
+@keyframes bf-skel-shine {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
