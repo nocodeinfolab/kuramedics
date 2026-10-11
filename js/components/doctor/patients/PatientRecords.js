@@ -3,6 +3,7 @@
 import { Component } from "../../../core/component.js";
 import { h } from "../../../utils/dom.js";
 import api from "../../../services/api.js";
+import { captureFocus, restoreFocus } from "../../../utils/focus.js";
 
 const SECTION_ORDER = ["Outcome", "Plan", "Follow-up"];
 const PATIENTS_PAGE_LIMIT = 20;
@@ -118,14 +119,12 @@ export default class PatientRecords extends Component {
 
     setSearchTerm(term) {
         this.searchTerm = term;
-        this.update(); // reflect typing immediately
-
+    
         clearTimeout(this._searchDebounceTimer);
         this._searchDebounceTimer = setTimeout(() => {
             this.loadPatients({ reset: true });
         }, 350);
     }
-
     async selectPatient(patientId) {
         if (this.selectedPatientId === patientId) {
             this.selectedPatientId = null;
@@ -244,7 +243,9 @@ export default class PatientRecords extends Component {
             { class: "dashboard-page queue-page doctor-records" },
             this.renderHeader(),
             this.renderAlerts(),
-            this.loading ? this.renderSkeleton() : this.renderContent()
+            this.loading
+                ? h("div", { class: "services-list" }, this.renderSearch(), this.renderSkeleton())
+                : this.renderContent()
         );
     }
     
@@ -323,6 +324,7 @@ export default class PatientRecords extends Component {
             h("input", {
                 type: "text",
                 class: "pr-search__input",
+                "data-focus-key": "search",
                 placeholder: "Search by patient name or email...",
                 "aria-label": "Search patients",
                 value: this.searchTerm,
@@ -599,7 +601,9 @@ export default class PatientRecords extends Component {
 
     update() {
         if (!this.el) return;
+        const focus = captureFocus(this.el);
         const newTree = this.render();
         this.el.replaceChildren(...(Array.isArray(newTree) ? newTree : [newTree]).flat());
+        restoreFocus(this.el, focus);
     }
 }
