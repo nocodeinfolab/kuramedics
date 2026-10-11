@@ -3,6 +3,7 @@
 import { Component } from "../../../core/component.js";
 import { h } from "../../../utils/dom.js";
 import api from "../../../services/api.js";
+import { captureFocus, restoreFocus } from "../../../utils/focus.js";
 
 const POLL_INTERVAL_MS = 60000; // safety-net fallback; live delivery is via socket
 
@@ -360,14 +361,28 @@ export default class MessagingPage extends Component {
 
     setSearchTerm(term) {
         this.searchTerm = term;
-        this.update();
     
         clearTimeout(this._searchDebounceTimer);
         this._searchDebounceTimer = setTimeout(() => {
             this.loadConversations({ reset: true });
         }, 350);
     }
-
+    renderSearchBox() {
+        return h(
+            "div",
+            { class: "mp-search" },
+            icon(MI.search, 18),
+            h("input", {
+                type: "text",
+                class: "mp-search__input",
+                "data-focus-key": "search",
+                placeholder: "Search by patient name...",
+                "aria-label": "Search conversations",
+                value: this.searchTerm,
+                oninput: e => this.setSearchTerm(e.target.value),
+            })
+        );
+    }
     // ---------- Formatting ----------
 
     formatDateTime(dateString) {
@@ -413,7 +428,7 @@ export default class MessagingPage extends Component {
             this.view === "list" ? this.renderListHeader() : this.renderThreadHeader(),
             this.view === "list" ? this.renderListAlerts() : null,
             this.loading && this.view === "list"
-                ? this.renderListSkeleton()
+                ? h("div", { class: "services-list" }, this.renderSearchBox(), this.renderListSkeleton())
                 : this.view === "list"
                 ? this.renderConversationList()
                 : this.renderThread()
@@ -481,19 +496,7 @@ export default class MessagingPage extends Component {
         return h(
             "div",
             { class: "services-list" },
-            h(
-                "div",
-                { class: "mp-search" },
-                icon(MI.search, 18),
-                h("input", {
-                    type: "text",
-                    class: "mp-search__input",
-                    placeholder: "Search by patient name...",
-                    "aria-label": "Search conversations",
-                    value: this.searchTerm,
-                    oninput: e => this.setSearchTerm(e.target.value),
-                })
-            ),
+            this.renderSearchBox(),
             this.conversations.length === 0
                 ? h(
                       "div",
@@ -774,6 +777,7 @@ export default class MessagingPage extends Component {
 
     update() {
         if (!this.el) return;
+        const focus = captureFocus(this.el);
     
         const threadBody = this.el.querySelector("#chat-thread-body");
         const prevScrollHeight = threadBody?.scrollHeight ?? 0;
@@ -809,5 +813,6 @@ export default class MessagingPage extends Component {
                 }
             }
         }
+        restoreFocus(this.el, focus); 
     }
-}
+}   
