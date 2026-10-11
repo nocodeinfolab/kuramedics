@@ -168,19 +168,23 @@ export default class BookingForm extends Component {
     renderHeader() {
         const name = this.doctorProfile?.full_name || this.doctor.full_name || "Doctor";
         return h(
-            "div",
-            { class: "bf-header" },
-            h(
-                "button",
-                { class: "bf-back-btn", type: "button", onclick: () => this.onBack?.() },
-                icon(["M15 18l-6-6 6-6"], 16),
-                h("span", null, "Back")
-            ),
+            "section",
+            { class: "dashboard-header patient-home" },
             h(
                 "div",
-                { class: "bf-header-text" },
-                h("p", { class: "bf-eyebrow" }, "Book appointment"),
-                h("h1", { class: "bf-title" }, name)
+                { class: "ph-hero" },
+                h(
+                    "button",
+                    { class: "ph-back-btn", type: "button", onclick: () => this.onBack?.() },
+                    icon(["M15 18l-6-6 6-6"], 16),
+                    h("span", null, "Back")
+                ),
+                h(
+                    "div",
+                    { class: "ph-hero__text" },
+                    h("p", { class: "dashboard-greeting" }, "Book appointment"),
+                    h("h1", { class: "dashboard-title" }, name)
+                )
             )
         );
     }
