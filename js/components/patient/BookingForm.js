@@ -175,9 +175,13 @@ export default class BookingForm extends Component {
                 { class: "ph-hero" },
                 h(
                     "button",
-                    { class: "ph-back-btn", type: "button", onclick: () => this.onBack?.() },
-                    icon(["M15 18l-6-6 6-6"], 16),
-                    h("span", null, "Back")
+                    {
+                        class: "ph-hero__back",
+                        type: "button",
+                        "aria-label": "Back",
+                        onclick: () => this.onBack?.(),
+                    },
+                    icon(["M15 18l-6-6 6-6"], 18)
                 ),
                 h(
                     "div",
@@ -188,7 +192,6 @@ export default class BookingForm extends Component {
             )
         );
     }
-
     renderLoading() {
         return h(
             "div",
