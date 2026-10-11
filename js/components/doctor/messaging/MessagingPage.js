@@ -13,6 +13,38 @@ const STATUS_LABELS = {
 };
 const CONVERSATIONS_PAGE_LIMIT = 20;
 const MESSAGES_PAGE_LIMIT = 30;
+const icon = (paths, size = 18) =>
+    h(
+        "svg",
+        { viewBox: "0 0 24 24", fill: "none", width: String(size), height: String(size), "aria-hidden": "true" },
+        ...paths.map(d =>
+            h("path", {
+                d,
+                stroke: "currentColor",
+                "stroke-width": "1.8",
+                "stroke-linecap": "round",
+                "stroke-linejoin": "round"
+            })
+        )
+    );
+
+const MI = {
+    search: ["M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z", "M21 21l-4.3-4.3"],
+    chat: ["M5 5.5h14a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1h-8.5l-4.2 3.6v-3.6H5a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1z"],
+    back: ["M15 18l-6-6 6-6"],
+    send: ["M22 2L11 13", "M22 2l-7 20-4-9-9-4 20-7z"],
+    alert: ["M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z", "M12 9v4", "M12 17h.01"],
+    lock: ["M6 11h12a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1z", "M8 11V8a4 4 0 0 1 8 0v3"]
+};
+
+const STATUS_TONES = { open: "success", closed: "neutral", archived: "neutral" };
+
+const getInitials = name => {
+    const parts = (name || "").trim().split(/\s+/).filter(Boolean);
+    if (parts.length === 0) return "P";
+    if (parts.length === 1) return parts[0].charAt(0).toUpperCase();
+    return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+};
 
 export default class MessagingPage extends Component {
     constructor(doctor, socket, onMessagesRead) {
@@ -355,40 +387,83 @@ export default class MessagingPage extends Component {
             minute: "2-digit",
         });
     }
+    formatDayLabel(dateString) {
+        if (!dateString) return "";
+        const date = new Date(dateString);
+        const startOfDay = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        const diff = Math.round((startOfDay(date) - startOfDay(new Date())) / 86400000);
+        if (diff === 0) return "Today";
+        if (diff === -1) return "Yesterday";
+        return date.toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+    }
+    
+    formatListTime(dateString) {
+        if (!dateString) return "";
+        return this.formatDayLabel(dateString) === "Today"
+            ? this.formatTime(dateString)
+            : new Date(dateString).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+    }
 
     // ---------- Render ----------
 
     render() {
         return h(
             "div",
-            { class: `dashboard-page queue-page ${this.view === "thread" ? "in-thread-view" : ""}` },
+            { class: `dashboard-page queue-page doctor-messages ${this.view === "thread" ? "in-thread-view" : ""}` },
             this.view === "list" ? this.renderListHeader() : this.renderThreadHeader(),
             this.view === "list" ? this.renderListAlerts() : null,
             this.loading && this.view === "list"
-                ? h(
-                      "div",
-                      { class: "dashboard-card text-center py-4" },
-                      h("p", { class: "dashboard-muted" }, "Loading messages...")
-                  )
+                ? this.renderListSkeleton()
                 : this.view === "list"
                 ? this.renderConversationList()
                 : this.renderThread()
+        );
+    }
+    
+    renderListSkeleton() {
+        return h(
+            "div",
+            { "aria-busy": "true", "aria-label": "Loading messages" },
+            ...[0, 1, 2, 3].map(() =>
+                h(
+                    "div",
+                    { class: "dashboard-card mp-conv" },
+                    h("div", { class: "skeleton skeleton--circle" }),
+                    h(
+                        "div",
+                        { class: "mp-conv__body" },
+                        h("div", { class: "skeleton skeleton--line-sm" }),
+                        h("div", { class: "skeleton skeleton--line-sm skeleton--short" })
+                    )
+                )
+            )
         );
     }
 
     // ---------- List view ----------
 
     renderListHeader() {
+        const unread = this.conversations.reduce((sum, c) => sum + (c.unread_count || 0), 0);
+    
         return h(
             "section",
             { class: "dashboard-header" },
             h("p", { class: "dashboard-greeting" }, "Doctor Messages"),
             h("h1", { class: "dashboard-title" }, "Messages"),
-            h(
-                "p",
-                { class: "dashboard-subtitle" },
-                "Secure conversations with your patients."
-            )
+            h("p", { class: "dashboard-subtitle" }, "Secure conversations with your patients."),
+            this.loading
+                ? null
+                : h(
+                      "div",
+                      { class: "dashboard-hero-meta" },
+                      h("span", { class: "hero-chip" },
+                          h("span", { class: "hero-chip__dot" }),
+                          `${this.convTotalCount} conversation${this.convTotalCount === 1 ? "" : "s"}`),
+                      unread > 0
+                          ? h("span", { class: "hero-chip hero-chip--warning" },
+                                h("span", { class: "hero-chip__dot" }), `${unread} unread`)
+                          : null
+                  )
         );
     }
 
@@ -396,8 +471,9 @@ export default class MessagingPage extends Component {
         if (!this.errorMessage) return null;
         return h(
             "div",
-            { class: "dashboard-card", style: "border-left: 4px solid #ef4444; margin-bottom: var(--space-3);" },
-            h("p", { style: "color: #ef4444; margin: 0;" }, this.errorMessage)
+            { class: "mp-alert", role: "alert" },
+            icon(MI.alert, 18),
+            h("span", {}, this.errorMessage)
         );
     }
 
@@ -407,28 +483,29 @@ export default class MessagingPage extends Component {
             { class: "services-list" },
             h(
                 "div",
-                {
-                    class: "dashboard-card",
-                    style: "padding: 0.85rem 1rem; margin-bottom: var(--space-3);",
-                },
+                { class: "mp-search" },
+                icon(MI.search, 18),
                 h("input", {
                     type: "text",
+                    class: "mp-search__input",
                     placeholder: "Search by patient name...",
+                    "aria-label": "Search conversations",
                     value: this.searchTerm,
-                    style: "width: 100%; padding: 0.55rem 0.7rem; border: 1px solid var(--color-line); border-radius: 6px; font-size: 0.88rem; box-sizing: border-box;",
                     oninput: e => this.setSearchTerm(e.target.value),
                 })
             ),
             this.conversations.length === 0
                 ? h(
                       "div",
-                      { class: "dashboard-card text-center py-4" },
+                      { class: "dashboard-card mp-empty" },
+                      h("span", { class: "mp-empty__icon" }, icon(MI.chat, 22)),
+                      h("p", { class: "mp-empty__title" }, this.searchTerm ? "No matches" : "No conversations yet"),
                       h(
                           "p",
-                          { class: "dashboard-muted" },
+                          { class: "mp-empty__text" },
                           this.searchTerm
                               ? `No conversations match "${this.searchTerm}".`
-                              : "No conversations yet."
+                              : "Conversations start once a patient's appointment is confirmed and paid."
                       )
                   )
                 : h(
@@ -444,12 +521,12 @@ export default class MessagingPage extends Component {
         if (!this.convHasMore) return null;
         return h(
             "div",
-            { class: "text-center", style: "margin-top: var(--space-2);" },
+            { class: "mp-more-wrap" },
             h(
                 "button",
                 {
-                    class: "btn btn-outline",
-                    style: "padding: 0.35rem 0.8rem; font-size: 0.75rem; border-radius: 5px;",
+                    type: "button",
+                    class: "btn btn-outline mp-more",
                     disabled: this.convLoadingMore,
                     onclick: () => this.loadConversations({ reset: false }),
                 },
@@ -461,73 +538,44 @@ export default class MessagingPage extends Component {
     renderConversationCard(conversation) {
         const unread = conversation.unread_count || 0;
         const statusLabel = STATUS_LABELS[conversation.status] || conversation.status;
-
-        const badgeColor =
-            conversation.status === "open"
-                ? "#10b981"
-                : conversation.status === "archived"
-                ? "var(--color-ink-faint)"
-                : "#64748b";
-
+        const tone = STATUS_TONES[conversation.status] || "neutral";
+        const name = conversation.patient_name || "Unknown Patient";
+    
         const previewText = conversation.last_message_deleted_at
             ? "This message was deleted"
             : conversation.last_message_type && conversation.last_message_type !== "text"
             ? `Sent a ${conversation.last_message_type}`
             : conversation.last_message_body || "No messages yet";
-
+    
         return h(
             "div",
             {
-                class: "dashboard-card service-item-card",
-                style: "padding: 0.9rem 1.1rem; margin-bottom: var(--space-3); cursor: pointer;",
+                class: `dashboard-card service-item-card mp-conv${unread > 0 ? " mp-conv--unread" : ""}`,
+                role: "button",
+                tabindex: "0",
                 onclick: () => this.openConversation(conversation),
+                onkeydown: e => {
+                    if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        this.openConversation(conversation);
+                    }
+                },
             },
+            h("div", { class: "mp-avatar" }, getInitials(name)),
             h(
                 "div",
-                { style: "display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-3);" },
-                h(
-                    "div",
-                    { style: "min-width: 0; flex: 1;" },
-                    h(
-                        "h3",
-                        { style: "margin: 0 0 4px; font-size: 1.0rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" },
-                        conversation.patient_name || "Unknown Patient"
-                    ),
-                    h(
-                        "p",
-                        {
-                            class: unread > 0 ? "" : "dashboard-muted",
-                            style: `margin: 0; font-size: 0.82rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; ${unread > 0 ? "font-weight: 600;" : ""}`,
-                        },
-                        previewText
-                    )
-                ),
-                h(
-                    "div",
-                    { style: "display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0;" },
-                    h(
-                        "span",
-                        { class: "dashboard-muted", style: "font-size: 0.72rem; white-space: nowrap;" },
-                        this.formatDateTime(conversation.last_message_created_at || conversation.created_at)
-                    ),
-                    unread > 0
-                        ? h(
-                              "span",
-                              {
-                                  class: "dashboard-badge",
-                                  style: "background: #0284c7; font-size: 0.68rem; padding: 2px 7px; border-radius: 10px;",
-                              },
-                              String(unread)
-                          )
-                        : h(
-                              "span",
-                              {
-                                  class: "dashboard-badge",
-                                  style: `background: ${badgeColor}; font-size: 0.68rem; padding: 2px 7px; border-radius: 5px;`,
-                              },
-                              statusLabel
-                          )
-                )
+                { class: "mp-conv__body" },
+                h("h3", { class: "mp-conv__name" }, name),
+                h("p", { class: "mp-conv__preview" }, previewText)
+            ),
+            h(
+                "div",
+                { class: "mp-conv__meta" },
+                h("span", { class: "mp-conv__time" },
+                    this.formatListTime(conversation.last_message_created_at || conversation.created_at)),
+                unread > 0
+                    ? h("span", { class: "mp-unread" }, unread > 9 ? "9+" : String(unread))
+                    : h("span", { class: `status-chip status-chip--${tone}` }, statusLabel)
             )
         );
     }
@@ -537,31 +585,32 @@ export default class MessagingPage extends Component {
     renderThreadHeader() {
         const conversation = this.activeConversation || {};
         const statusLabel = STATUS_LABELS[conversation.status] || conversation.status;
-
+        const tone = STATUS_TONES[conversation.status] || "neutral";
+        const name = conversation.patient_name || "Conversation";
+    
         return h(
             "section",
-            { class: "dashboard-header chat-thread-header", style: "display: flex; align-items: flex-start; gap: 10px;" },
+            { class: "dashboard-header chat-thread-header mp-thread-head" },
             h(
                 "button",
                 {
-                    class: "btn btn-outline",
-                    style: "padding: 0.4rem 0.6rem; font-size: 0.8rem; border-radius: 6px; flex-shrink: 0; color: white;",
+                    type: "button",
+                    class: "mp-back",
+                    "aria-label": "Back to messages",
                     onclick: () => this.closeThread(),
                 },
-                "← Back"
+                icon(MI.back, 20)
             ),
+            h("div", { class: "mp-avatar mp-avatar--light" }, getInitials(name)),
             h(
                 "div",
-                { style: "min-width: 0; flex: 1;" },
+                { class: "mp-thread-head__text" },
+                h("h1", { class: "dashboard-title" }, name),
                 h(
-                    "h1",
-                    { class: "dashboard-title", style: "font-size: 1.15rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" },
-                    conversation.patient_name || "Conversation"
-                ),
-                h(
-                    "p",
-                    { class: "dashboard-subtitle", style: "font-size: 0.8rem;" },
-                    `Status: ${statusLabel}`
+                    "span",
+                    { class: `hero-chip hero-chip--${tone === "success" ? "success" : "neutral"}` },
+                    h("span", { class: "hero-chip__dot" }),
+                    statusLabel
                 )
             )
         );
@@ -570,33 +619,28 @@ export default class MessagingPage extends Component {
     renderThread() {
         return h(
             "div",
-            { 
-                class: "dashboard-card chat-thread-card", 
-                style: "padding: 0; display: flex; flex-direction: column; height: calc(100dvh - 320px); min-height: 290px; overflow: hidden;" 
-            },
+            { class: "dashboard-card chat-thread-card mp-thread" },
             this.renderThreadStatusBar(),
             this.messagesError
                 ? h(
                       "div",
-                      { style: "padding: 0.6rem 1rem; border-bottom: 1px solid var(--color-line);" },
-                      h("p", { style: "color: #ef4444; margin: 0; font-size: 0.82rem;" }, this.messagesError)
+                      { class: "mp-thread__error", role: "alert" },
+                      icon(MI.alert, 16),
+                      h("span", {}, this.messagesError)
                   )
                 : null,
             h(
                 "div",
-                {
-                    id: "chat-thread-body",
-                    style: "flex: 1; min-height: 0; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 10px; -webkit-overflow-scrolling: touch;",
-                },
+                { id: "chat-thread-body", class: "mp-thread__body" },
                 this.messagesHasMore
                     ? h(
                           "div",
-                          { class: "text-center" },
+                          { class: "mp-more-wrap" },
                           h(
                               "button",
                               {
-                                  class: "btn btn-outline",
-                                  style: "padding: 0.3rem 0.7rem; font-size: 0.75rem; border-radius: 5px;",
+                                  type: "button",
+                                  class: "btn btn-outline mp-more",
                                   disabled: this.messagesLoadingOlder,
                                   onclick: () => {
                                       this._justLoadedOlder = true;
@@ -608,27 +652,53 @@ export default class MessagingPage extends Component {
                       )
                     : null,
                 this.messagesLoading
-                    ? h("p", { class: "dashboard-muted text-center" }, "Loading conversation...")
+                    ? h(
+                          "div",
+                          { "aria-busy": "true", class: "mp-thread__loading" },
+                          h("div", { class: "skeleton skeleton--line" }),
+                          h("div", { class: "skeleton skeleton--line skeleton--short" })
+                      )
                     : this.messages.length === 0
-                    ? h("p", { class: "dashboard-muted text-center" }, "No messages yet. Say hello.")
-                    : this.messages.map(message => this.renderMessageBubble(message))
+                    ? h(
+                          "div",
+                          { class: "mp-thread__empty" },
+                          h("span", { class: "mp-empty__icon" }, icon(MI.chat, 22)),
+                          h("p", { class: "mp-empty__title" }, "No messages yet"),
+                          h("p", { class: "mp-empty__text" }, "Say hello to start the conversation.")
+                      )
+                    : this.renderMessageList()
             ),
             this.renderComposer()
         );
     }
-
+    
+    renderMessageList() {
+        const out = [];
+        let lastDay = null;
+    
+        this.messages.forEach(message => {
+            const day = new Date(message.created_at).toDateString();
+            if (day !== lastDay) {
+                out.push(h("div", { class: "mp-day" }, h("span", {}, this.formatDayLabel(message.created_at))));
+                lastDay = day;
+            }
+            out.push(this.renderMessageBubble(message));
+        });
+    
+        return out;
+    }
+    
     renderThreadStatusBar() {
         const conversation = this.activeConversation || {};
         if (conversation.status === "open") return null;
-
+    
         return h(
             "div",
-            {
-                style: "padding: 0.6rem 1rem; border-bottom: 1px solid var(--color-line); background: rgba(2,132,199,0.04); display: flex; justify-content: space-between; align-items: center; gap: 10px;",
-            },
+            { class: "mp-status-bar" },
+            h("span", { class: "mp-status-bar__icon" }, icon(MI.lock, 16)),
             h(
                 "p",
-                { class: "dashboard-muted", style: "margin: 0; font-size: 0.8rem;" },
+                { class: "mp-status-bar__text" },
                 conversation.status === "closed"
                     ? "This conversation is closed."
                     : "This conversation is archived."
@@ -636,8 +706,8 @@ export default class MessagingPage extends Component {
             h(
                 "button",
                 {
-                    class: "btn btn-outline",
-                    style: "padding: 0.35rem 0.7rem; font-size: 0.78rem; border-radius: 6px;",
+                    type: "button",
+                    class: "btn btn-outline mp-reopen",
                     disabled: this.statusActionLoading,
                     onclick: () => this.setConversationStatus("open"),
                 },
@@ -645,49 +715,41 @@ export default class MessagingPage extends Component {
             )
         );
     }
-
+    
     renderMessageBubble(message) {
         const isMine = message.sender_role === "doctor";
         const isDeleted = !!message.deleted_at;
-
+    
         return h(
             "div",
-            { style: `display: flex; flex-direction: column; align-items: ${isMine ? "flex-end" : "flex-start"};` },
+            { class: `mp-msg ${isMine ? "mp-msg--mine" : "mp-msg--theirs"}` },
             h(
                 "div",
-                {
-                    style: `max-width: 78%; padding: 0.55rem 0.8rem; border-radius: 12px; font-size: 0.88rem; line-height: 1.45; ${
-                        isMine
-                            ? "background: var(--color-primary, #0284c7); color: #fff; border-bottom-right-radius: 3px;"
-                            : "background: var(--color-bg-muted, #f1f5f9); color: inherit; border-bottom-left-radius: 3px;"
-                    } ${isDeleted ? "font-style: italic; opacity: 0.7;" : ""}`,
-                },
+                { class: `mp-bubble${isDeleted ? " mp-bubble--deleted" : ""}` },
                 isDeleted ? "This message was deleted" : (message.body || "")
             ),
             h(
                 "span",
-                { class: "dashboard-muted", style: "font-size: 0.68rem; margin-top: 3px;" },
+                { class: "mp-time" },
                 `${this.formatTime(message.created_at)}${message.is_edited ? " · edited" : ""}`
             )
         );
     }
-
+    
     renderComposer() {
         const conversation = this.activeConversation || {};
         const isClosed = conversation.status === "closed";
-
+    
         return h(
             "div",
-            { 
-                class: "chat-composer",
-                style: "border-top: 1px solid var(--color-line); padding: 0.75rem; display: flex; gap: 8px; align-items: flex-end; background: var(--color-bg-card, #ffffff); zone-index: 10;" 
-            },
+            { class: "chat-composer mp-composer" },
             h("textarea", {
                 rows: 1,
+                class: "mp-composer__input",
+                "aria-label": "Message",
                 placeholder: isClosed ? "Reopen the conversation to send a message" : "Type a message...",
                 value: this.messageDraft,
                 disabled: isClosed || this.sending,
-                style: "flex: 1; padding: 0.55rem 0.7rem; border: 1px solid var(--color-line); border-radius: 8px; font-size: 0.88rem; font-family: inherit; resize: none; box-sizing: border-box; max-height: 100px;",
                 oninput: e => this.setMessageDraft(e.target.value),
                 onkeydown: e => {
                     if (e.key === "Enter" && !e.shiftKey) {
@@ -699,15 +761,13 @@ export default class MessagingPage extends Component {
             h(
                 "button",
                 {
-                    class: "btn btn-primary",
-                    style: "padding: 0.55rem 1rem; font-size: 0.85rem; border-radius: 8px; flex-shrink: 0;",
-                    // Always active except while a send is in flight or the
-                    // conversation is closed — empty-body and closed-thread
-                    // sends are still guarded inside sendMessage() itself.
+                    type: "button",
+                    class: "mp-send",
+                    "aria-label": "Send message",
                     disabled: isClosed || this.sending,
                     onclick: () => this.sendMessage(),
                 },
-                this.sending ? "Sending..." : "Send"
+                this.sending ? h("span", { class: "btn-spinner" }) : icon(MI.send, 18)
             )
         );
     }
