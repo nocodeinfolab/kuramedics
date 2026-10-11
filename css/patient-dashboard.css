@@ -1821,3 +1821,440 @@
     line-height: 1.55;
     color: var(--color-muted);
 }
+/* ============================================================
+   Patient Doctor List — premium browse
+   Scoped under .patient-doctor-list with the dl- prefix.
+   ============================================================ */
+
+.patient-doctor-list {
+    --dl-border: rgba(15, 23, 42, 0.08);
+    --dl-border-strong: rgba(15, 23, 42, 0.14);
+    --dl-card: #ffffff;
+    --dl-danger: #ef4444;
+    --dl-danger-soft: color-mix(in srgb, #ef4444 10%, transparent);
+    --dl-primary-soft: color-mix(in srgb, var(--color-primary) 10%, transparent);
+    padding-bottom: 24px;
+}
+
+/* -------- Stack -------- */
+.patient-doctor-list .dl-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* -------- Triage suggestion banner -------- */
+.patient-doctor-list .dl-triage-banner {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 12px 14px;
+    border-radius: var(--radius-md, 14px);
+    background: var(--dl-primary-soft);
+    border: 1px solid color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
+.patient-doctor-list .dl-triage-icon {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: #ffffff;
+    color: var(--color-primary);
+}
+.patient-doctor-list .dl-triage-text {
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--color-ink);
+}
+.patient-doctor-list .dl-triage-text strong {
+    color: var(--color-primary);
+    font-weight: 700;
+}
+
+/* -------- Filters -------- */
+.patient-doctor-list .dl-filters {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Select */
+.patient-doctor-list .dl-select-wrap { position: relative; }
+
+.patient-doctor-list .dl-select {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 38px 12px 14px;
+    border: 1px solid var(--dl-border);
+    border-radius: var(--radius-md, 14px);
+    background: #ffffff;
+    color: var(--color-ink);
+    font-size: 0.9rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: border-color var(--duration-fast) var(--ease-out),
+                box-shadow var(--duration-fast) var(--ease-out);
+}
+.patient-doctor-list .dl-select:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--dl-primary-soft);
+}
+.patient-doctor-list .dl-select-chevron {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    color: var(--color-muted);
+    pointer-events: none;
+    display: inline-flex;
+}
+
+/* Search row */
+.patient-doctor-list .dl-search-row {
+    display: flex;
+    gap: 8px;
+}
+
+.patient-doctor-list .dl-search-wrap {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+}
+.patient-doctor-list .dl-search-icon {
+    position: absolute;
+    top: 50%;
+    left: 12px;
+    transform: translateY(-50%);
+    color: var(--color-muted);
+    display: inline-flex;
+    pointer-events: none;
+}
+.patient-doctor-list .dl-search-input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 14px 12px 40px;
+    border: 1px solid var(--dl-border);
+    border-radius: var(--radius-md, 14px);
+    background: #ffffff;
+    color: var(--color-ink);
+    font-size: 0.9rem;
+    font-family: inherit;
+    transition: border-color var(--duration-fast) var(--ease-out),
+                box-shadow var(--duration-fast) var(--ease-out);
+}
+.patient-doctor-list .dl-search-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--dl-primary-soft);
+}
+.patient-doctor-list .dl-search-input::placeholder { color: var(--color-muted); }
+
+.patient-doctor-list .dl-search-btn {
+    flex-shrink: 0;
+    padding: 0 18px;
+    height: 46px;
+    border: none;
+    border-radius: var(--radius-md, 14px);
+    background: var(--color-primary);
+    color: #ffffff;
+    font-size: 0.88rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform var(--duration-fast) var(--ease-out),
+                box-shadow var(--duration-fast) var(--ease-out);
+    box-shadow: 0 8px 18px -10px color-mix(in srgb, var(--color-primary) 60%, transparent);
+}
+.patient-doctor-list .dl-search-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 22px -10px color-mix(in srgb, var(--color-primary) 65%, transparent);
+}
+.patient-doctor-list .dl-search-btn:active { transform: translateY(0); }
+
+/* -------- Doctor list -------- */
+.patient-doctor-list .dl-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.patient-doctor-list .dl-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 16px;
+    text-align: left;
+    width: 100%;
+    box-sizing: border-box;
+    background: var(--dl-card);
+    border: 1px solid var(--dl-border);
+    border-radius: var(--radius-lg, 18px);
+    box-shadow: var(--shadow-card);
+    cursor: pointer;
+    font: inherit;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform var(--duration-fast) var(--ease-out),
+                box-shadow var(--duration-fast) var(--ease-out);
+}
+.patient-doctor-list .dl-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 28px -14px rgba(15, 23, 42, 0.18);
+}
+.patient-doctor-list .dl-card:active { transform: translateY(0); }
+.patient-doctor-list .dl-card:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+.patient-doctor-list .dl-card-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.patient-doctor-list .dl-avatar {
+    flex-shrink: 0;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+.patient-doctor-list .dl-avatar--initial {
+    display: grid;
+    place-items: center;
+    background: var(--dl-primary-soft);
+    color: var(--color-primary);
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.patient-doctor-list .dl-card-body {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.patient-doctor-list .dl-name {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -0.005em;
+    color: var(--color-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.patient-doctor-list .dl-chip {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: var(--dl-primary-soft);
+    color: var(--color-primary);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.patient-doctor-list .dl-meta {
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    color: var(--color-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.patient-doctor-list .dl-chevron {
+    flex-shrink: 0;
+    align-self: center;
+    color: var(--color-muted);
+    display: inline-flex;
+    transition: transform var(--duration-fast) var(--ease-out);
+}
+.patient-doctor-list .dl-card:hover .dl-chevron {
+    transform: translateX(2px);
+    color: var(--color-primary);
+}
+
+.patient-doctor-list .dl-bio {
+    margin: 0;
+    font-size: 0.84rem;
+    line-height: 1.55;
+    color: var(--color-ink-soft, var(--color-ink));
+    display: -webkit-box;
+    -webkit-line-clamp: 4;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.patient-doctor-list .dl-bio-more {
+    color: var(--color-primary);
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* -------- Empty -------- */
+.patient-doctor-list .dl-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+    padding: 32px 22px 28px;
+    background: var(--dl-card);
+    border: 1px solid var(--dl-border);
+    border-radius: var(--radius-lg, 18px);
+    box-shadow: var(--shadow-card);
+}
+.patient-doctor-list .dl-empty-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--dl-primary-soft);
+    color: var(--color-primary);
+}
+.patient-doctor-list .dl-empty-title {
+    margin: 4px 0 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-ink);
+}
+.patient-doctor-list .dl-empty-text {
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--color-muted);
+}
+
+/* -------- Load more -------- */
+.patient-doctor-list .dl-load-more-wrap {
+    display: flex;
+    justify-content: center;
+    padding: 6px 0 12px;
+}
+.patient-doctor-list .dl-load-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 22px;
+    border: 1px solid var(--dl-border);
+    border-radius: 999px;
+    background: #ffffff;
+    color: var(--color-ink);
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background var(--duration-fast) var(--ease-out),
+                border-color var(--duration-fast) var(--ease-out);
+}
+.patient-doctor-list .dl-load-more:hover:not(:disabled) {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+.patient-doctor-list .dl-load-more:disabled { opacity: 0.7; cursor: progress; }
+
+/* -------- Error -------- */
+.patient-doctor-list .dl-alert {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 12px 14px;
+    border-radius: var(--radius-md, 14px);
+    background: var(--dl-danger-soft);
+    border: 1px solid color-mix(in srgb, #ef4444 22%, transparent);
+}
+.patient-doctor-list .dl-alert-icon {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: #ffffff;
+    color: var(--dl-danger);
+}
+.patient-doctor-list .dl-alert-text {
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--color-ink);
+}
+
+/* -------- Spinner -------- */
+.patient-doctor-list .dl-spinner {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid rgba(15, 23, 42, 0.18);
+    border-top-color: var(--color-primary);
+    animation: dl-spin 0.7s linear infinite;
+    display: inline-block;
+}
+@keyframes dl-spin { to { transform: rotate(360deg); } }
+
+/* -------- Skeleton -------- */
+.patient-doctor-list .dl-card--skeleton {
+    pointer-events: none;
+    cursor: default;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 12px;
+}
+.patient-doctor-list .dl-skel-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+.patient-doctor-list .dl-skel {
+    border-radius: 6px;
+    background: linear-gradient(90deg,
+        rgba(15, 23, 42, 0.06) 0%,
+        rgba(15, 23, 42, 0.10) 50%,
+        rgba(15, 23, 42, 0.06) 100%);
+    background-size: 200% 100%;
+    animation: dl-skel-shine 1.4s ease-in-out infinite;
+}
+.patient-doctor-list .dl-skel--avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+.patient-doctor-list .dl-skel--line { height: 12px; }
+.patient-doctor-list .dl-skel--short { width: 55%; }
+.patient-doctor-list .dl-skel--tiny { width: 32%; height: 10px; }
+@keyframes dl-skel-shine {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* -------- Very small screens -------- */
+@media (max-width: 360px) {
+    .patient-doctor-list .dl-search-btn { padding: 0 14px; font-size: 0.82rem; }
+    .patient-doctor-list .dl-avatar { width: 46px; height: 46px; }
+    .patient-doctor-list .dl-name { font-size: 0.95rem; }
+}
