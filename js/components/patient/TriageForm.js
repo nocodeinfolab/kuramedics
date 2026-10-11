@@ -4,6 +4,9 @@ import { Component } from "../../core/component.js";
 import { h } from "../../utils/dom.js";
 import api from "../../services/api.js";
 
+const icon = (paths, size = 18) => h("svg", { viewBox: "0 0 24 24", fill: "none", width: String(size), height: String(size), "aria-hidden": "true" }, ...paths.map(d => h("path", { d, stroke: "currentColor", "stroke-width": "1.8", "stroke-linecap": "round", "stroke-linejoin": "round" })));
+
+
 const URGENCY_LABELS = {
     low: "Low urgency",
     medium: "Medium urgency",
@@ -230,51 +233,40 @@ export default class TriageForm extends Component {
     render() {
         return h(
             "div",
-            { class: "dashboard-page" },
-            h(
-                "section",
-                { class: "dashboard-header" },
-                h("p", { class: "dashboard-greeting" }, "Find Care"),
-                h("h1", { class: "dashboard-title" }, "Tell us what's going on"),
-                h(
-                    "p",
-                    { class: "dashboard-subtitle" },
-                    "A few quick questions to help us suggest the right type of doctor — this is a starting point, not a diagnosis."
-                )
-            ),
+            { class: "triage-form" },
+            this.renderHeader(),
             this.result ? this.renderResult() : this.renderConversation()
         );
     }
 
+    renderHeader() {
+        return h(
+            "div",
+            { class: "tf-header" },
+            h("p", { class: "tf-eyebrow" }, "Find Care"),
+            h("h1", { class: "tf-title" }, "Tell us what's going on"),
+            h(
+                "p",
+                { class: "tf-subtitle" },
+                "A few quick questions to help us suggest the right type of doctor — this is a starting point, not a diagnosis."
+            )
+        );
+    }
+
     renderConversation() {
-        if (this.submitting) {
-            return h(
-                "div",
-                { class: "dashboard-card text-center py-4" },
-                h("p", { class: "dashboard-muted" }, "Analyzing what you've told us...")
-            );
-        }
+        if (this.submitting) return this.renderAnalyzing();
 
         return h(
             "div",
-            { class: "services-list" },
-            this.error
-                ? h(
-                      "div",
-                      { class: "dashboard-card", style: "border-left: 4px solid #ef4444; margin-bottom: var(--space-3);" },
-                      h("p", { style: "color: #ef4444; margin: 0;" }, this.error)
-                  )
-                : null,
+            { class: "tf-stack" },
+            this.error ? this.renderError(this.error) : null,
             h(
                 "div",
-                { class: "dashboard-card", style: "padding: 1.1rem; display: flex; flex-direction: column; gap: 12px;" },
+                { class: "tf-chat-card" },
                 this.renderStepProgress(),
                 h(
                     "div",
-                    {
-                        id: "triage-transcript",
-                        style: "display: flex; flex-direction: column; gap: 10px; max-height: 50vh; overflow-y: auto; scroll-behavior: smooth;",
-                    },
+                    { id: "triage-transcript", class: "tf-transcript" },
                     this.steps.slice(0, this.stepIndex).map(step => this.renderExchangeBubble(step)),
                     this.showingTyping ? this.renderTypingIndicator() : null,
                     !this.showingTyping && !this.matching ? this.renderCurrentQuestionBubble() : null
@@ -285,77 +277,112 @@ export default class TriageForm extends Component {
                 ? h(
                       "button",
                       {
-                          class: "btn btn-outline",
-                          style: "padding: 0.55rem 1rem; font-size: 0.85rem; border-radius: 8px;",
+                          class: "tf-skip-btn",
+                          type: "button",
                           onclick: () => this.skipToAllDoctors(),
                       },
-                      "Skip — browse all doctors instead"
+                      icon(["M9 18l6-6-6-6"], 16),
+                      h("span", null, "Skip — browse all doctors instead")
                   )
                 : null
         );
     }
 
+    renderAnalyzing() {
+        return h(
+            "div",
+            { class: "tf-chat-card tf-analyzing" },
+            h(
+                "div",
+                { class: "tf-analyzing-icon" },
+                icon(["M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z"], 22)
+            ),
+            h("p", { class: "tf-analyzing-title" }, "Analyzing what you've told us"),
+            h("p", { class: "tf-analyzing-text" }, "This will only take a moment."),
+            h("div", { class: "tf-analyzing-bar" }, h("span"))
+        );
+    }
+
+    renderError(message) {
+        return h(
+            "div",
+            { class: "tf-alert tf-alert--danger", role: "alert" },
+            h(
+                "div",
+                { class: "tf-alert-icon" },
+                icon(["M12 9v4", "M12 17h.01", "M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"], 18)
+            ),
+            h("p", { class: "tf-alert-text" }, message)
+        );
+    }
+
     renderStepProgress() {
         const total = this.steps.length > 1 ? this.steps.length : null;
-        return h(
-            "p",
-            { class: "dashboard-muted", style: "margin: 0; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.03em;" },
-            total ? `Step ${Math.min(this.stepIndex + 1, total)} of ${total}` : "Step 1"
-        );
+        const label = total ? `Step ${Math.min(this.stepIndex + 1, total)} of ${total}` : "Step 1";
+        return h("span", { class: "tf-step-pill" }, label);
     }
 
     renderExchangeBubble(step) {
         return h(
             "div",
-            { class: "triage-bubble-in", style: "display: flex; flex-direction: column; gap: 6px;" },
+            { class: "tf-exchange" },
+            this.renderAiBubble(step.question),
             h(
                 "div",
-                { style: "align-self: flex-start; max-width: 85%; padding: 0.6rem 0.85rem; border-radius: 12px; border-bottom-left-radius: 3px; background: var(--color-bg-muted, #f1f5f9); font-size: 0.86rem; line-height: 1.45;" },
-                step.question
-            ),
-            h(
-                "div",
-                { style: "align-self: flex-end; max-width: 85%; padding: 0.6rem 0.85rem; border-radius: 12px; border-bottom-right-radius: 3px; background: var(--color-primary, #0284c7); color: #fff; font-size: 0.86rem; line-height: 1.45;" },
-                this.answers[step.key]
+                { class: "tf-bubble-row tf-bubble-row--user tf-bubble-in" },
+                h("div", { class: "tf-bubble tf-bubble--user" }, this.answers[step.key])
             )
         );
     }
 
-    renderCurrentQuestionBubble() {
-        const step = this.steps[this.stepIndex];
+    renderAiBubble(text) {
         return h(
             "div",
-            { class: "triage-bubble-in", style: "align-self: flex-start; max-width: 85%; padding: 0.6rem 0.85rem; border-radius: 12px; border-bottom-left-radius: 3px; background: var(--color-bg-muted, #f1f5f9); font-size: 0.86rem; line-height: 1.45;" },
-            step.question
+            { class: "tf-bubble-row tf-bubble-row--ai tf-bubble-in" },
+            h(
+                "div",
+                { class: "tf-avatar tf-avatar--ai" },
+                icon(["M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z"], 14)
+            ),
+            h("div", { class: "tf-bubble tf-bubble--ai" }, text)
         );
+    }
+
+    renderCurrentQuestionBubble() {
+        return this.renderAiBubble(this.steps[this.stepIndex].question);
     }
 
     renderTypingIndicator() {
         return h(
             "div",
-            {
-                class: "triage-bubble-in",
-                style: "align-self: flex-start; display: flex; gap: 4px; padding: 0.7rem 0.9rem; border-radius: 12px; border-bottom-left-radius: 3px; background: var(--color-bg-muted, #f1f5f9);",
-            },
-            h("span", { class: "triage-typing-dot" }),
-            h("span", { class: "triage-typing-dot" }),
-            h("span", { class: "triage-typing-dot" })
+            { class: "tf-bubble-row tf-bubble-row--ai tf-bubble-in" },
+            h(
+                "div",
+                { class: "tf-avatar tf-avatar--ai" },
+                icon(["M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z"], 14)
+            ),
+            h(
+                "div",
+                { class: "tf-bubble tf-bubble--ai tf-bubble--typing" },
+                h("span", { class: "tf-typing-dot" }),
+                h("span", { class: "tf-typing-dot" }),
+                h("span", { class: "tf-typing-dot" })
+            )
         );
     }
 
     renderInputRow() {
         const step = this.steps[this.stepIndex];
         const isLastStep = this.stepIndex === this.steps.length - 1 && this.stepIndex > 0;
-        const fieldInputStyle = "padding: 0.65rem 0.8rem; border: 1px solid var(--color-line); border-radius: 8px; width: 100%; font-size: 0.9rem; box-sizing: border-box; font-family: inherit; resize: vertical;";
 
         return h(
             "div",
-            { style: "display: flex; flex-direction: column; gap: 8px;" },
+            { class: "tf-input-row" },
             h("textarea", {
                 rows: 3,
+                class: "tf-textarea",
                 placeholder: step.placeholder,
                 value: this.currentInput,
-                style: fieldInputStyle,
                 oninput: e => {
                     this.setCurrentInput(e.target.value);
                     const nextBtn = this.el?.querySelector("[data-triage-next]");
@@ -364,28 +391,30 @@ export default class TriageForm extends Component {
             }),
             h(
                 "div",
-                { style: "display: flex; gap: 8px;" },
+                { class: "tf-input-actions" },
                 this.stepIndex > 0
                     ? h(
                           "button",
                           {
-                              class: "btn btn-outline",
-                              style: "padding: 0.55rem 1rem; font-size: 0.85rem; border-radius: 8px;",
+                              class: "tf-back-btn",
+                              type: "button",
                               onclick: () => this.goBackOneStep(),
                           },
-                          "Back"
+                          icon(["M15 18l-6-6 6-6"], 16),
+                          h("span", null, "Back")
                       )
                     : null,
                 h(
                     "button",
                     {
                         "data-triage-next": "true",
-                        class: "btn btn-primary",
-                        style: "padding: 0.55rem 1rem; font-size: 0.85rem; border-radius: 8px; flex: 1;",
+                        class: "tf-next-btn",
+                        type: "button",
                         disabled: !this.currentInput.trim(),
                         onclick: () => this.advanceStep(),
                     },
-                    isLastStep ? "Continue" : "Next"
+                    h("span", null, isLastStep ? "Continue" : "Next"),
+                    icon(["M5 12h14", "M12 5l7 7-7 7"], 16)
                 )
             )
         );
@@ -395,74 +424,104 @@ export default class TriageForm extends Component {
 
     renderResult() {
         const result = this.result;
-        const urgencyColor = URGENCY_COLORS[result.urgency_level] || URGENCY_COLORS.low;
+        const urgencyTone =
+            result.urgency_level === "high" ? "danger"
+            : result.urgency_level === "medium" ? "warning"
+            : "success";
         const urgencyLabel = URGENCY_LABELS[result.urgency_level] || result.urgency_level;
 
         return h(
             "div",
-            { class: "services-list" },
-            result.red_flag
-                ? h(
-                      "div",
-                      { class: "dashboard-card", style: "border-left: 4px solid #ef4444; background: rgba(239,68,68,0.06); padding: 1rem 1.1rem;" },
-                      h("p", { style: "margin: 0 0 4px; font-size: 0.8rem; font-weight: 700; color: #ef4444; text-transform: uppercase; letter-spacing: 0.03em;" }, "Please read this first"),
-                      h("p", { style: "margin: 0; font-size: 0.9rem; line-height: 1.5;" }, result.red_flag_message || "This may be a medical emergency. Please seek urgent or emergency care.")
-                  )
-                : null,
+            { class: "tf-stack" },
+            result.red_flag ? this.renderRedFlag() : null,
             h(
                 "div",
-                { class: "dashboard-card", style: "padding: 1.1rem; display: flex; flex-direction: column; gap: 14px;" },
+                { class: "tf-result-card" },
                 h(
                     "div",
-                    { style: "display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;" },
+                    { class: "tf-result-header" },
                     h(
                         "div",
-                        {},
-                        h("p", { class: "dashboard-muted", style: "margin: 0 0 4px; font-size: 0.78rem;" }, "Suggested specialization"),
-                        h("p", { style: "margin: 0; font-size: 1.05rem; font-weight: 600;" }, result.suggested_specialization || "General Practice")
+                        { class: "tf-result-spec" },
+                        h("p", { class: "tf-result-label" }, "Suggested specialization"),
+                        h("p", { class: "tf-result-value" }, result.suggested_specialization || "General Practice")
                     ),
-                    h("span", { class: "dashboard-badge", style: `background: ${urgencyColor}; font-size: 0.7rem; padding: 3px 9px; border-radius: 5px; white-space: nowrap; flex-shrink: 0;` }, urgencyLabel)
+                    h("span", { class: `tf-chip tf-chip--${urgencyTone}` }, urgencyLabel)
                 ),
                 result.symptoms?.length
                     ? h(
                           "div",
-                          {},
-                          h("p", { class: "dashboard-muted", style: "margin: 0 0 6px; font-size: 0.78rem;" }, "Symptoms noted"),
+                          { class: "tf-result-block" },
+                          h("p", { class: "tf-result-label" }, "Symptoms noted"),
                           h(
                               "div",
-                              { style: "display: flex; flex-wrap: wrap; gap: 6px;" },
-                              result.symptoms.map(symptom =>
-                                  h("span", { style: "font-size: 0.76rem; padding: 3px 9px; border-radius: 10px; background: var(--color-bg-muted, #f1f5f9); color: var(--color-ink-faint, #64748b);" }, symptom)
-                              )
+                              { class: "tf-tags" },
+                              result.symptoms.map(symptom => h("span", { class: "tf-tag" }, symptom))
                           )
                       )
                     : null,
                 h(
                     "div",
-                    {},
-                    h("p", { class: "dashboard-muted", style: "margin: 0 0 4px; font-size: 0.78rem;" }, "Duration"),
-                    h("p", { style: "margin: 0; font-size: 0.88rem;" }, result.duration || "Not clearly stated")
+                    { class: "tf-result-block" },
+                    h("p", { class: "tf-result-label" }, "Duration"),
+                    h("p", { class: "tf-result-value-sm" }, result.duration || "Not clearly stated")
                 ),
                 h(
                     "div",
-                    {},
-                    h("p", { class: "dashboard-muted", style: "margin: 0 0 4px; font-size: 0.78rem;" }, "Summary for your doctor"),
-                    h("p", { style: "margin: 0; font-size: 0.88rem; line-height: 1.5;" }, result.patient_summary || "")
+                    { class: "tf-result-block" },
+                    h("p", { class: "tf-result-label" }, "Summary for your doctor"),
+                    h("p", { class: "tf-result-value-sm" }, result.patient_summary || "")
                 ),
-                h("p", { class: "dashboard-muted", style: "margin: 0; font-size: 0.72rem; font-style: italic;" }, "This is an AI-assisted summary to help guide you to the right doctor. It is not a diagnosis.")
+                h(
+                    "p",
+                    { class: "tf-disclaimer" },
+                    "This is an AI-assisted summary to help guide you to the right doctor. It is not a diagnosis."
+                )
             ),
             h(
                 "div",
-                { style: "display: flex; flex-direction: column; gap: 8px;" },
+                { class: "tf-actions" },
                 h(
                     "button",
-                    { class: "btn btn-primary", style: "padding: 0.65rem 1rem; font-size: 0.9rem; border-radius: 8px;", onclick: () => this.continueToDoctors() },
-                    `Find ${result.suggested_specialization || "a"} doctors`
+                    {
+                        class: "tf-primary-btn",
+                        type: "button",
+                        onclick: () => this.continueToDoctors(),
+                    },
+                    icon(["M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16", "M21 21l-4.35-4.35"], 16),
+                    h("span", null, `Find ${result.suggested_specialization || "a"} doctors`)
                 ),
                 h(
                     "button",
-                    { class: "btn btn-outline", style: "padding: 0.55rem 1rem; font-size: 0.85rem; border-radius: 8px;", onclick: () => this.startOver() },
-                    "Start over"
+                    {
+                        class: "tf-secondary-btn",
+                        type: "button",
+                        onclick: () => this.startOver(),
+                    },
+                    icon(["M3 12a9 9 0 1 0 3-6.7L3 8", "M3 3v5h5"], 16),
+                    h("span", null, "Start over")
+                )
+            )
+        );
+    }
+
+    renderRedFlag() {
+        return h(
+            "div",
+            { class: "tf-alert tf-alert--danger", role: "alert" },
+            h(
+                "div",
+                { class: "tf-alert-icon" },
+                icon(["M12 9v4", "M12 17h.01", "M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"], 18)
+            ),
+            h(
+                "div",
+                { class: "tf-alert-body" },
+                h("p", { class: "tf-alert-title" }, "Please read this first"),
+                h(
+                    "p",
+                    { class: "tf-alert-text" },
+                    this.result.red_flag_message || "This may be a medical emergency. Please seek urgent or emergency care."
                 )
             )
         );
