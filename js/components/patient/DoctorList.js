@@ -4,6 +4,8 @@ import { Component } from "../../core/component.js";
 import { h } from "../../utils/dom.js";
 import api from "../../services/api.js";
 
+const icon = (paths, size = 18) => h("svg", { viewBox: "0 0 24 24", fill: "none", width: String(size), height: String(size), "aria-hidden": "true" }, ...paths.map(d => h("path", { d, stroke: "currentColor", "stroke-width": "1.8", "stroke-linecap": "round", "stroke-linejoin": "round" })));
+
 const PAGE_LIMIT = 10;
 
 export default class DoctorList extends Component {
@@ -129,60 +131,92 @@ export default class DoctorList extends Component {
     render() {
         return h(
             "div",
-            { class: "dashboard-page queue-page" },
+            { class: "patient-doctor-list" },
             this.renderHeader(),
-            this.triageResult ? this.renderTriageBanner() : null,
-            this.errorMessage
-                ? h(
-                      "div",
-                      { class: "dashboard-card", style: "border-left: 4px solid #ef4444; margin-bottom: var(--space-3);" },
-                      h("p", { style: "color: #ef4444; margin: 0;" }, this.errorMessage)
-                  )
-                : null,
-            this.renderFilters(),
-            this.loading
-                ? h(
-                      "div",
-                      { class: "dashboard-card text-center py-4" },
-                      h("p", { class: "dashboard-muted" }, "Loading doctors...")
-                  )
-                : this.renderList(),
-            this.renderLoadMore()
+            h(
+                "div",
+                { class: "dl-stack" },
+                this.triageResult ? this.renderTriageBanner() : null,
+                this.errorMessage ? this.renderError(this.errorMessage) : null,
+                this.renderFilters(),
+                this.loading ? this.renderSkeleton() : this.renderList(),
+                this.renderLoadMore()
+            )
+        );
+    }
+
+    renderError(message) {
+        return h(
+            "div",
+            { class: "dl-alert", role: "alert" },
+            h(
+                "div",
+                { class: "dl-alert-icon" },
+                icon(["M12 9v4", "M12 17h.01", "M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"], 18)
+            ),
+            h("p", { class: "dl-alert-text" }, message)
+        );
+    }
+
+    renderSkeleton() {
+        return h(
+            "div",
+            { class: "dl-list", "aria-busy": "true", "aria-label": "Loading doctors" },
+            ...[0, 1, 2].map(() =>
+                h(
+                    "div",
+                    { class: "dl-card dl-card--skeleton" },
+                    h("div", { class: "dl-skel dl-skel--avatar" }),
+                    h(
+                        "div",
+                        { class: "dl-skel-body" },
+                        h("div", { class: "dl-skel dl-skel--line dl-skel--short" }),
+                        h("div", { class: "dl-skel dl-skel--line dl-skel--tiny" }),
+                        h("div", { class: "dl-skel dl-skel--line" })
+                    )
+                )
+            )
         );
     }
 
     renderHeader() {
         return h(
             "section",
-            { class: "dashboard-header", style: "display: flex; align-items: flex-start; gap: 10px;" },
-            h(
-                "button",
-                {
-                    class: "btn btn-outline",
-                    style: "padding: 0.4rem 0.6rem; font-size: 0.8rem; border-radius: 6px; flex-shrink: 0; color: #ffffff;",
-                    onclick: () => this.onBackToTriage?.(),
-                },
-                "← Back"
-            ),
+            { class: "dashboard-header patient-home" },
             h(
                 "div",
-                {},
-                h("p", { class: "dashboard-greeting" }, "Find Care"),
-                h("h1", { class: "dashboard-title" }, "Choose a doctor")
+                { class: "ph-hero" },
+                h(
+                    "button",
+                    {
+                        class: "ph-hero__back",
+                        type: "button",
+                        "aria-label": "Back",
+                        onclick: () => this.onBackToTriage?.(),
+                    },
+                    icon(["M15 18l-6-6 6-6"], 18)
+                ),
+                h(
+                    "div",
+                    { class: "ph-hero__text" },
+                    h("p", { class: "dashboard-greeting" }, "Find Care"),
+                    h("h1", { class: "dashboard-title" }, "Choose a doctor")
+                )
             )
         );
     }
-
     renderTriageBanner() {
         return h(
             "div",
-            {
-                class: "dashboard-card",
-                style: "padding: 0.85rem 1rem; margin-bottom: var(--space-3); background: rgba(2,132,199,0.04);",
-            },
+            { class: "dl-triage-banner" },
+            h(
+                "div",
+                { class: "dl-triage-icon" },
+                icon(["M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z"], 18)
+            ),
             h(
                 "p",
-                { style: "margin: 0; font-size: 0.85rem;" },
+                { class: "dl-triage-text" },
                 `Based on what you described, we suggest `,
                 h("strong", {}, this.triageResult.suggested_specialization || "General Practice"),
                 `. You can change this below if you'd prefer a different specialist.`
@@ -193,43 +227,56 @@ export default class DoctorList extends Component {
     renderFilters() {
         return h(
             "div",
-            {
-                class: "dashboard-card",
-                style: "display: flex; flex-direction: column; gap: 10px; padding: 0.85rem 1rem; margin-bottom: var(--space-3);",
-            },
+            { class: "dl-filters" },
             h(
-                "select",
-                {
-                    value: this.selectedSpecialization,
-                    style: "width: 100%; padding: 0.55rem 0.7rem; border: 1px solid var(--color-line); border-radius: 6px; font-size: 0.88rem; box-sizing: border-box;",
-                    onchange: e => this.setSpecialization(e.target.value),
-                },
-                h("option", { value: "" }, "All specializations"),
-                this.specializations.map(spec =>
-                    h("option", { value: spec }, spec)
-                )
+                "div",
+                { class: "dl-select-wrap" },
+                h(
+                    "select",
+                    {
+                        class: "dl-select",
+                        "aria-label": "Specialization",
+                        value: this.selectedSpecialization,
+                        onchange: e => this.setSpecialization(e.target.value),
+                    },
+                    h("option", { value: "" }, "All specializations"),
+                    this.specializations.map(spec =>
+                        h("option", { value: spec }, spec)
+                    )
+                ),
+                h("span", { class: "dl-select-chevron" }, icon(["M6 9l6 6 6-6"], 16))
             ),
             h(
                 "div",
-                { style: "display: flex; gap: 8px;" },
-                h("input", {
-                    type: "text",
-                    placeholder: "Search by doctor or clinic name...",
-                    value: this.searchTerm,
-                    style: "flex: 1; padding: 0.55rem 0.7rem; border: 1px solid var(--color-line); border-radius: 6px; font-size: 0.88rem; box-sizing: border-box;",
-                    oninput: e => this.setSearchTerm(e.target.value),
-                    onkeydown: e => {
-                        if (e.key === "Enter") this.submitSearch();
-                    },
-                }),
+                { class: "dl-search-row" },
+                h(
+                    "div",
+                    { class: "dl-search-wrap" },
+                    h(
+                        "span",
+                        { class: "dl-search-icon" },
+                        icon(["M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16", "M21 21l-4.35-4.35"], 16)
+                    ),
+                    h("input", {
+                        type: "text",
+                        class: "dl-search-input",
+                        placeholder: "Search doctor or clinic",
+                        value: this.searchTerm,
+                        oninput: e => this.setSearchTerm(e.target.value),
+                        onkeydown: e => {
+                            if (e.key === "Enter") this.submitSearch();
+                        },
+                    })
+                ),
                 h(
                     "button",
                     {
-                        class: "btn btn-outline",
-                        style: "padding: 0.5rem 0.9rem; font-size: 0.82rem; border-radius: 6px; flex-shrink: 0;",
+                        class: "dl-search-btn",
+                        type: "button",
+                        "aria-label": "Search",
                         onclick: () => this.submitSearch(),
                     },
-                    "Search"
+                    h("span", null, "Search")
                 )
             )
         );
@@ -237,94 +284,95 @@ export default class DoctorList extends Component {
 
     renderList() {
         if (this.doctors.length === 0) {
+            const filtered = this.selectedSpecialization || this.searchTerm;
             return h(
                 "div",
-                { class: "dashboard-card text-center py-4" },
+                { class: "dl-empty" },
+                h(
+                    "div",
+                    { class: "dl-empty-icon" },
+                    icon(["M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16", "M21 21l-4.35-4.35"], 22)
+                ),
                 h(
                     "p",
-                    { class: "dashboard-muted" },
-                    this.selectedSpecialization || this.searchTerm
-                        ? "No doctors match your filters right now."
-                        : "No doctors are available right now."
+                    { class: "dl-empty-title" },
+                    filtered ? "No doctors match your filters" : "No doctors available right now"
+                ),
+                h(
+                    "p",
+                    { class: "dl-empty-text" },
+                    filtered
+                        ? "Try a different specialization or clear your search."
+                        : "Please check back in a moment."
                 )
             );
         }
 
         return h(
             "div",
-            { class: "services-list" },
+            { class: "dl-list" },
             this.doctors.map(doctor => this.renderDoctorCard(doctor))
         );
     }
 
     renderDoctorCard(doctor) {
+        const initial = (doctor.full_name || "?").charAt(0).toUpperCase();
+        const bio = doctor.bio ? this.truncateBioForLines(doctor.bio) : "";
+        const showSeeMore = doctor.bio && doctor.bio.length > (45 * 5);
+
         return h(
-            "div",
+            "button",
             {
-                class: "dashboard-card service-item-card",
-                style: "padding: 1rem 1.1rem; margin-bottom: var(--space-3); cursor: pointer;",
+                class: "dl-card",
+                type: "button",
                 onclick: () => this.selectDoctor(doctor),
             },
             h(
                 "div",
-                { style: "display: flex; gap: 12px; align-items: flex-start;" },
+                { class: "dl-card-row" },
                 doctor.avatar_url
                     ? h("img", {
+                          class: "dl-avatar",
                           src: doctor.avatar_url,
                           alt: doctor.full_name || "Doctor",
-                          style: "width: 48px; height: 48px; border-radius: 50%; object-fit: cover; flex-shrink: 0;",
                       })
-                    : h(
-                          "div",
-                          {
-                              style: "width: 48px; height: 48px; border-radius: 50%; background: var(--color-bg-muted, #f1f5f9); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-weight: 600; color: var(--color-primary, #0284c7);",
-                          },
-                          (doctor.full_name || "?").charAt(0).toUpperCase()
-                      ),
+                    : h("div", { class: "dl-avatar dl-avatar--initial" }, initial),
                 h(
                     "div",
-                    { style: "min-width: 0; flex: 1;" },
-                    h(
-                        "h3",
-                        { style: "margin: 0 0 4px; font-size: 1.0rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" },
-                        doctor.full_name || "Unnamed Doctor"
-                    ),
+                    { class: "dl-card-body" },
+                    h("h3", { class: "dl-name" }, doctor.full_name || "Unnamed Doctor"),
                     h(
                         "span",
-                        {
-                            class: "dashboard-badge",
-                            style: "background: var(--color-primary, #0284c7); font-size: 0.7rem; padding: 3px 9px; border-radius: 5px; white-space: nowrap;",
-                        },
+                        { class: "dl-chip" },
                         doctor.specialization || "General Practice"
                     ),
                     doctor.years_of_experience
                         ? h(
                               "p",
-                              { class: "dashboard-muted", style: "margin: 6px 0 0; font-size: 0.8rem;" },
+                              { class: "dl-meta" },
                               `${doctor.years_of_experience} years of experience`
                           )
                         : null,
                     doctor.clinic_name
-                        ? h(
-                              "p",
-                              { class: "dashboard-muted", style: "margin: 4px 0 0; font-size: 0.8rem;" },
-                              doctor.clinic_name
-                          )
-                        : null,
-                    doctor.bio
-                        ? h(
-                              "p",
-                              { style: "margin: 8px 0 0; font-size: 0.84rem; line-height: 1.45;" },
-                              this.truncateBioForLines(doctor.bio),
-                              h(
-                                  "span",
-                                  { style: "color: var(--color-primary, #0284c7); font-weight: 600; white-space: nowrap;" },
-                                  doctor.bio.length > (45 * 5) ? "See more" : ""
-                              )
-                          )
+                        ? h("p", { class: "dl-meta" }, doctor.clinic_name)
                         : null
+                ),
+                h(
+                    "span",
+                    { class: "dl-chevron" },
+                    icon(["M9 6l6 6-6 6"], 18)
                 )
-            )
+            ),
+            bio
+                ? h(
+                      "p",
+                      { class: "dl-bio" },
+                      bio,
+                      showSeeMore
+                          ? h("span", { class: "dl-bio-more" }, "See more")
+                          : null
+                  )
+                : null
         );
     }
 
@@ -333,16 +381,19 @@ export default class DoctorList extends Component {
 
         return h(
             "div",
-            { class: "text-center", style: "margin-top: var(--space-2);" },
+            { class: "dl-load-more-wrap" },
             h(
                 "button",
                 {
-                    class: "btn btn-outline",
-                    style: "padding: 0.35rem 0.8rem; font-size: 0.75rem; border-radius: 5px;",
+                    class: "dl-load-more",
+                    type: "button",
                     disabled: this.loadingMore,
                     onclick: () => this.loadDoctors({ reset: false }),
                 },
-                this.loadingMore ? "Loading..." : "Load More"
+                this.loadingMore
+                    ? h("span", { class: "dl-spinner" })
+                    : null,
+                h("span", null, this.loadingMore ? "Loading…" : "Load more")
             )
         );
     }
