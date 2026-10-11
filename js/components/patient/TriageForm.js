@@ -250,12 +250,7 @@ export default class TriageForm extends Component {
                     "div",
                     { class: "ph-hero__text" },
                     h("p", { class: "dashboard-greeting" }, "Find Care"),
-                    h("h1", { class: "dashboard-title" }, "Tell us what's going on"),
-                    h(
-                        "p",
-                        { class: "dashboard-subtitle" },
-                        "Quick questions — not a diagnosis."
-                    )
+                    h("h1", { class: "dashboard-title" }, "Tell us what's going on")
                 )
             )
         );
