@@ -2,6 +2,8 @@ import { Component } from "../../../core/component.js";
 import { h } from "../../../utils/dom.js";
 import doctorConsultationService from "../../../services/doctorConsultationService.js";
 
+const icon = (paths, size = 18) => h("svg", { viewBox: "0 0 24 24", fill: "none", width: String(size), height: String(size), "aria-hidden": "true" }, ...paths.map(d => h("path", { d, stroke: "currentColor", "stroke-width": "1.8", "stroke-linecap": "round", "stroke-linejoin": "round" })));
+
 const SERVICE_TYPE_OPTIONS = [
     { value: "video_consultation", label: "Video Consultation" },
     { value: "voice_consultation", label: "Voice Consultation" },
@@ -161,15 +163,40 @@ export default class DoctorConsultationServicesPage extends Component {
     render() {
         return h(
             "div",
-            { class: "dashboard-page consultation-services-page" },
+            { class: "consultation-services-page" },
             this.renderHeader(),
-            this.renderAlerts(),
-            this.loading
-                ? h("div", { class: "dashboard-card text-center py-4" }, 
-                    h("p", { class: "dashboard-muted" }, "Loading consultation services...")
-                  )
-                : this.renderServiceList(),
+            h(
+                "div",
+                { class: "cs-body" },
+                this.renderAlerts(),
+                this.loading ? this.renderSkeleton() : this.renderServiceList()
+            ),
             this.isModalOpen ? this.renderModal() : null
+        );
+    }
+
+    renderSkeleton() {
+        return h(
+            "div",
+            { class: "cs-skel-stack", "aria-busy": "true", "aria-label": "Loading services" },
+            ...[0, 1].map(() =>
+                h(
+                    "div",
+                    { class: "cs-card cs-card--skeleton" },
+                    h(
+                        "div",
+                        { class: "cs-card__head" },
+                        h(
+                            "div",
+                            { class: "cs-skel-body" },
+                            h("div", { class: "cs-skel cs-skel--line cs-skel--short" }),
+                            h("div", { class: "cs-skel cs-skel--line cs-skel--tiny" })
+                        ),
+                        h("div", { class: "cs-skel cs-skel--chip" })
+                    ),
+                    h("div", { class: "cs-skel cs-skel--block" })
+                )
+            )
         );
     }
 
@@ -177,7 +204,6 @@ export default class DoctorConsultationServicesPage extends Component {
         return h(
             "section",
             { class: "dashboard-header page-hero" },
-    
             h(
                 "button",
                 {
@@ -185,16 +211,10 @@ export default class DoctorConsultationServicesPage extends Component {
                     class: "page-hero__back",
                     onclick: () => this.onBack()
                 },
-                this.renderChevronIcon(),
+                icon(["M15 18l-6-6 6-6"], 14),
                 h("span", {}, "Settings")
             ),
-    
-            h(
-                "h1",
-                { class: "page-hero__title" },
-                "Consultation Services"
-            ),
-    
+            h("h1", { class: "page-hero__title" }, "Consultation Services"),
             h(
                 "p",
                 { class: "page-hero__subtitle" },
@@ -202,35 +222,25 @@ export default class DoctorConsultationServicesPage extends Component {
             )
         );
     }
-    renderChevronIcon() {
-        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        svg.setAttribute("width", "14");
-        svg.setAttribute("height", "14");
-        svg.setAttribute("viewBox", "0 0 24 24");
-        svg.setAttribute("fill", "none");
-        svg.setAttribute("stroke", "currentColor");
-        svg.setAttribute("stroke-width", "2.5");
-        svg.setAttribute("stroke-linecap", "round");
-        svg.setAttribute("stroke-linejoin", "round");
-    
-        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
-        path.setAttribute("d", "M15 18l-6-6 6-6");
-        svg.appendChild(path);
-        return svg;
-    }
     renderAlerts() {
         const alerts = [];
         if (this.error) {
             alerts.push(
-                h("div", { class: "dashboard-card", style: "border-left: 4px solid #ef4444;" }, 
-                    h("p", { style: "color: #ef4444; margin: 0;" }, this.error)
+                h(
+                    "div",
+                    { class: "q-alert q-alert--error", role: "alert" },
+                    icon(["M12 9v4", "M12 17h.01", "M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"], 18),
+                    h("span", {}, this.error)
                 )
             );
         }
         if (this.successMsg) {
             alerts.push(
-                h("div", { class: "dashboard-card", style: "border-left: 4px solid #10b981;" }, 
-                    h("p", { style: "color: #10b981; margin: 0;" }, this.successMsg)
+                h(
+                    "div",
+                    { class: "q-alert q-alert--success", role: "status" },
+                    icon(["M20 6L9 17l-5-5"], 18),
+                    h("span", {}, this.successMsg)
                 )
             );
         }
@@ -241,275 +251,358 @@ export default class DoctorConsultationServicesPage extends Component {
         if (!this.services || this.services.length === 0) {
             return h(
                 "div",
-                { class: "dashboard-card", style: "text-align: center;" },
-                h("p", { class: "dashboard-muted" }, "No consultation services configured yet."),
+                { class: "cs-empty" },
+                h(
+                    "div",
+                    { class: "cs-empty__icon" },
+                    icon(
+                        [
+                            "M20 7h-4.18A3 3 0 0 0 13 4h-2a3 3 0 0 0-2.82 3H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z",
+                            "M9 4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1H9z",
+                            "M12 11v6",
+                            "M9 14h6"
+                        ],
+                        22
+                    )
+                ),
+                h("p", { class: "cs-empty__title" }, "No services yet"),
+                h(
+                    "p",
+                    { class: "cs-empty__text" },
+                    "Add your consultation types, rates, and availability so patients can book with you."
+                ),
                 h(
                     "button",
                     {
-                        class: "btn btn-outline",
-                        style: "margin-top: var(--space-3);",
+                        class: "cs-primary-btn",
+                        type: "button",
                         onclick: () => this.handleOpenModal()
                     },
-                    "Create your first service"
+                    icon(["M12 5v14", "M5 12h14"], 16),
+                    h("span", {}, "Create your first service")
                 )
             );
         }
 
         return h(
             "div",
-            { class: "services-list" },
+            { class: "cs-list" },
             this.services.map(service => this.renderServiceCard(service))
         );
     }
-
     renderServiceCard(service) {
         const isActive = service.is_enabled;
 
         return h(
-            "div",
-            { class: "dashboard-card service-item-card" },
+            "article",
+            { class: "cs-card" },
+
             h(
                 "div",
-                { style: "display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-3);" },
+                { class: "cs-card__head" },
                 h(
                     "div",
-                    {},
-                    h("h3", { style: "margin: 0 0 var(--space-2);" }, service.display_name),
+                    { class: "cs-card__title-wrap" },
+                    h("h3", { class: "cs-card__name" }, service.display_name || "Untitled service"),
                     h(
                         "span",
-                        { 
-                            class: "dashboard-badge",
-                            style: isActive ? "background: #10b981;" : "background: var(--color-ink-faint);"
-                        },
+                        { class: `status-chip status-chip--${isActive ? "success" : "danger"}` },
                         isActive ? "Active" : "Disabled"
                     )
                 ),
                 h(
-                    "div",
-                    { style: "display: flex; gap: var(--space-2); align-items: center;" },
-                    h(
-                        "button",
-                        {
-                            class: "btn btn-outline",
-                            style: "padding: 0.4rem 0.8rem; font-size: var(--step-small);",
-                            onclick: () => this.handleOpenModal(service)
-                        },
-                        "Edit"
-                    ),
-                    /* Status Icon Toggle Button */
-                    h(
-                        "button",
-                        {
-                            class: "btn btn-outline",
-                            title: isActive ? "Click to Disable Service" : "Click to Enable Service",
-                            ariaLabel: isActive ? "Disable Service" : "Enable Service",
-                            style: `padding: 0.4rem 0.6rem; font-size: 1.1rem; display: inline-flex; align-items: center; justify-content: center; ${
-                                isActive 
-                                    ? "color: #10b981; border-color: rgba(16, 185, 129, 0.4); background: rgba(16, 185, 129, 0.05);" 
-                                    : "color: #ef4444; border-color: rgba(239, 68, 68, 0.3); background: rgba(239, 68, 68, 0.05);"
-                            }`,
-                            onclick: () => this.handleToggleStatus(service)
-                        },
-                        isActive ? "🟢" : "🔴" // Replace with inline SVG / Icon font if preferred
+                    "button",
+                    {
+                        type: "button",
+                        class: `cs-toggle ${isActive ? "cs-toggle--on" : "cs-toggle--off"}`,
+                        "aria-label": isActive ? "Disable service" : "Enable service",
+                        title: isActive ? "Disable service" : "Enable service",
+                        onclick: () => this.handleToggleStatus(service)
+                    },
+                    icon(
+                        isActive
+                            ? ["M20 6L9 17l-5-5"]
+                            : ["M18.36 6.64a9 9 0 1 1-12.73 0", "M12 2v10"],
+                        18
                     )
                 )
             ),
-            h("p", { class: "dashboard-muted", style: "margin-top: var(--space-3);" }, service.description || "No description provided."),
-            h(
-                "div",
-                { 
-                    class: "input-group", 
-                    style: "margin-top: var(--space-4); padding-top: var(--space-3); border-top: 1px solid var(--color-line);" 
-                },
-                h("div", {}, h("strong", {}, "Duration: "), service.duration_minutes ? `${service.duration_minutes} mins` : "N/A"),
-                h("div", {}, h("strong", {}, "First-Time Rate: "), `₦${(service.first_time_price_amount || 0).toLocaleString()}`),
-                h("div", {}, h("strong", {}, "Follow-Up Rate: "), service.follow_up_price_amount !== null ? `₦${Number(service.follow_up_price_amount).toLocaleString()}` : "N/A")
-            ),
-            service.availability_note
-                ? h("p", { class: "dashboard-muted", style: "margin-top: var(--space-2); font-size: var(--step-small);" }, h("em", {}, `Note: ${service.availability_note}`))
-                : null
-        );
-    }
 
-    renderModal() {
-        return h(
-            "div",
-            { 
-                style: "position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 100; padding: var(--space-4);" 
-            },
             h(
-                "div",
-                { class: "settings-card", style: "max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto;" },
+                "p",
+                { class: "cs-card__desc" },
+                service.description || "No description provided."
+            ),
+
+            h(
+                "dl",
+                { class: "cs-card__details" },
                 h(
                     "div",
-                    { style: "display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-4);" },
-                    h("h2", { style: "margin: 0;" }, this.editingServiceId ? "Edit Consultation Service" : "Add Consultation Service"),
+                    { class: "cs-detail" },
+                    h("dt", { class: "cs-detail__label" }, "Duration"),
                     h(
-                        "button", 
-                        { 
-                            class: "btn btn-outline", 
-                            style: "padding: 0.2rem 0.6rem; font-size: 1.2rem; border: none;",
-                            onclick: () => this.handleCloseModal() 
-                        }, 
-                        "×"
+                        "dd",
+                        { class: "cs-detail__value" },
+                        service.duration_minutes ? `${service.duration_minutes} min` : "N/A"
                     )
                 ),
                 h(
+                    "div",
+                    { class: "cs-detail" },
+                    h("dt", { class: "cs-detail__label" }, "First-time"),
+                    h(
+                        "dd",
+                        { class: "cs-detail__value" },
+                        `₦${Number(service.first_time_price_amount || 0).toLocaleString()}`
+                    )
+                ),
+                h(
+                    "div",
+                    { class: "cs-detail" },
+                    h("dt", { class: "cs-detail__label" }, "Follow-up"),
+                    h(
+                        "dd",
+                        { class: "cs-detail__value" },
+                        service.follow_up_price_amount !== null
+                            ? `₦${Number(service.follow_up_price_amount).toLocaleString()}`
+                            : "N/A"
+                    )
+                )
+            ),
+
+            service.availability_note
+                ? h(
+                      "p",
+                      { class: "cs-card__note" },
+                      icon(["M12 8v4l3 2", "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20"], 14),
+                      h("span", {}, service.availability_note)
+                  )
+                : null,
+
+            h(
+                "div",
+                { class: "cs-card__actions" },
+                h(
+                    "button",
+                    {
+                        type: "button",
+                        class: "cs-edit-btn",
+                        onclick: () => this.handleOpenModal(service)
+                    },
+                    icon(
+                        [
+                            "M12 20h9",
+                            "M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"
+                        ],
+                        15
+                    ),
+                    h("span", {}, "Edit")
+                )
+            )
+        );
+    }
+    renderModal() {
+        return h(
+            "div",
+            { class: "cs-sheet-overlay", role: "presentation" },
+            h(
+                "div",
+                {
+                    class: "cs-sheet",
+                    role: "dialog",
+                    "aria-modal": "true",
+                    "aria-label": this.editingServiceId ? "Edit consultation service" : "Add consultation service"
+                },
+
+                h("div", { class: "cs-sheet__handle", "aria-hidden": "true" }),
+
+                h(
+                    "div",
+                    { class: "cs-sheet__head" },
+                    h(
+                        "h2",
+                        { class: "cs-sheet__title" },
+                        this.editingServiceId ? "Edit service" : "Add service"
+                    ),
+                    h(
+                        "button",
+                        {
+                            type: "button",
+                            class: "cs-sheet__close",
+                            "aria-label": "Close",
+                            onclick: () => this.handleCloseModal()
+                        },
+                        icon(["M18 6L6 18", "M6 6l12 12"], 18)
+                    )
+                ),
+
+                h(
                     "form",
-                    { onsubmit: e => this.handleSubmit(e) },
+                    { class: "cs-sheet__form", onsubmit: e => this.handleSubmit(e) },
 
                     h(
                         "div",
-                        { class: "input-group" },
+                        { class: "cs-sheet__body" },
+
                         h(
                             "div",
-                            { class: "form-group" },
-                            h("label", { class: "form-label" }, "Service Type"),
+                            { class: "input-group" },
                             h(
-                                "select",
-                                {
-                                    class: "form-input",
-                                    disabled: !!this.editingServiceId,
-                                    onchange: e => {
-                                        const selected = SERVICE_TYPE_OPTIONS.find(opt => opt.value === e.target.value);
-                                        this.formData.service_type = e.target.value;
-                                        if (selected && !this.formData.display_name) {
-                                            this.formData.display_name = selected.label;
+                                "div",
+                                { class: "form-group" },
+                                h("label", { class: "form-label" }, "Service type"),
+                                h(
+                                    "select",
+                                    {
+                                        class: "form-input",
+                                        disabled: !!this.editingServiceId,
+                                        onchange: e => {
+                                            const selected = SERVICE_TYPE_OPTIONS.find(opt => opt.value === e.target.value);
+                                            this.formData.service_type = e.target.value;
+                                            if (selected && !this.formData.display_name) {
+                                                this.formData.display_name = selected.label;
+                                            }
                                         }
-                                    }
-                                },
-                                SERVICE_TYPE_OPTIONS.map(opt =>
-                                    h(
-                                        "option",
-                                        {
-                                            value: opt.value,
-                                            selected: this.formData.service_type === opt.value
-                                        },
-                                        opt.label
+                                    },
+                                    SERVICE_TYPE_OPTIONS.map(opt =>
+                                        h(
+                                            "option",
+                                            {
+                                                value: opt.value,
+                                                selected: this.formData.service_type === opt.value
+                                            },
+                                            opt.label
+                                        )
                                     )
                                 )
+                            ),
+                            h(
+                                "div",
+                                { class: "form-group" },
+                                h("label", { class: "form-label" }, "Display name"),
+                                h("input", {
+                                    type: "text",
+                                    class: "form-input",
+                                    required: true,
+                                    value: this.formData.display_name,
+                                    oninput: e => (this.formData.display_name = e.target.value)
+                                })
                             )
                         ),
+
+                        h(
+                            "div",
+                            { class: "input-group" },
+                            h(
+                                "div",
+                                { class: "form-group" },
+                                h("label", { class: "form-label" }, "First-time price (₦)"),
+                                h("input", {
+                                    type: "number",
+                                    class: "form-input",
+                                    inputmode: "decimal",
+                                    required: this.formData.is_enabled,
+                                    min: this.formData.is_enabled ? 1 : 0,
+                                    value: this.formData.first_time_price_amount,
+                                    oninput: e => {
+                                        this.formData.first_time_price_amount = e.target.value;
+                                        this.formData.price_naira = e.target.value;
+                                    }
+                                })
+                            ),
+                            h(
+                                "div",
+                                { class: "form-group" },
+                                h("label", { class: "form-label" }, "Follow-up price (₦)"),
+                                h("input", {
+                                    type: "number",
+                                    class: "form-input",
+                                    inputmode: "decimal",
+                                    min: 0,
+                                    value: this.formData.follow_up_price_amount,
+                                    oninput: e => (this.formData.follow_up_price_amount = e.target.value)
+                                })
+                            )
+                        ),
+
                         h(
                             "div",
                             { class: "form-group" },
-                            h("label", { class: "form-label" }, "Display Name"),
+                            h("label", { class: "form-label" }, "Duration (minutes)"),
+                            h("input", {
+                                type: "number",
+                                class: "form-input",
+                                inputmode: "numeric",
+                                min: 5,
+                                value: this.formData.duration_minutes,
+                                oninput: e => (this.formData.duration_minutes = e.target.value)
+                            })
+                        ),
+
+                        h(
+                            "div",
+                            { class: "form-group" },
+                            h("label", { class: "form-label" }, "Description"),
+                            h("textarea", {
+                                class: "form-textarea",
+                                rows: 3,
+                                value: this.formData.description,
+                                oninput: e => (this.formData.description = e.target.value)
+                            })
+                        ),
+
+                        h(
+                            "div",
+                            { class: "form-group" },
+                            h("label", { class: "form-label" }, "Availability note"),
                             h("input", {
                                 type: "text",
                                 class: "form-input",
-                                required: true,
-                                value: this.formData.display_name,
-                                oninput: e => (this.formData.display_name = e.target.value)
-                            })
-                        )
-                    ),
-
-                    h(
-                        "div",
-                        { class: "input-group" },
-                        h(
-                            "div",
-                            { class: "form-group" },
-                            h("label", { class: "form-label" }, "First-Time Price (₦)"),
-                            h("input", {
-                                type: "number",
-                                class: "form-input",
-                                required: this.formData.is_enabled,
-                                min: this.formData.is_enabled ? 1 : 0,
-                                value: this.formData.first_time_price_amount,
-                                oninput: e => {
-                                    this.formData.first_time_price_amount = e.target.value;
-                                    this.formData.price_naira = e.target.value;
-                                }
+                                placeholder: "e.g. Weekdays between 9 AM – 4 PM",
+                                value: this.formData.availability_note,
+                                oninput: e => (this.formData.availability_note = e.target.value)
                             })
                         ),
+
                         h(
                             "div",
-                            { class: "form-group" },
-                            h("label", { class: "form-label" }, "Follow-Up Price (₦)"),
-                            h("input", {
-                                type: "number",
-                                class: "form-input",
-                                min: 0,
-                                value: this.formData.follow_up_price_amount,
-                                oninput: e => (this.formData.follow_up_price_amount = e.target.value)
-                            })
+                            { class: "cs-checks" },
+                            h(
+                                "label",
+                                { class: "cs-check", for: "chk_service_enabled" },
+                                h("input", {
+                                    type: "checkbox",
+                                    id: "chk_service_enabled",
+                                    checked: this.formData.is_enabled,
+                                    onchange: e => (this.formData.is_enabled = e.target.checked)
+                                }),
+                                h("span", { class: "cs-check__box" }, icon(["M20 6L9 17l-5-5"], 14)),
+                                h("span", { class: "cs-check__text" }, "Service enabled")
+                            ),
+                            h(
+                                "label",
+                                { class: "cs-check", for: "chk_requires_payment" },
+                                h("input", {
+                                    type: "checkbox",
+                                    id: "chk_requires_payment",
+                                    checked: this.formData.requires_payment,
+                                    onchange: e => (this.formData.requires_payment = e.target.checked)
+                                }),
+                                h("span", { class: "cs-check__box" }, icon(["M20 6L9 17l-5-5"], 14)),
+                                h("span", { class: "cs-check__text" }, "Requires payment")
+                            )
                         )
                     ),
 
                     h(
                         "div",
-                        { class: "form-group" },
-                        h("label", { class: "form-label" }, "Duration (Mins)"),
-                        h("input", {
-                            type: "number",
-                            class: "form-input",
-                            min: 5,
-                            value: this.formData.duration_minutes,
-                            oninput: e => (this.formData.duration_minutes = e.target.value)
-                        })
-                    ),
-
-                    h(
-                        "div",
-                        { class: "form-group" },
-                        h("label", { class: "form-label" }, "Description"),
-                        h("textarea", {
-                            class: "form-textarea",
-                            rows: 3,
-                            value: this.formData.description,
-                            oninput: e => (this.formData.description = e.target.value)
-                        })
-                    ),
-
-                    h(
-                        "div",
-                        { class: "form-group" },
-                        h("label", { class: "form-label" }, "Availability Note"),
-                        h("input", {
-                            type: "text",
-                            class: "form-input",
-                            placeholder: "e.g., Weekdays between 9 AM - 4 PM",
-                            value: this.formData.availability_note,
-                            oninput: e => (this.formData.availability_note = e.target.value)
-                        })
-                    ),
-
-                    h(
-                        "div",
-                        { class: "input-group", style: "margin-bottom: var(--space-5);" },
-                        h(
-                            "div",
-                            { class: "form-checkbox" },
-                            h("input", {
-                                type: "checkbox",
-                                id: "chk_service_enabled",
-                                checked: this.formData.is_enabled,
-                                onchange: e => (this.formData.is_enabled = e.target.checked)
-                            }),
-                            h("label", { htmlFor: "chk_service_enabled" }, "Service Enabled")
-                        ),
-                        h(
-                            "div",
-                            { class: "form-checkbox" },
-                            h("input", {
-                                type: "checkbox",
-                                id: "chk_requires_payment",
-                                checked: this.formData.requires_payment,
-                                onchange: e => (this.formData.requires_payment = e.target.checked)
-                            }),
-                            h("label", { htmlFor: "chk_requires_payment" }, "Requires Payment")
-                        )
-                    ),
-
-                    h(
-                        "div",
-                        { style: "display: flex; justify-content: flex-end; gap: var(--space-3);" },
+                        { class: "cs-sheet__actions" },
                         h(
                             "button",
                             {
                                 type: "button",
-                                class: "btn btn-outline",
+                                class: "cs-cancel-btn",
                                 onclick: () => this.handleCloseModal()
                             },
                             "Cancel"
@@ -518,11 +611,11 @@ export default class DoctorConsultationServicesPage extends Component {
                             "button",
                             {
                                 type: "submit",
-                                class: "btn btn-primary",
+                                class: "cs-primary-btn",
                                 disabled: this.saving
                             },
                             this.saving ? h("span", { class: "btn-spinner" }) : null,
-                            this.saving ? "Saving..." : "Save Service"
+                            h("span", {}, this.saving ? "Saving…" : "Save service")
                         )
                     )
                 )
