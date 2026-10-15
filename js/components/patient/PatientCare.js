@@ -4,6 +4,9 @@ import { Component } from "../../core/component.js";
 import { h } from "../../utils/dom.js";
 import api from "../../services/api.js";
 
+const icon = (paths, size = 18) => h("svg", { viewBox: "0 0 24 24", fill: "none", width: String(size), height: String(size), "aria-hidden": "true" }, ...paths.map(d => h("path", { d, stroke: "currentColor", "stroke-width": "1.8", "stroke-linecap": "round", "stroke-linejoin": "round" })));
+
+
 const PENDING_STATUSES = ["pending", "pending_confirmation", "reschedule_requested"];
 const CONFIRMED_STATUSES = ["confirmed"];
 const COMPLETED_STATUSES = ["completed"];
@@ -359,44 +362,86 @@ export default class PatientCare extends Component {
     render() {
       const isFirstRender = !this._hasRenderedOnce;
       this._hasRenderedOnce = true;
-    
-      return h("div", { class: "dashboard-page-shell" },
-        this.renderHeader(),  // no animation class — renders instantly
-        h("div", { class: `dashboard-page${isFirstRender ? " dashboard-page--enter" : ""}` },
+
+      return h(
+        "div",
+        { class: "patient-care" },
+        this.renderHeader(),
+        h(
+          "div",
+          { class: `pc-body${isFirstRender ? " pc-body--enter" : ""}` },
+          h(
+            "p",
+            { class: "pc-intro" },
+            "Track your appointments and view your consultation notes."
+          ),
           this.renderAlerts(),
-          this.loading ? h("div", { class: "dashboard-card text-center py-4" }, h("p", { class: "dashboard-muted" }, "Loading your appointments...")) : this.renderContent()
+          this.loading ? this.renderSkeleton() : this.renderContent()
         )
       );
     }
+
     renderHeader() {
         return h(
             "section",
-            { class: "dashboard-header" },
-            h("p", { class: "dashboard-greeting" }, "My Care"),
-            h("h1", { class: "dashboard-title" }, "Appointments & Records"),
+            { class: "dashboard-header patient-home" },
             h(
-                "p",
-                { class: "dashboard-subtitle" },
-                "Track your appointments and view your consultation notes."
+                "div",
+                { class: "ph-hero" },
+                h(
+                    "div",
+                    { class: "ph-hero__text" },
+                    h("p", { class: "dashboard-greeting" }, "My Care"),
+                    h("h1", { class: "dashboard-title" }, "Appointments & Records")
+                )
+            )
+        );
+    }
+
+    renderSkeleton() {
+        return h(
+            "div",
+            { class: "pc-skel-stack", "aria-busy": "true", "aria-label": "Loading your appointments" },
+            ...[0, 1, 2].map(() =>
+                h(
+                    "div",
+                    { class: "pc-card pc-card--skeleton" },
+                    h(
+                        "div",
+                        { class: "pc-skel-head" },
+                        h(
+                            "div",
+                            { class: "pc-skel-head-text" },
+                            h("div", { class: "pc-skel pc-skel--line pc-skel--short" }),
+                            h("div", { class: "pc-skel pc-skel--line pc-skel--tiny" })
+                        ),
+                        h("div", { class: "pc-skel pc-skel--chip" })
+                    )
+                )
             )
         );
     }
     renderSpinner() {
-        return h("span", { class: "btn-spinner" });
+        return h("span", { class: "pc-spinner" });
     }
 
     renderAlerts() {
         if (!this.errorMessage) return null;
         return h(
             "div",
-            { class: "dashboard-card", style: "border-left: 4px solid #ef4444; margin-bottom: var(--space-3);" },
-            h("p", { style: "color: #ef4444; margin: 0;" }, this.errorMessage)
+            { class: "pc-alert", role: "alert" },
+            h(
+                "div",
+                { class: "pc-alert-icon" },
+                icon(["M12 9v4", "M12 17h.01", "M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"], 18)
+            ),
+            h("p", { class: "pc-alert-text" }, this.errorMessage)
         );
     }
     renderContent() {
         return h(
             "div",
-            { class: "services-list" },
+            { class: "pc-stack" },
             this.renderTabs(),
             this.renderList()
         );
@@ -411,37 +456,64 @@ export default class PatientCare extends Component {
 
         return h(
             "div",
-            {
-                class: "dashboard-card",
-                style: "display: flex; gap: 8px; padding: 0.65rem 0.75rem; overflow-x: auto; margin-bottom: var(--space-3);",
-            },
+            { class: "pc-tabs", role: "tablist" },
             tabs.map(tab =>
                 h(
                     "button",
                     {
-                        class: `btn ${this.activeTab === tab.key ? "btn-primary" : "btn-outline"}`,
-                        style: "padding: 0.42rem 0.8rem; font-size: 0.8rem; border-radius: 6px; white-space: nowrap; flex-shrink: 0;",
+                        class: `pc-tab${this.activeTab === tab.key ? " pc-tab--active" : ""}`,
+                        type: "button",
+                        role: "tab",
+                        "aria-selected": this.activeTab === tab.key ? "true" : "false",
                         onclick: () => this.setTab(tab.key),
                     },
-                    `${tab.label} (${this.tabCounts[tab.key] ?? 0})`
+                    h("span", { class: "pc-tab-label" }, tab.label),
+                    h(
+                        "span",
+                        { class: "pc-tab-count" },
+                        String(this.tabCounts[tab.key] ?? 0)
+                    )
                 )
             )
         );
     }
 
     renderList() {
-        // this.bookings IS the current tab's data now — no more in-memory filtering
         if (this.bookings.length === 0) {
             return h(
                 "div",
-                { class: "dashboard-card text-center py-4" },
-                h("p", { class: "dashboard-muted" }, `No ${this.activeTab} appointments right now.`)
+                { class: "pc-empty" },
+                h(
+                    "div",
+                    { class: "pc-empty-icon" },
+                    icon(
+                        [
+                            "M8 2v4",
+                            "M16 2v4",
+                            "M3 10h18",
+                            "M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2",
+                        ],
+                        22
+                    )
+                ),
+                h(
+                    "p",
+                    { class: "pc-empty-title" },
+                    `No ${this.activeTab} appointments`
+                ),
+                h(
+                    "p",
+                    { class: "pc-empty-text" },
+                    this.activeTab === "completed"
+                        ? "Your past consultations will appear here."
+                        : "New appointments will appear here as they’re booked."
+                )
             );
         }
 
         return h(
             "div",
-            { class: "services-list" },
+            { class: "pc-list" },
             this.bookings.map(booking => this.renderBookingCard(booking)),
             this.renderLoadMore()
         );
@@ -452,16 +524,17 @@ export default class PatientCare extends Component {
 
         return h(
             "div",
-            { class: "text-center", style: "margin-top: var(--space-2);" },
+            { class: "pc-load-more-wrap" },
             h(
                 "button",
                 {
-                    class: "btn btn-outline",
-                    style: "padding: 0.35rem 0.8rem; font-size: 0.75rem; border-radius: 5px;",
+                    class: "pc-load-more",
+                    type: "button",
                     disabled: this.loadingMore,
                     onclick: () => this.loadMore(),
                 },
-                this.loadingMore ? "Loading..." : "Load More"
+                this.loadingMore ? h("span", { class: "pc-spinner pc-spinner--dark" }) : null,
+                h("span", null, this.loadingMore ? "Loading…" : "Load more")
             )
         );
     }
@@ -472,59 +545,63 @@ export default class PatientCare extends Component {
         const isRescheduleRequested = booking.status === "reschedule_requested";
         const statusLabel = STATUS_LABELS[booking.status] || booking.status;
 
-        const badgeColor =
-            booking.status === "confirmed"
-                ? "#10b981"
-                : booking.status === "completed"
-                ? "var(--color-ink-faint)"
-                : booking.status === "reschedule_requested"
-                ? "#8b5cf6" // distinct purple — was sharing amber with pending_confirmation
-                : booking.status === "pending_confirmation"
-                ? "#f59e0b"
-                : "#0284c7";
+        const chipTone =
+            booking.status === "confirmed" ? "success"
+            : booking.status === "completed" ? "muted"
+            : booking.status === "reschedule_requested" ? "violet"
+            : booking.status === "pending_confirmation" ? "warning"
+            : "info";
 
         return h(
-            "div",
+            "article",
             {
-                class: "dashboard-card service-item-card",
-                style: `padding: 1rem 1.1rem; margin-bottom: var(--space-3); ${isCompleted ? "cursor: pointer;" : ""}`,
+                class: `pc-card${isCompleted ? " pc-card--tappable" : ""}${isExpanded ? " pc-card--expanded" : ""}`,
                 onclick: isCompleted ? () => this.toggleBooking(booking.id) : null,
             },
             h(
                 "div",
-                { style: "display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-3);" },
+                { class: "pc-card-head" },
                 h(
                     "div",
-                    { style: "min-width: 0;" },
+                    { class: "pc-card-identity" },
                     h(
                         "h3",
-                        { style: "margin: 0 0 4px; font-size: 1.02rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" },
+                        { class: "pc-card-name" },
                         booking.doctor_name || "Unknown Doctor"
                     ),
                     h(
                         "p",
-                        { class: "dashboard-muted", style: "margin: 0; font-size: 0.8rem;" },
+                        { class: "pc-card-meta" },
                         `${booking.consultation_service_name || "General"} · ${this.formatDateTime(booking.booking_date)}`
                     )
                 ),
                 h(
                     "span",
-                    {
-                        class: "dashboard-badge",
-                        style: `background: ${badgeColor}; font-size: 0.7rem; padding: 3px 9px; border-radius: 5px; white-space: nowrap; flex-shrink: 0; color: #ffffff;`,
-                    },
+                    { class: `pc-chip pc-chip--${chipTone}` },
                     statusLabel
                 )
             ),
+
             isRescheduleRequested ? this.renderRescheduleComparison(booking) : null,
             CONFIRMED_STATUSES.includes(booking.status) ? this.renderConfirmedActions(booking) : null,
+
             isCompleted
                 ? h(
-                      "p",
-                      { class: "dashboard-muted", style: "margin: 10px 0 0; font-size: 0.78rem;" },
-                      isExpanded ? "Tap to hide notes" : "Tap to view notes"
+                      "div",
+                      { class: "pc-expand-hint" },
+                      h(
+                          "span",
+                          null,
+                          isExpanded ? "Hide notes" : "View notes"
+                      ),
+                      h(
+                          "span",
+                          { class: `pc-expand-chevron${isExpanded ? " pc-expand-chevron--open" : ""}` },
+                          icon(["M6 9l6 6 6-6"], 16)
+                      )
                   )
                 : null,
+
             isCompleted && isExpanded ? this.renderConsultationNotes(booking) : null
         );
     }
@@ -533,31 +610,32 @@ export default class PatientCare extends Component {
         const isPaid = booking.payment_status === "paid";
         const isMessaging = this.messageLoadingId === booking.id;
         const isPaying = this.payingBookingId === booking.id;
-        const btnStyle = "padding: 0.4rem 0.75rem; font-size: 0.8rem; border-radius: 6px; line-height: 1.4;";
 
         if (!isPaid) {
             return h(
                 "div",
-                {
-                    style: "margin-top: 10px; padding: 0.7rem 0.85rem; background: rgba(2,132,199,0.06); border: 1px solid rgba(2,132,199,0.25); border-radius: 8px; display: flex; flex-direction: column; gap: 8px;",
-                },
+                { class: "pc-pay-box" },
                 h(
                     "p",
-                    { style: "margin: 0; font-size: 0.82rem; line-height: 1.45;" },
+                    { class: "pc-pay-text" },
                     "Your doctor has confirmed this appointment time. Complete payment to unlock messaging and start your consultation."
                 ),
                 h(
                     "button",
                     {
-                        class: "btn btn-primary",
-                        style: btnStyle,
+                        class: "pc-pay-btn",
+                        type: "button",
                         disabled: isPaying,
                         onclick: () => this.handlePayNow(booking),
                     },
                     isPaying ? this.renderSpinner() : null,
-                    isPaying
-                        ? "Redirecting..."
-                        : `Pay Now${booking.consultation_fee_amount ? ` · ₦${Number(booking.consultation_fee_amount).toLocaleString()}` : ""}`
+                    h(
+                        "span",
+                        null,
+                        isPaying
+                            ? "Redirecting…"
+                            : `Pay Now${booking.consultation_fee_amount ? ` · ₦${Number(booking.consultation_fee_amount).toLocaleString()}` : ""}`
+                    )
                 )
             );
         }
@@ -568,26 +646,27 @@ export default class PatientCare extends Component {
 
         return h(
             "div",
-            { style: "display: flex; flex-direction: column; gap: 8px; margin-top: 10px;" },
+            { class: "pc-actions" },
             isCallConsultation
                 ? h(
                       "p",
-                      { class: "dashboard-muted", style: "margin: 0; font-size: 0.8rem; line-height: 1.45;" },
+                      { class: "pc-action-note" },
                       `Your doctor will start the ${isVoiceConsultation ? "voice" : "video"} call at your scheduled time (${this.formatDateTime(booking.booking_date)}). You can message them beforehand with any questions.`
                   )
                 : null,
             h(
                 "div",
-                { style: "display: flex; gap: 8px;" },
+                { class: "pc-action-row" },
                 h(
                     "button",
                     {
-                        class: "btn btn-outline",
-                        style: `${btnStyle} border: 1px solid var(--color-primary, #0284c7); color: var(--color-primary, #0284c7); background: transparent; cursor: pointer; font-weight: 600;`,
+                        class: "pc-secondary-btn",
+                        type: "button",
                         disabled: isMessaging,
                         onclick: () => this.handleMessageDoctor(booking),
                     },
-                    isMessaging ? "Opening..." : "Message"
+                    icon(["M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"], 16),
+                    h("span", null, isMessaging ? "Opening…" : "Message")
                 )
             )
         );
@@ -596,51 +675,59 @@ export default class PatientCare extends Component {
         const isPaying = this.payingBookingId === booking.id;
         return h(
             "div",
-            {
-                style: "margin-top: 10px; padding: 0.7rem 0.85rem; background: rgba(139, 92, 246, 0.06); border: 1px solid rgba(139, 92, 246, 0.25); border-radius: 8px; display: flex; flex-direction: column; gap: 6px;",
-            },
-    
+            { class: "pc-reschedule" },
+            h(
+                "div",
+                { class: "pc-reschedule-head" },
+                h(
+                    "div",
+                    { class: "pc-reschedule-icon" },
+                    icon(
+                        [
+                            "M12 8v4l3 2",
+                            "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20",
+                        ],
+                        16
+                    )
+                ),
+                h("p", { class: "pc-reschedule-eyebrow" }, "New time suggested")
+            ),
+
             booking.patient_requested_time
                 ? h(
                       "p",
-                      { style: "margin: 0; font-size: 0.82rem;" },
-                      h("span", { class: "dashboard-muted" }, "You requested: "),
+                      { class: "pc-reschedule-line" },
+                      h("span", { class: "pc-reschedule-label" }, "You requested"),
                       h(
                           "span",
-                          {
-                              style: "text-decoration: line-through; color: var(--color-ink-faint);",
-                          },
+                          { class: "pc-reschedule-struck" },
                           this.formatDateTime(booking.patient_requested_time)
                       )
                   )
                 : null,
-    
+
             booking.doctor_suggested_time
                 ? h(
                       "p",
-                      { style: "margin: 0; font-size: 0.86rem;" },
-                      h("span", { class: "dashboard-muted" }, "Doctor suggested: "),
+                      { class: "pc-reschedule-line" },
+                      h("span", { class: "pc-reschedule-label" }, "Doctor suggested"),
                       h(
                           "span",
-                          { style: "font-weight:700; color:#7c3aed;" },
+                          { class: "pc-reschedule-strong" },
                           this.formatDateTime(booking.doctor_suggested_time)
                       )
                   )
                 : null,
-    
+
             booking.confirmation_note
-                ? h(
-                      "p",
-                      { class: "dashboard-muted" },
-                      `"${booking.confirmation_note}"`
-                  )
+                ? h("p", { class: "pc-reschedule-quote" }, `"${booking.confirmation_note}"`)
                 : null,
 
             h(
                 "button",
                 {
-                    class: "btn btn-primary",
-                    style: "padding: 0.4rem 0.75rem; font-size: 0.8rem; border-radius: 6px; align-self: flex-start;",
+                    class: "pc-accept-btn",
+                    type: "button",
                     disabled: isPaying,
                     onclick: (e) => {
                         e.stopPropagation();
@@ -648,58 +735,70 @@ export default class PatientCare extends Component {
                     },
                 },
                 isPaying ? this.renderSpinner() : null,
-                isPaying ? "Redirecting..." : "Accept time & Pay"
+                h("span", null, isPaying ? "Redirecting…" : "Accept time & Pay")
             )
         );
     }
-
     renderConsultationNotes(booking) {
         const record = this.recordsByBookingId[booking.id];
-    
+
         if (!record) {
             return h(
                 "div",
-                { style: "margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--color-line);" },
-                h("p", { class: "dashboard-muted" }, "No notes have been recorded for this consultation yet.")
+                {
+                    class: "pc-notes",
+                    onclick: e => e.stopPropagation(),
+                },
+                h(
+                    "p",
+                    { class: "pc-notes-empty" },
+                    "No notes have been recorded for this consultation yet."
+                )
             );
         }
-    
+
         const sections = this.parseDoctorNotes(record.doctor_notes);
         const medications = Array.isArray(record.medications) ? record.medications : [];
-    
+
         return h(
             "div",
             {
-                style: "margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--color-line);",
+                class: "pc-notes",
                 onclick: e => e.stopPropagation(),
             },
+
             record.follow_up_date
                 ? h(
-                      "p",
-                      {
-                          style: "margin: 0 0 12px; font-size: 0.8rem; font-weight: 600; color: #b45309; display: flex; align-items: center; gap: 5px;",
-                      },
-                      h("span", {}, "📅"),
-                      `Follow-up recommended: ${this.formatShortDate(record.follow_up_date)}`
+                      "div",
+                      { class: "pc-followup" },
+                      h(
+                          "span",
+                          { class: "pc-followup-icon" },
+                          icon(
+                              [
+                                  "M8 2v4",
+                                  "M16 2v4",
+                                  "M3 10h18",
+                                  "M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2",
+                              ],
+                              16
+                          )
+                      ),
+                      h(
+                          "span",
+                          null,
+                          `Follow-up recommended: ${this.formatShortDate(record.follow_up_date)}`
+                      )
                   )
                 : null,
+
             sections.map(section =>
                 h(
-                    "div",
-                    { style: "margin-bottom: 12px;" },
-                    h(
-                        "h4",
-                        {
-                            style: "margin: 0 0 6px; font-size: 0.86rem; font-weight: 700; color: var(--color-primary, #0284c7); text-transform: uppercase; letter-spacing: 0.03em;",
-                        },
-                        section.title
-                    ),
+                    "section",
+                    { class: "pc-notes-section" },
+                    h("h4", { class: "pc-notes-title" }, section.title),
                     this.splitParagraphs(section.body).map(paragraph =>
-                        h(
-                            "p",
-                            { style: "margin: 0 0 8px; font-size: 0.88rem; line-height: 1.55;" },
-                            paragraph
-                        )
+                        h("p", { class: "pc-notes-body" }, paragraph)
                     ),
                     section.title === "Plan" && medications.length > 0
                         ? this.renderMedicationsList(medications, booking)
@@ -712,25 +811,30 @@ export default class PatientCare extends Component {
     renderMedicationsList(medications, booking) {
         return h(
             "div",
-            { style: "margin-top: 4px; display: flex; flex-direction: column; gap: 8px;" },
+            { class: "pc-meds" },
             h(
                 "div",
-                { style: "display: flex; justify-content: space-between; align-items: center;" },
-                h(
-                    "p",
-                    { class: "dashboard-muted", style: "margin: 0; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em;" },
-                    "Prescription"
-                ),
+                { class: "pc-meds-head" },
+                h("span", { class: "pc-meds-eyebrow" }, "Prescription"),
                 h(
                     "button",
                     {
-                        style: "font-size: 0.74rem; color: var(--color-primary, #0284c7); font-weight: 600; background: none; border: none; cursor: pointer; padding: 0;",
+                        class: "pc-meds-download",
+                        type: "button",
                         onclick: e => {
                             e.stopPropagation();
                             this.downloadPrescription(booking);
                         },
                     },
-                    "Download prescription"
+                    icon(
+                        [
+                            "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4",
+                            "M7 10l5 5 5-5",
+                            "M12 15V3",
+                        ],
+                        14
+                    ),
+                    h("span", null, "Download")
                 )
             ),
             medications.map(med => this.renderMedicationCard(med))
@@ -742,11 +846,15 @@ export default class PatientCare extends Component {
 
         return h(
             "div",
-            { style: "padding: 8px 10px; background: var(--color-bg-muted, #f1f5f9); border-radius: 6px;" },
-            h("p", { style: "margin: 0 0 2px; font-size: 0.86rem; font-weight: 600;" }, med.medication || "Unnamed medication"),
-            details ? h("p", { class: "dashboard-muted", style: "margin: 0; font-size: 0.78rem;" }, details) : null,
+            { class: "pc-med" },
+            h(
+                "div",
+                { class: "pc-med-head" },
+                h("p", { class: "pc-med-name" }, med.medication || "Unnamed medication"),
+                details ? h("p", { class: "pc-med-details" }, details) : null
+            ),
             med.instructions
-                ? h("p", { style: "margin: 4px 0 0; font-size: 0.78rem; font-style: italic; line-height: 1.4;" }, med.instructions)
+                ? h("p", { class: "pc-med-notes" }, med.instructions)
                 : null
         );
     }
