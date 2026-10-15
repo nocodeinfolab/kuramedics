@@ -2785,9 +2785,8 @@
     font-size: 0.78rem;
     line-height: 1.4;
     color: var(--color-muted);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 /* -------- Status chip -------- */
