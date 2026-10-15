@@ -5,6 +5,8 @@ import { h } from "../../utils/dom.js";
 import api from "../../services/api.js";
 import pushNotifications from "../../services/pushNotifications.js";
 
+const icon = (paths, size = 18) => h("svg", { viewBox: "0 0 24 24", fill: "none", width: String(size), height: String(size), "aria-hidden": "true" }, ...paths.map(d => h("path", { d, stroke: "currentColor", "stroke-width": "1.8", "stroke-linecap": "round", "stroke-linejoin": "round" })));
+
 const GENDER_OPTIONS = [
     { value: "female", label: "Female" },
     { value: "male", label: "Male" },
@@ -107,227 +109,279 @@ export default class PatientProfilePage extends Component {
     // ---------- Render ----------
 
     render() {
-        const fieldLabelStyle = "display: block; margin-bottom: 5px; font-size: 0.82rem; font-weight: 600;";
-        const fieldInputStyle = "padding: 0.6rem 0.7rem; border: 1px solid var(--color-line); border-radius: 6px; width: 100%; font-size: 0.9rem; box-sizing: border-box; font-family: inherit;";
+        const initial = (this.patient.full_name || "P").charAt(0).toUpperCase();
 
         return h(
             "div",
-            { class: "dashboard-page" },
+            { class: "patient-profile" },
             h(
                 "section",
-                { class: "dashboard-header" },
-                h("p", { class: "dashboard-greeting" }, "Profile"),
-                h("h1", { class: "dashboard-title" }, this.patient.full_name || "Your Profile"),
-                h("p", { class: "dashboard-subtitle" }, this.patient.email || "")
-            ),
-
-            h(
-                "div",
-                { class: "services-list" },
-
-                this.saveError
-                    ? h(
-                          "div",
-                          { class: "dashboard-card", style: "border-left: 4px solid #ef4444;" },
-                          h("p", { style: "color: #ef4444; margin: 0;" }, this.saveError)
-                      )
-                    : null,
-
-                this.saveSuccess
-                    ? h(
-                          "div",
-                          { class: "dashboard-card", style: "border-left: 4px solid #10b981;" },
-                          h("p", { style: "color: #10b981; margin: 0;" }, "Your profile has been updated.")
-                      )
-                    : null,
-
-                // ---------- Medical info ----------
+                { class: "dashboard-header patient-home" },
                 h(
                     "div",
-                    { class: "dashboard-card", style: "padding: 1.1rem; display: flex; flex-direction: column; gap: 14px;" },
-                    h("p", { class: "dashboard-muted", style: "margin: 0; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em;" }, "Medical Information"),
-
+                    { class: "ph-hero" },
+                    h("div", { class: "ph-hero__avatar" }, initial),
                     h(
                         "div",
-                        {},
-                        h("label", { style: fieldLabelStyle }, "Date of birth"),
-                        h("input", {
-                            type: "date",
-                            value: this.draft.date_of_birth,
-                            style: fieldInputStyle,
-                            oninput: e => this.setField("date_of_birth", e.target.value),
-                        })
-                    ),
-
-                    h(
-                        "div",
-                        {},
-                        h("label", { style: fieldLabelStyle }, "Gender"),
+                        { class: "ph-hero__text" },
+                        h("p", { class: "dashboard-greeting" }, "Profile"),
                         h(
-                            "select",
-                            {
-                                value: this.draft.gender,
-                                style: fieldInputStyle,
-                                onchange: e => this.setField("gender", e.target.value),
-                            },
-                            h("option", { value: "" }, "Select..."),
-                            GENDER_OPTIONS.map(option =>
-                                h("option", { value: option.value }, option.label)
-                            )
-                        )
-                    ),
-
-                    h(
-                        "div",
-                        {},
-                        h("label", { style: fieldLabelStyle }, "Blood group"),
+                            "h1",
+                            { class: "dashboard-title" },
+                            this.patient.full_name || "Your profile"
+                        ),
                         h(
-                            "select",
-                            {
-                                value: this.draft.blood_group,
-                                style: fieldInputStyle,
-                                onchange: e => this.setField("blood_group", e.target.value),
-                            },
-                            h("option", { value: "" }, "Not sure / skip"),
-                            BLOOD_GROUP_OPTIONS.map(option =>
-                                h("option", { value: option }, option)
-                            )
+                            "p",
+                            { class: "dashboard-subtitle" },
+                            this.patient.email || ""
                         )
-                    ),
-
-                    h(
-                        "div",
-                        {},
-                        h("label", { style: fieldLabelStyle }, "Known allergies"),
-                        h("input", {
-                            type: "text",
-                            placeholder: "e.g. penicillin, peanuts — or leave blank if none",
-                            value: this.draft.allergies,
-                            style: fieldInputStyle,
-                            oninput: e => this.setField("allergies", e.target.value),
-                        })
-                    ),
-
-                    h(
-                        "div",
-                        {},
-                        h("label", { style: fieldLabelStyle }, "Ongoing health conditions"),
-                        h("input", {
-                            type: "text",
-                            placeholder: "e.g. diabetes, hypertension — or leave blank if none",
-                            value: this.draft.chronic_conditions,
-                            style: fieldInputStyle,
-                            oninput: e => this.setField("chronic_conditions", e.target.value),
-                        })
-                    )
-                ),
-
-                // ---------- Contact info ----------
-                h(
-                    "div",
-                    { class: "dashboard-card", style: "padding: 1.1rem; display: flex; flex-direction: column; gap: 14px;" },
-                    h("p", { class: "dashboard-muted", style: "margin: 0; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em;" }, "Contact Information"),
-
-                    h(
-                        "div",
-                        {},
-                        h("label", { style: fieldLabelStyle }, "Phone number"),
-                        h("input", {
-                            type: "tel",
-                            placeholder: "e.g. 08012345678",
-                            value: this.draft.phone_number,
-                            style: fieldInputStyle,
-                            oninput: e => this.setField("phone_number", e.target.value),
-                        })
-                    ),
-
-                    h(
-                        "div",
-                        {},
-                        h("label", { style: fieldLabelStyle }, "WhatsApp number"),
-                        h("input", {
-                            type: "tel",
-                            placeholder: "If different from phone number",
-                            value: this.draft.whatsapp_number,
-                            style: fieldInputStyle,
-                            oninput: e => this.setField("whatsapp_number", e.target.value),
-                        })
-                    ),
-
-                    h(
-                        "div",
-                        {},
-                        h("label", { style: fieldLabelStyle }, "Address"),
-                        h("textarea", {
-                            rows: 2,
-                            value: this.draft.address,
-                            style: `${fieldInputStyle} resize: vertical;`,
-                            oninput: e => this.setField("address", e.target.value),
-                        })
-                    )
-                ),
-
-                // ---------- Emergency contact ----------
-                h(
-                    "div",
-                    { class: "dashboard-card", style: "padding: 1.1rem; display: flex; flex-direction: column; gap: 14px;" },
-                    h("p", { class: "dashboard-muted", style: "margin: 0; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em;" }, "Emergency Contact"),
-
-                    h(
-                        "div",
-                        {},
-                        h("label", { style: fieldLabelStyle }, "Contact name"),
-                        h("input", {
-                            type: "text",
-                            value: this.draft.emergency_contact_name,
-                            style: fieldInputStyle,
-                            oninput: e => this.setField("emergency_contact_name", e.target.value),
-                        })
-                    ),
-
-                    h(
-                        "div",
-                        {},
-                        h("label", { style: fieldLabelStyle }, "Contact phone"),
-                        h("input", {
-                            type: "tel",
-                            value: this.draft.emergency_contact_phone,
-                            style: fieldInputStyle,
-                            oninput: e => this.setField("emergency_contact_phone", e.target.value),
-                        })
-                    )
-                ),
-
-                h(
-                    "button",
-                    {
-                        class: "btn btn-primary",
-                        style: "padding: 0.65rem 1rem; font-size: 0.9rem; border-radius: 8px;",
-                        disabled: this.saving,
-                        onclick: () => this.saveProfile(),
-                    },
-                    this.saving ? "Saving..." : "Save changes"
-                ),
-
-                // ---------- Account ----------
-                h(
-                    "div",
-                    { class: "dashboard-card", style: "padding: 1.1rem;" },
-                    h("p", { class: "dashboard-muted", style: "margin: 0 0 10px; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.03em;" }, "Account"),
-                    h(
-                        "button",
-                        {
-                            type: "button",
-                            class: "btn btn-outline",
-                            style: "padding: 0.55rem 1rem; font-size: 0.85rem; border-radius: 8px; color: #ef4444; border-color: #ef4444; min-width: 7.5rem;",
-                            disabled: this.loggingOut,
-                            "aria-busy": String(this.loggingOut),
-                            onclick: () => this.logout(),
-                        },
-                        this.loggingOut ? h("span", { class: "btn-spinner btn-spinner--danger" }) : null,
-                        this.loggingOut ? "Logging out…" : "Log out"
                     )
                 )
+            ),
+            h(
+                "div",
+                { class: "pp-body" },
+                this.renderAlerts(),
+                this.renderMedicalCard(),
+                this.renderContactCard(),
+                this.renderEmergencyCard(),
+                this.renderSaveBar(),
+                this.renderAccountCard()
+            )
+        );
+    }
+
+    renderAlerts() {
+        if (this.saveError) {
+            return h(
+                "div",
+                { class: "pp-alert pp-alert--danger", role: "alert" },
+                h(
+                    "div",
+                    { class: "pp-alert-icon" },
+                    icon(["M12 9v4", "M12 17h.01", "M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"], 18)
+                ),
+                h("p", { class: "pp-alert-text" }, this.saveError)
+            );
+        }
+        if (this.saveSuccess) {
+            return h(
+                "div",
+                { class: "pp-alert pp-alert--success", role: "status" },
+                h(
+                    "div",
+                    { class: "pp-alert-icon" },
+                    icon(["M20 6L9 17l-5-5"], 18)
+                ),
+                h("p", { class: "pp-alert-text" }, "Your profile has been updated.")
+            );
+        }
+        return null;
+    }
+
+    renderField({ label, control }) {
+        return h(
+            "div",
+            { class: "pp-field" },
+            h("label", { class: "pp-label" }, label),
+            control
+        );
+    }
+
+    renderMedicalCard() {
+        return h(
+            "section",
+            { class: "pp-card" },
+            h("p", { class: "pp-section-eyebrow" }, "Medical information"),
+
+            this.renderField({
+                label: "Date of birth",
+                control: h("input", {
+                    type: "date",
+                    class: "pp-input",
+                    value: this.draft.date_of_birth,
+                    oninput: e => this.setField("date_of_birth", e.target.value),
+                }),
+            }),
+
+            this.renderField({
+                label: "Gender",
+                control: h(
+                    "div",
+                    { class: "pp-select-wrap" },
+                    h(
+                        "select",
+                        {
+                            class: "pp-select",
+                            value: this.draft.gender,
+                            onchange: e => this.setField("gender", e.target.value),
+                        },
+                        h("option", { value: "" }, "Select…"),
+                        GENDER_OPTIONS.map(option =>
+                            h("option", { value: option.value }, option.label)
+                        )
+                    ),
+                    h("span", { class: "pp-select-chevron" }, icon(["M6 9l6 6 6-6"], 16))
+                ),
+            }),
+
+            this.renderField({
+                label: "Blood group",
+                control: h(
+                    "div",
+                    { class: "pp-select-wrap" },
+                    h(
+                        "select",
+                        {
+                            class: "pp-select",
+                            value: this.draft.blood_group,
+                            onchange: e => this.setField("blood_group", e.target.value),
+                        },
+                        h("option", { value: "" }, "Not sure / skip"),
+                        BLOOD_GROUP_OPTIONS.map(option =>
+                            h("option", { value: option }, option)
+                        )
+                    ),
+                    h("span", { class: "pp-select-chevron" }, icon(["M6 9l6 6 6-6"], 16))
+                ),
+            }),
+
+            this.renderField({
+                label: "Known allergies",
+                control: h("input", {
+                    type: "text",
+                    class: "pp-input",
+                    placeholder: "e.g. penicillin, peanuts — or leave blank if none",
+                    value: this.draft.allergies,
+                    oninput: e => this.setField("allergies", e.target.value),
+                }),
+            }),
+
+            this.renderField({
+                label: "Ongoing health conditions",
+                control: h("input", {
+                    type: "text",
+                    class: "pp-input",
+                    placeholder: "e.g. diabetes, hypertension — or leave blank if none",
+                    value: this.draft.chronic_conditions,
+                    oninput: e => this.setField("chronic_conditions", e.target.value),
+                }),
+            })
+        );
+    }
+
+    renderContactCard() {
+        return h(
+            "section",
+            { class: "pp-card" },
+            h("p", { class: "pp-section-eyebrow" }, "Contact information"),
+
+            this.renderField({
+                label: "Phone number",
+                control: h("input", {
+                    type: "tel",
+                    class: "pp-input",
+                    inputmode: "tel",
+                    placeholder: "e.g. 08012345678",
+                    value: this.draft.phone_number,
+                    oninput: e => this.setField("phone_number", e.target.value),
+                }),
+            }),
+
+            this.renderField({
+                label: "WhatsApp number",
+                control: h("input", {
+                    type: "tel",
+                    class: "pp-input",
+                    inputmode: "tel",
+                    placeholder: "If different from phone number",
+                    value: this.draft.whatsapp_number,
+                    oninput: e => this.setField("whatsapp_number", e.target.value),
+                }),
+            }),
+
+            this.renderField({
+                label: "Address",
+                control: h("textarea", {
+                    rows: 2,
+                    class: "pp-textarea",
+                    value: this.draft.address,
+                    oninput: e => this.setField("address", e.target.value),
+                }),
+            })
+        );
+    }
+
+    renderEmergencyCard() {
+        return h(
+            "section",
+            { class: "pp-card" },
+            h("p", { class: "pp-section-eyebrow" }, "Emergency contact"),
+
+            this.renderField({
+                label: "Contact name",
+                control: h("input", {
+                    type: "text",
+                    class: "pp-input",
+                    value: this.draft.emergency_contact_name,
+                    oninput: e => this.setField("emergency_contact_name", e.target.value),
+                }),
+            }),
+
+            this.renderField({
+                label: "Contact phone",
+                control: h("input", {
+                    type: "tel",
+                    class: "pp-input",
+                    inputmode: "tel",
+                    value: this.draft.emergency_contact_phone,
+                    oninput: e => this.setField("emergency_contact_phone", e.target.value),
+                }),
+            })
+        );
+    }
+
+    renderSaveBar() {
+        return h(
+            "button",
+            {
+                class: "pp-submit",
+                type: "button",
+                disabled: this.saving,
+                onclick: () => this.saveProfile(),
+            },
+            this.saving ? h("span", { class: "pp-spinner" }) : null,
+            h("span", null, this.saving ? "Saving…" : "Save changes")
+        );
+    }
+
+    renderAccountCard() {
+        return h(
+            "section",
+            { class: "pp-account-card" },
+            h(
+                "div",
+                { class: "pp-account-head" },
+                h("p", { class: "pp-section-eyebrow" }, "Account"),
+                h(
+                    "p",
+                    { class: "pp-account-text" },
+                    "Signing out will end your session on this device."
+                )
+            ),
+            h(
+                "button",
+                {
+                    type: "button",
+                    class: "pp-logout-btn",
+                    disabled: this.loggingOut,
+                    "aria-busy": String(this.loggingOut),
+                    onclick: () => this.logout(),
+                },
+                this.loggingOut
+                    ? h("span", { class: "pp-spinner pp-spinner--danger" })
+                    : icon(["M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4", "M16 17l5-5-5-5", "M21 12H9"], 16),
+                h("span", null, this.loggingOut ? "Logging out…" : "Log out")
             )
         );
     }
