@@ -3,6 +3,8 @@
 import { Component } from "../../core/component.js";
 import { h } from "../../utils/dom.js";
 import api from "../../services/api.js";
+const icon = (paths, size = 18) => h("svg", { viewBox: "0 0 24 24", fill: "none", width: String(size), height: String(size), "aria-hidden": "true" }, ...paths.map(d => h("path", { d, stroke: "currentColor", "stroke-width": "1.8", "stroke-linecap": "round", "stroke-linejoin": "round" })));
+
 
 const POLL_INTERVAL_MS = 60000;
 
@@ -341,18 +343,43 @@ export default class PatientMessaging extends Component {
     render() {
         return h(
             "div",
-            { class: "dashboard-page" },
+            { class: "patient-messaging" },
             this.view === "list" ? this.renderListHeader() : this.renderThreadHeader(),
-            this.view === "list" ? this.renderListAlerts() : null,
-            this.loading && this.view === "list"
-                ? h(
-                      "div",
-                      { class: "dashboard-page queue-page patient-messaging-page" },
-                      h("p", { class: "dashboard-muted" }, "Loading messages...")
-                  )
-                : this.view === "list"
-                ? this.renderConversationList()
-                : this.renderThread()
+            h(
+                "div",
+                { class: "pm-body" },
+                this.view === "list"
+                    ? [
+                          h(
+                              "p",
+                              { class: "pm-intro" },
+                              "Secure conversations with your doctors."
+                          ),
+                          this.renderListAlerts(),
+                          this.loading ? this.renderListSkeleton() : this.renderConversationList()
+                      ]
+                    : this.renderThread()
+            )
+        );
+    }
+
+    renderListSkeleton() {
+        return h(
+            "div",
+            { class: "pm-skel-stack", "aria-busy": "true", "aria-label": "Loading messages" },
+            ...[0, 1, 2].map(() =>
+                h(
+                    "div",
+                    { class: "pm-conversation pm-conversation--skeleton" },
+                    h("div", { class: "pm-skel pm-skel--avatar" }),
+                    h(
+                        "div",
+                        { class: "pm-conv-body" },
+                        h("div", { class: "pm-skel pm-skel--line pm-skel--short" }),
+                        h("div", { class: "pm-skel pm-skel--line" })
+                    )
+                )
+            )
         );
     }
 
@@ -361,16 +388,15 @@ export default class PatientMessaging extends Component {
     renderListHeader() {
         return h(
             "section",
-            { class: "dashboard-header" },
+            { class: "dashboard-header patient-home" },
             h(
                 "div",
-                { class: "dashboard-header__content" },
-                h("p", { class: "dashboard-greeting" }, "My Messages"),
-                h("h1", { class: "dashboard-title" }, "Messages"),
+                { class: "ph-hero" },
                 h(
-                    "p",
-                    { class: "dashboard-subtitle" },
-                    "Secure conversations with your doctors."
+                    "div",
+                    { class: "ph-hero__text" },
+                    h("p", { class: "dashboard-greeting" }, "My Messages"),
+                    h("h1", { class: "dashboard-title" }, "Messages")
                 )
             )
         );
@@ -380,78 +406,95 @@ export default class PatientMessaging extends Component {
         if (!this.errorMessage) return null;
         return h(
             "div",
-            { class: "dashboard-card", style: "border-left: 4px solid #ef4444; margin-bottom: var(--space-3);" },
-            h("p", { style: "color: #ef4444; margin: 0;" }, this.errorMessage)
+            { class: "pm-alert", role: "alert" },
+            h(
+                "div",
+                { class: "pm-alert-icon" },
+                icon(["M12 9v4", "M12 17h.01", "M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"], 18)
+            ),
+            h("p", { class: "pm-alert-text" }, this.errorMessage)
         );
     }
 
     renderConversationList() {
         return h(
             "div",
-            { class: "services-list" },
+            { class: "pm-list-stack" },
             h(
                 "div",
-                {
-                    class: "dashboard-card",
-                    style: "padding: 0.85rem 1rem; margin-bottom: var(--space-3);",
-                },
+                { class: "pm-search-wrap" },
+                h(
+                    "span",
+                    { class: "pm-search-icon" },
+                    icon(["M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16", "M21 21l-4.35-4.35"], 16)
+                ),
                 h("input", {
                     type: "text",
-                    placeholder: "Search by doctor name...",
+                    class: "pm-search-input",
+                    "data-focus-key": "search",
+                    "aria-label": "Search conversations",
+                    placeholder: "Search by doctor name",
                     value: this.searchTerm,
-                    style: "width: 100%; padding: 0.55rem 0.7rem; border: 1px solid var(--color-line); border-radius: 6px; font-size: 0.88rem; box-sizing: border-box;",
                     oninput: e => this.setSearchTerm(e.target.value),
                 })
             ),
             this.conversations.length === 0
                 ? h(
                       "div",
-                      { class: "dashboard-card text-center py-4" },
+                      { class: "pm-empty" },
+                      h(
+                          "div",
+                          { class: "pm-empty-icon" },
+                          icon(["M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"], 22)
+                      ),
                       h(
                           "p",
-                          { class: "dashboard-muted" },
+                          { class: "pm-empty-title" },
+                          this.searchTerm
+                              ? "No matches"
+                              : "No conversations yet"
+                      ),
+                      h(
+                          "p",
+                          { class: "pm-empty-text" },
                           this.searchTerm
                               ? `No conversations match "${this.searchTerm}".`
-                              : "No conversations yet. Message a doctor from your appointments."
+                              : "Message a doctor from your appointments to start."
                       )
                   )
                 : h(
                       "div",
-                      { class: "services-list" },
+                      { class: "pm-list" },
                       this.conversations.map(conversation => this.renderConversationCard(conversation)),
                       this.renderLoadMore()
                   )
         );
     }
-    
+
     renderLoadMore() {
         if (!this.hasMore || this.loading) return null;
-    
+
         return h(
             "div",
-            { class: "text-center", style: "margin-top: var(--space-2);" },
+            { class: "pm-load-more-wrap" },
             h(
                 "button",
                 {
-                    class: "btn btn-outline",
-                    style: "padding: 0.35rem 0.8rem; font-size: 0.75rem; border-radius: 5px;",
+                    class: "pm-load-more",
+                    type: "button",
                     disabled: this.loadingMore,
                     onclick: () => this.loadMoreConversations(),
                 },
-                this.loadingMore ? "Loading..." : "Load More"
+                this.loadingMore ? h("span", { class: "pm-spinner pm-spinner--dark" }) : null,
+                h("span", null, this.loadingMore ? "Loading…" : "Load more")
             )
         );
     }
     renderConversationCard(conversation) {
         const unread = conversation.unread_count || 0;
         const statusLabel = STATUS_LABELS[conversation.status] || conversation.status;
-
-        const badgeColor =
-            conversation.status === "open"
-                ? "#10b981"
-                : conversation.status === "archived"
-                ? "var(--color-ink-faint)"
-                : "#64748b";
+        const initial = (conversation.doctor_name || "?").charAt(0).toUpperCase();
+        const hasUnread = unread > 0;
 
         const previewText = conversation.last_message_deleted_at
             ? "This message was deleted"
@@ -459,56 +502,55 @@ export default class PatientMessaging extends Component {
             ? `Sent a ${conversation.last_message_type}`
             : conversation.last_message_body || "No messages yet";
 
+        const chipTone =
+            conversation.status === "open" ? "success"
+            : conversation.status === "archived" ? "muted"
+            : "info";
+
         return h(
-            "div",
+            "button",
             {
-                class: "dashboard-card service-item-card",
-                style: "padding: 0.9rem 1.1rem; margin-bottom: var(--space-3); cursor: pointer;",
+                class: `pm-conversation${hasUnread ? " pm-conversation--unread" : ""}`,
+                type: "button",
                 onclick: () => this.openConversation(conversation),
             },
+            h("div", { class: "pm-conv-avatar" }, initial),
             h(
                 "div",
-                { style: "display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-3);" },
+                { class: "pm-conv-body" },
                 h(
                     "div",
-                    { style: "min-width: 0; flex: 1;" },
+                    { class: "pm-conv-head" },
                     h(
-                        "h3",
-                        { style: "margin: 0 0 4px; font-size: 1.0rem; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" },
+                        "span",
+                        { class: "pm-conv-name" },
                         conversation.doctor_name || "Unknown Doctor"
                     ),
                     h(
-                        "p",
-                        {
-                            class: unread > 0 ? "" : "dashboard-muted",
-                            style: `margin: 0; font-size: 0.82rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; ${unread > 0 ? "font-weight: 600;" : ""}`,
-                        },
-                        previewText
+                        "span",
+                        { class: "pm-conv-time" },
+                        this.formatDateTime(
+                            conversation.last_message_created_at || conversation.created_at
+                        )
                     )
                 ),
                 h(
                     "div",
-                    { style: "display: flex; flex-direction: column; align-items: flex-end; gap: 6px; flex-shrink: 0;" },
+                    { class: "pm-conv-foot" },
                     h(
                         "span",
-                        { class: "dashboard-muted", style: "font-size: 0.72rem; white-space: nowrap;" },
-                        this.formatDateTime(conversation.last_message_created_at || conversation.created_at)
+                        { class: `pm-conv-preview${hasUnread ? " pm-conv-preview--unread" : ""}` },
+                        previewText
                     ),
-                    unread > 0
+                    hasUnread
                         ? h(
                               "span",
-                              {
-                                  class: "dashboard-badge",
-                                  style: "background: #0284c7; font-size: 0.68rem; padding: 2px 7px; border-radius: 10px;",
-                              },
-                              String(unread)
+                              { class: "pm-conv-badge" },
+                              unread > 9 ? "9+" : String(unread)
                           )
                         : h(
                               "span",
-                              {
-                                  class: "dashboard-badge",
-                                  style: `background: ${badgeColor}; font-size: 0.68rem; padding: 2px 7px; border-radius: 5px;`,
-                              },
+                              { class: `pm-conv-chip pm-conv-chip--${chipTone}` },
                               statusLabel
                           )
                 )
@@ -524,28 +566,34 @@ export default class PatientMessaging extends Component {
 
         return h(
             "section",
-            { class: "dashboard-header", style: "display: flex; align-items: flex-start; gap: 10px;" },
-            h(
-                "button",
-                {
-                    class: "btn btn-outline",
-                    style: "padding: 0.4rem 0.6rem; font-size: 0.8rem; border-radius: 6px; flex-shrink: 0; color: white;",
-                    onclick: () => this.closeThread(),
-                },
-                "← Back"
-            ),
+            { class: "dashboard-header patient-home" },
             h(
                 "div",
-                { style: "min-width: 0; flex: 1;" },
+                { class: "ph-hero" },
                 h(
-                    "h1",
-                    { class: "dashboard-title", style: "font-size: 1.15rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" },
-                    conversation.doctor_name || "Conversation"
+                    "button",
+                    {
+                        class: "ph-hero__back",
+                        type: "button",
+                        "aria-label": "Back to messages",
+                        onclick: () => this.closeThread(),
+                    },
+                    icon(["M15 18l-6-6 6-6"], 18)
                 ),
                 h(
-                    "p",
-                    { class: "dashboard-subtitle", style: "font-size: 0.8rem;" },
-                    `Status: ${statusLabel}`
+                    "div",
+                    { class: "ph-hero__text" },
+                    h("p", { class: "dashboard-greeting" }, "Conversation"),
+                    h(
+                        "h1",
+                        { class: "dashboard-title" },
+                        conversation.doctor_name || "Conversation"
+                    ),
+                    h(
+                        "p",
+                        { class: "dashboard-subtitle" },
+                        `Status: ${statusLabel}`
+                    )
                 )
             )
         );
@@ -554,25 +602,22 @@ export default class PatientMessaging extends Component {
     renderThread() {
         return h(
             "div",
-            { class: "dashboard-card", style: "padding: 0; display: flex; flex-direction: column; height: calc(100dvh - 320px); min-height: 250px; overflow: hidden;" },
+            { class: "pm-thread-card" },
             this.renderThreadStatusBar(),
             this.messagesError
                 ? h(
                       "div",
-                      { style: "padding: 0.6rem 1rem; border-bottom: 1px solid var(--color-line);" },
-                      h("p", { style: "color: #ef4444; margin: 0; font-size: 0.82rem;" }, this.messagesError)
+                      { class: "pm-thread-error" },
+                      h("p", null, this.messagesError)
                   )
                 : null,
             h(
                 "div",
-                {
-                    id: "patient-chat-thread-body",
-                    style: "flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 10px;",
-                },
+                { id: "patient-chat-thread-body", class: "pm-thread-body" },
                 this.messagesLoading
-                    ? h("p", { class: "dashboard-muted text-center" }, "Loading conversation...")
+                    ? this.renderThreadLoading()
                     : this.messages.length === 0
-                    ? h("p", { class: "dashboard-muted text-center" }, "No messages yet. Say hello.")
+                    ? this.renderThreadEmpty()
                     : [
                           this.renderLoadOlderButton(),
                           ...this.messages.map(message => this.renderMessageBubble(message)),
@@ -581,25 +626,50 @@ export default class PatientMessaging extends Component {
             this.renderComposer()
         );
     }
-    
-    renderLoadOlderButton() {
-        if (!this.hasMoreMessages) return null;
-    
+
+    renderThreadLoading() {
         return h(
             "div",
-            { class: "text-center", style: "margin-bottom: 8px;" },
+            { class: "pm-thread-loading" },
+            h("div", { class: "pm-skel pm-skel--line pm-skel--short" }),
+            h("div", { class: "pm-skel pm-skel--line" }),
+            h("div", { class: "pm-skel pm-skel--line pm-skel--short" })
+        );
+    }
+
+    renderThreadEmpty() {
+        return h(
+            "div",
+            { class: "pm-thread-empty" },
+            h(
+                "div",
+                { class: "pm-thread-empty-icon" },
+                icon(["M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"], 20)
+            ),
+            h("p", { class: "pm-thread-empty-title" }, "No messages yet"),
+            h("p", { class: "pm-thread-empty-text" }, "Say hello to start the conversation.")
+        );
+    }
+
+    renderLoadOlderButton() {
+        if (!this.hasMoreMessages) return null;
+
+        return h(
+            "div",
+            { class: "pm-load-older-wrap" },
             h(
                 "button",
                 {
-                    class: "btn btn-outline",
-                    style: "padding: 0.3rem 0.7rem; font-size: 0.74rem; border-radius: 5px;",
+                    class: "pm-load-older",
+                    type: "button",
                     disabled: this.messagesLoadingOlder,
                     onclick: () => {
                         this._justLoadedOlder = true;
                         this.loadOlderMessages();
                     },
                 },
-                this.messagesLoadingOlder ? "Loading..." : "Load older messages"
+                this.messagesLoadingOlder ? h("span", { class: "pm-spinner pm-spinner--dark" }) : null,
+                h("span", null, this.messagesLoadingOlder ? "Loading…" : "Load older messages")
             )
         );
     }
@@ -626,12 +696,15 @@ export default class PatientMessaging extends Component {
 
         return h(
             "div",
-            {
-                style: "padding: 0.6rem 1rem; border-bottom: 1px solid var(--color-line); background: rgba(2,132,199,0.04);",
-            },
+            { class: "pm-status-bar" },
+            h(
+                "div",
+                { class: "pm-status-icon" },
+                icon(["M12 9v4", "M12 17h.01", "M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"], 16)
+            ),
             h(
                 "p",
-                { class: "dashboard-muted", style: "margin: 0; font-size: 0.8rem;" },
+                { class: "pm-status-text" },
                 conversation.status === "closed"
                     ? "Your doctor has closed this conversation. Contact them from a new appointment if you need to reopen it."
                     : "This conversation is archived."
@@ -645,21 +718,17 @@ export default class PatientMessaging extends Component {
 
         return h(
             "div",
-            { style: `display: flex; flex-direction: column; align-items: ${isMine ? "flex-end" : "flex-start"};` },
+            { class: `pm-bubble-row${isMine ? " pm-bubble-row--mine" : " pm-bubble-row--theirs"}` },
             h(
                 "div",
                 {
-                    style: `max-width: 78%; padding: 0.55rem 0.8rem; border-radius: 12px; font-size: 0.88rem; line-height: 1.45; ${
-                        isMine
-                            ? "background: var(--color-primary, #0284c7); color: #fff; border-bottom-right-radius: 3px;"
-                            : "background: var(--color-bg-muted, #f1f5f9); color: inherit; border-bottom-left-radius: 3px;"
-                    } ${isDeleted ? "font-style: italic; opacity: 0.7;" : ""}`,
+                    class: `pm-bubble${isMine ? " pm-bubble--mine" : " pm-bubble--theirs"}${isDeleted ? " pm-bubble--deleted" : ""}`,
                 },
                 isDeleted ? "This message was deleted" : (message.body || "")
             ),
             h(
                 "span",
-                { class: "dashboard-muted", style: "font-size: 0.68rem; margin-top: 3px;" },
+                { class: "pm-bubble-time" },
                 `${this.formatTime(message.created_at)}${message.is_edited ? " · edited" : ""}`
             )
         );
@@ -671,13 +740,13 @@ export default class PatientMessaging extends Component {
 
         return h(
             "div",
-            { style: "border-top: 1px solid var(--color-line); padding: 0.75rem; display: flex; gap: 8px; align-items: flex-end;" },
+            { class: "pm-composer" },
             h("textarea", {
                 rows: 1,
-                placeholder: isClosed ? "This conversation is no longer open" : "Type a message...",
+                class: "pm-composer-input",
+                placeholder: isClosed ? "This conversation is no longer open" : "Type a message…",
                 value: this.messageDraft,
                 disabled: isClosed || this.sending,
-                style: "flex: 1; padding: 0.55rem 0.7rem; border: 1px solid var(--color-line); border-radius: 8px; font-size: 0.88rem; font-family: inherit; resize: none; box-sizing: border-box; max-height: 100px;",
                 oninput: e => this.setMessageDraft(e.target.value),
                 onkeydown: e => {
                     if (e.key === "Enter" && !e.shiftKey) {
@@ -689,12 +758,15 @@ export default class PatientMessaging extends Component {
             h(
                 "button",
                 {
-                    class: "btn btn-primary",
-                    style: "padding: 0.55rem 1rem; font-size: 0.85rem; border-radius: 8px; flex-shrink: 0;",
-                    disabled: this.sending,
+                    class: "pm-send-btn",
+                    type: "button",
+                    "aria-label": "Send message",
+                    disabled: this.sending || isClosed,
                     onclick: () => this.sendMessage(),
                 },
-                this.sending ? "Sending..." : "Send"
+                this.sending
+                    ? h("span", { class: "pm-spinner" })
+                    : icon(["M22 2L11 13", "M22 2l-7 20-4-9-9-4 20-7z"], 18)
             )
         );
     }
