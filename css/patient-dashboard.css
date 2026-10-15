@@ -3862,3 +3862,268 @@
     .patient-messaging .pm-composer-input { padding: 10px 14px; font-size: 0.86rem; }
     .patient-messaging .pm-send-btn { width: 40px; height: 40px; }
 }
+/* ============================================================
+   Patient Profile — premium edit form
+   Scoped under .patient-profile with the pp- prefix.
+   ============================================================ */
+
+.patient-profile {
+    --pp-border: rgba(15, 23, 42, 0.08);
+    --pp-border-strong: rgba(15, 23, 42, 0.14);
+    --pp-card: #ffffff;
+    --pp-danger: #ef4444;
+    --pp-danger-soft: color-mix(in srgb, #ef4444 10%, transparent);
+    --pp-success: #10b981;
+    --pp-success-soft: color-mix(in srgb, #10b981 12%, transparent);
+    --pp-primary-soft: color-mix(in srgb, var(--color-primary) 10%, transparent);
+    padding-bottom: 24px;
+}
+
+.patient-profile .pp-body {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    animation: dash-fade-in var(--duration-medium) var(--ease-out);
+}
+
+/* -------- Alerts -------- */
+.patient-profile .pp-alert {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 12px 14px;
+    border-radius: var(--radius-md, 14px);
+    border: 1px solid transparent;
+}
+.patient-profile .pp-alert--danger {
+    background: var(--pp-danger-soft);
+    border-color: color-mix(in srgb, #ef4444 22%, transparent);
+}
+.patient-profile .pp-alert--success {
+    background: var(--pp-success-soft);
+    border-color: color-mix(in srgb, #10b981 22%, transparent);
+}
+.patient-profile .pp-alert-icon {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: #ffffff;
+}
+.patient-profile .pp-alert--danger .pp-alert-icon { color: var(--pp-danger); }
+.patient-profile .pp-alert--success .pp-alert-icon { color: var(--pp-success); }
+.patient-profile .pp-alert-text {
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--color-ink);
+    align-self: center;
+}
+
+/* -------- Card / section -------- */
+.patient-profile .pp-card {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 18px;
+    background: var(--pp-card);
+    border: 1px solid var(--pp-border);
+    border-radius: var(--radius-lg, 18px);
+    box-shadow: var(--shadow-card);
+}
+
+.patient-profile .pp-section-eyebrow {
+    margin: 0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+}
+
+/* -------- Field -------- */
+.patient-profile .pp-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.patient-profile .pp-label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: var(--color-ink);
+}
+
+/* -------- Inputs (shared) -------- */
+.patient-profile .pp-input,
+.patient-profile .pp-select,
+.patient-profile .pp-textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 12px 14px;
+    border: 1px solid var(--pp-border);
+    border-radius: var(--radius-md, 14px);
+    background: #ffffff;
+    color: var(--color-ink);
+    font-size: 0.9rem;
+    font-family: inherit;
+    transition: border-color var(--duration-fast) var(--ease-out),
+                box-shadow var(--duration-fast) var(--ease-out);
+}
+.patient-profile .pp-input::placeholder,
+.patient-profile .pp-textarea::placeholder {
+    color: var(--color-muted);
+}
+.patient-profile .pp-input:focus,
+.patient-profile .pp-select:focus,
+.patient-profile .pp-textarea:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--pp-primary-soft);
+}
+.patient-profile .pp-textarea {
+    resize: vertical;
+    line-height: 1.5;
+    min-height: 60px;
+}
+
+/* Date input — trim the native icon padding on iOS/Android */
+.patient-profile .pp-input[type="date"] {
+    -webkit-appearance: none;
+    appearance: none;
+    min-height: 46px;
+}
+
+/* -------- Select -------- */
+.patient-profile .pp-select-wrap { position: relative; }
+
+.patient-profile .pp-select {
+    appearance: none;
+    -webkit-appearance: none;
+    padding-right: 38px;
+    cursor: pointer;
+}
+.patient-profile .pp-select-chevron {
+    position: absolute;
+    top: 50%;
+    right: 12px;
+    transform: translateY(-50%);
+    color: var(--color-muted);
+    pointer-events: none;
+    display: inline-flex;
+}
+
+/* -------- Submit -------- */
+.patient-profile .pp-submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 14px 22px;
+    border: none;
+    border-radius: 999px;
+    background: var(--color-primary);
+    color: #ffffff;
+    font-size: 0.92rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    box-shadow: 0 10px 22px -10px color-mix(in srgb, var(--color-primary) 60%, transparent);
+    transition: transform var(--duration-fast) var(--ease-out),
+                box-shadow var(--duration-fast) var(--ease-out),
+                background var(--duration-fast) var(--ease-out);
+}
+.patient-profile .pp-submit:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 26px -10px color-mix(in srgb, var(--color-primary) 65%, transparent);
+}
+.patient-profile .pp-submit:active:not(:disabled) { transform: translateY(0); }
+.patient-profile .pp-submit:disabled {
+    background: color-mix(in srgb, var(--color-ink) 10%, transparent);
+    color: color-mix(in srgb, var(--color-ink) 40%, transparent);
+    box-shadow: none;
+    cursor: not-allowed;
+}
+
+/* -------- Account card -------- */
+.patient-profile .pp-account-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 18px;
+    background: var(--pp-card);
+    border: 1px solid var(--pp-border);
+    border-radius: var(--radius-lg, 18px);
+    box-shadow: var(--shadow-card);
+}
+
+.patient-profile .pp-account-head {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+.patient-profile .pp-account-text {
+    margin: 0;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: var(--color-muted);
+}
+
+.patient-profile .pp-logout-btn {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border: 1px solid color-mix(in srgb, #ef4444 45%, transparent);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--pp-danger);
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background var(--duration-fast) var(--ease-out),
+                border-color var(--duration-fast) var(--ease-out);
+}
+.patient-profile .pp-logout-btn:hover:not(:disabled) {
+    background: var(--pp-danger-soft);
+    border-color: var(--pp-danger);
+}
+.patient-profile .pp-logout-btn:disabled { opacity: 0.7; cursor: progress; }
+
+/* -------- Spinner -------- */
+.patient-profile .pp-spinner {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.45);
+    border-top-color: #ffffff;
+    animation: pp-spin 0.7s linear infinite;
+    display: inline-block;
+    flex-shrink: 0;
+}
+.patient-profile .pp-spinner--danger {
+    width: 14px;
+    height: 14px;
+    border-color: rgba(239, 68, 68, 0.25);
+    border-top-color: var(--pp-danger);
+}
+@keyframes pp-spin { to { transform: rotate(360deg); } }
+
+/* -------- Very small screens -------- */
+@media (max-width: 360px) {
+    .patient-profile .pp-card,
+    .patient-profile .pp-account-card { padding: 16px; }
+    .patient-profile .pp-input,
+    .patient-profile .pp-select,
+    .patient-profile .pp-textarea { padding: 11px 12px; font-size: 0.88rem; }
+    .patient-profile .pp-logout-btn { align-self: stretch; justify-content: center; }
+}
