@@ -2612,3 +2612,655 @@
     .patient-doctor-profile .dp-service-desc,
     .patient-doctor-profile .dp-service-note { margin-left: 0; }
 }
+/* ============================================================
+   Patient Care — premium appointments & records
+   Scoped under .patient-care with the pc- prefix.
+   ============================================================ */
+
+.patient-care {
+    --pc-border: rgba(15, 23, 42, 0.08);
+    --pc-border-strong: rgba(15, 23, 42, 0.14);
+    --pc-card: #ffffff;
+    --pc-danger: #ef4444;
+    --pc-danger-soft: color-mix(in srgb, #ef4444 10%, transparent);
+    --pc-success: #10b981;
+    --pc-success-soft: color-mix(in srgb, #10b981 14%, transparent);
+    --pc-warning: #b45309;
+    --pc-warning-soft: color-mix(in srgb, #f59e0b 16%, transparent);
+    --pc-violet: #7c3aed;
+    --pc-violet-soft: color-mix(in srgb, #8b5cf6 14%, transparent);
+    --pc-primary-soft: color-mix(in srgb, var(--color-primary) 10%, transparent);
+    padding-bottom: 24px;
+}
+
+.patient-care .pc-body {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.patient-care .pc-body--enter {
+    animation: dash-fade-in var(--duration-medium) var(--ease-out);
+}
+
+.patient-care .pc-intro {
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.55;
+    color: var(--color-muted);
+}
+
+/* -------- Stack -------- */
+.patient-care .pc-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+/* -------- Tabs (segmented, horizontally scrollable) -------- */
+.patient-care .pc-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 5px;
+    background: rgba(15, 23, 42, 0.045);
+    border: 1px solid var(--pc-border);
+    border-radius: 999px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+.patient-care .pc-tabs::-webkit-scrollbar { display: none; }
+
+.patient-care .pc-tab {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--color-muted);
+    font-size: 0.82rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    white-space: nowrap;
+    -webkit-tap-highlight-color: transparent;
+    transition: background var(--duration-fast) var(--ease-out),
+                color var(--duration-fast) var(--ease-out),
+                box-shadow var(--duration-fast) var(--ease-out);
+}
+.patient-care .pc-tab:hover { color: var(--color-ink); }
+.patient-care .pc-tab--active {
+    background: #ffffff;
+    color: var(--color-primary);
+    box-shadow: 0 2px 6px -2px rgba(15, 23, 42, 0.14);
+}
+.patient-care .pc-tab--active:hover { color: var(--color-primary); }
+.patient-care .pc-tab:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+.patient-care .pc-tab-label { line-height: 1; }
+
+.patient-care .pc-tab-count {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.06);
+    color: var(--color-muted);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.64rem;
+    font-weight: 700;
+    line-height: 1;
+}
+.patient-care .pc-tab--active .pc-tab-count {
+    background: var(--pc-primary-soft);
+    color: var(--color-primary);
+}
+
+/* -------- List -------- */
+.patient-care .pc-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* -------- Card -------- */
+.patient-care .pc-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    background: var(--pc-card);
+    border: 1px solid var(--pc-border);
+    border-radius: var(--radius-lg, 18px);
+    box-shadow: var(--shadow-card);
+    box-sizing: border-box;
+    width: 100%;
+    transition: transform var(--duration-fast) var(--ease-out),
+                box-shadow var(--duration-fast) var(--ease-out);
+}
+.patient-care .pc-card--tappable {
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+.patient-care .pc-card--tappable:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 28px -14px rgba(15, 23, 42, 0.18);
+}
+.patient-care .pc-card--tappable:active { transform: translateY(0); }
+
+.patient-care .pc-card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+}
+.patient-care .pc-card-identity {
+    min-width: 0;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+.patient-care .pc-card-name {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -0.005em;
+    line-height: 1.3;
+    color: var(--color-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.patient-care .pc-card-meta {
+    margin: 0;
+    font-size: 0.78rem;
+    line-height: 1.4;
+    color: var(--color-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* -------- Status chip -------- */
+.patient-care .pc-chip {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
+.patient-care .pc-chip--success { background: var(--pc-success-soft); color: #0f6b4b; }
+.patient-care .pc-chip--warning { background: var(--pc-warning-soft); color: var(--pc-warning); }
+.patient-care .pc-chip--info    { background: var(--pc-primary-soft); color: var(--color-primary); }
+.patient-care .pc-chip--violet  { background: var(--pc-violet-soft);  color: var(--pc-violet); }
+.patient-care .pc-chip--muted   { background: rgba(15, 23, 42, 0.06); color: var(--color-muted); }
+
+/* -------- Expand hint (completed) -------- */
+.patient-care .pc-expand-hint {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 10px;
+    border-top: 1px solid var(--pc-border);
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--color-primary);
+}
+.patient-care .pc-expand-chevron {
+    display: inline-flex;
+    color: var(--color-primary);
+    transition: transform var(--duration-fast) var(--ease-out);
+}
+.patient-care .pc-expand-chevron--open { transform: rotate(180deg); }
+
+/* -------- Pay box -------- */
+.patient-care .pc-pay-box {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: var(--radius-md, 14px);
+    background: var(--pc-primary-soft);
+    border: 1px solid color-mix(in srgb, var(--color-primary) 22%, transparent);
+}
+.patient-care .pc-pay-text {
+    margin: 0;
+    font-size: 0.84rem;
+    line-height: 1.5;
+    color: var(--color-ink);
+}
+
+/* -------- Primary / secondary action buttons -------- */
+.patient-care .pc-pay-btn,
+.patient-care .pc-accept-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 999px;
+    background: var(--color-primary);
+    color: #ffffff;
+    font-size: 0.88rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    align-self: flex-start;
+    box-shadow: 0 8px 20px -10px color-mix(in srgb, var(--color-primary) 60%, transparent);
+    transition: transform var(--duration-fast) var(--ease-out),
+                box-shadow var(--duration-fast) var(--ease-out),
+                background var(--duration-fast) var(--ease-out);
+}
+.patient-care .pc-pay-btn:hover:not(:disabled),
+.patient-care .pc-accept-btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 24px -10px color-mix(in srgb, var(--color-primary) 65%, transparent);
+}
+.patient-care .pc-pay-btn:disabled,
+.patient-care .pc-accept-btn:disabled {
+    background: color-mix(in srgb, var(--color-ink) 10%, transparent);
+    color: color-mix(in srgb, var(--color-ink) 40%, transparent);
+    box-shadow: none;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.patient-care .pc-secondary-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 11px 20px;
+    border: 1px solid color-mix(in srgb, var(--color-primary) 40%, transparent);
+    border-radius: 999px;
+    background: transparent;
+    color: var(--color-primary);
+    font-size: 0.86rem;
+    font-weight: 600;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background var(--duration-fast) var(--ease-out);
+}
+.patient-care .pc-secondary-btn:hover:not(:disabled) { background: var(--pc-primary-soft); }
+.patient-care .pc-secondary-btn:disabled { opacity: 0.65; cursor: not-allowed; }
+
+.patient-care .pc-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.patient-care .pc-action-note {
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--color-muted);
+}
+.patient-care .pc-action-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* -------- Reschedule comparison -------- */
+.patient-care .pc-reschedule {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 14px;
+    border-radius: var(--radius-md, 14px);
+    background: var(--pc-violet-soft);
+    border: 1px solid color-mix(in srgb, #8b5cf6 25%, transparent);
+}
+.patient-care .pc-reschedule-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.patient-care .pc-reschedule-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: #ffffff;
+    color: var(--pc-violet);
+}
+.patient-care .pc-reschedule-eyebrow {
+    margin: 0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--pc-violet);
+}
+.patient-care .pc-reschedule-line {
+    margin: 0;
+    font-size: 0.82rem;
+    line-height: 1.45;
+    color: var(--color-ink);
+}
+.patient-care .pc-reschedule-label {
+    color: var(--color-muted);
+    margin-right: 6px;
+}
+.patient-care .pc-reschedule-struck {
+    text-decoration: line-through;
+    color: var(--color-muted);
+}
+.patient-care .pc-reschedule-strong {
+    font-weight: 700;
+    color: var(--pc-violet);
+}
+.patient-care .pc-reschedule-quote {
+    margin: 0;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: var(--color-muted);
+    font-style: italic;
+}
+
+/* -------- Consultation notes -------- */
+.patient-care .pc-notes {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--pc-border);
+    cursor: auto;
+}
+.patient-care .pc-notes-empty {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--color-muted);
+}
+
+.patient-care .pc-followup {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    align-self: flex-start;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: var(--pc-warning-soft);
+    color: var(--pc-warning);
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1;
+}
+.patient-care .pc-followup-icon { display: inline-flex; }
+
+.patient-care .pc-notes-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.patient-care .pc-notes-title {
+    margin: 0;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-primary);
+}
+.patient-care .pc-notes-body {
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.6;
+    color: var(--color-ink);
+}
+
+/* -------- Medications -------- */
+.patient-care .pc-meds {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+}
+.patient-care .pc-meds-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+.patient-care .pc-meds-eyebrow {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-muted);
+}
+.patient-care .pc-meds-download {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 6px 10px;
+    border: none;
+    border-radius: 999px;
+    background: var(--pc-primary-soft);
+    color: var(--color-primary);
+    font-size: 0.72rem;
+    font-weight: 600;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background var(--duration-fast) var(--ease-out);
+}
+.patient-care .pc-meds-download:hover { background: color-mix(in srgb, var(--color-primary) 18%, transparent); }
+
+.patient-care .pc-med {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm, 10px);
+    background: rgba(15, 23, 42, 0.04);
+}
+.patient-care .pc-med-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 10px;
+}
+.patient-care .pc-med-name {
+    margin: 0;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--color-ink);
+    line-height: 1.35;
+}
+.patient-care .pc-med-details {
+    margin: 0;
+    font-size: 0.76rem;
+    color: var(--color-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.patient-care .pc-med-notes {
+    margin: 0;
+    font-size: 0.78rem;
+    line-height: 1.45;
+    font-style: italic;
+    color: var(--color-muted);
+}
+
+/* -------- Empty -------- */
+.patient-care .pc-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 8px;
+    padding: 34px 22px 30px;
+    background: var(--pc-card);
+    border: 1px solid var(--pc-border);
+    border-radius: var(--radius-lg, 18px);
+    box-shadow: var(--shadow-card);
+}
+.patient-care .pc-empty-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: var(--pc-primary-soft);
+    color: var(--color-primary);
+}
+.patient-care .pc-empty-title {
+    margin: 4px 0 0;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-ink);
+    text-transform: capitalize;
+}
+.patient-care .pc-empty-text {
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--color-muted);
+}
+
+/* -------- Load more -------- */
+.patient-care .pc-load-more-wrap {
+    display: flex;
+    justify-content: center;
+    padding: 6px 0 4px;
+}
+.patient-care .pc-load-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 22px;
+    border: 1px solid var(--pc-border);
+    border-radius: 999px;
+    background: #ffffff;
+    color: var(--color-ink);
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: border-color var(--duration-fast) var(--ease-out),
+                color var(--duration-fast) var(--ease-out);
+}
+.patient-care .pc-load-more:hover:not(:disabled) {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+.patient-care .pc-load-more:disabled { opacity: 0.7; cursor: progress; }
+
+/* -------- Alert -------- */
+.patient-care .pc-alert {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 12px 14px;
+    border-radius: var(--radius-md, 14px);
+    background: var(--pc-danger-soft);
+    border: 1px solid color-mix(in srgb, #ef4444 22%, transparent);
+}
+.patient-care .pc-alert-icon {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    background: #ffffff;
+    color: var(--pc-danger);
+}
+.patient-care .pc-alert-text {
+    margin: 0;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--color-ink);
+}
+
+/* -------- Spinner -------- */
+.patient-care .pc-spinner {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.45);
+    border-top-color: #ffffff;
+    animation: pc-spin 0.7s linear infinite;
+    display: inline-block;
+}
+.patient-care .pc-spinner--dark {
+    border-color: rgba(15, 23, 42, 0.18);
+    border-top-color: var(--color-primary);
+}
+@keyframes pc-spin { to { transform: rotate(360deg); } }
+
+/* -------- Skeleton -------- */
+.patient-care .pc-skel-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+.patient-care .pc-card--skeleton {
+    pointer-events: none;
+    cursor: default;
+}
+.patient-care .pc-skel-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}
+.patient-care .pc-skel-head-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+.patient-care .pc-skel {
+    border-radius: 6px;
+    background: linear-gradient(90deg,
+        rgba(15, 23, 42, 0.06) 0%,
+        rgba(15, 23, 42, 0.10) 50%,
+        rgba(15, 23, 42, 0.06) 100%);
+    background-size: 200% 100%;
+    animation: pc-skel-shine 1.4s ease-in-out infinite;
+}
+.patient-care .pc-skel--line { height: 12px; width: 100%; }
+.patient-care .pc-skel--short { width: 55%; }
+.patient-care .pc-skel--tiny { width: 32%; height: 10px; }
+.patient-care .pc-skel--chip { width: 70px; height: 22px; border-radius: 999px; flex-shrink: 0; }
+@keyframes pc-skel-shine {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* -------- Very small screens -------- */
+@media (max-width: 360px) {
+    .patient-care .pc-tab { padding: 9px 11px; font-size: 0.78rem; }
+    .patient-care .pc-card { padding: 14px; }
+    .patient-care .pc-card-name { font-size: 0.94rem; }
+    .patient-care .pc-pay-btn,
+    .patient-care .pc-accept-btn,
+    .patient-care .pc-secondary-btn {
+        padding: 11px 16px;
+        font-size: 0.84rem;
+        align-self: stretch;
+    }
+}
