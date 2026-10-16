@@ -344,23 +344,23 @@ export default class DoctorSubscriptionPage extends Component {
             const oldPurchaseToken = oldProductId ? this.findOldPurchaseToken(oldProductId) : null;
             const isSameProduct = oldProductId && oldProductId === productId;
 
-            // Guard: if the server says we're on a paid tier but the
-            // device has no matching receipt, refuse rather than risk
-            // stacking a second parallel subscription.
             if (hasActivePaid && !oldPurchaseToken) {
                 return this.failBilling('Tap "Restore purchases" first, then try again.');
             }
 
             // ── Place the order ──
             if (platform === "apple") {
-                // Apple auto-compares current vs new subscription and
-                // applies proration — one call handles every case.
-                await store.order(offer);
+                
+                await store.order(offer, {
+                    apple: { appAccountToken: this.doctor.id }
+                });
             } else if (isSameProduct) {
-                // Same product, different base plan (monthly ↔ yearly).
-                // Do NOT pass oldPurchaseToken or replacementMode —
-                // Google handles the switch internally.
-                await store.order(offer);
+                
+                await store.order(offer, {
+                    googlePlay: {
+                        obfuscatedAccountId: this.doctor.id
+                    }
+                });
             } else if (oldPurchaseToken) {
                 // Cross-tier change
                 const RM = GooglePlay.ReplacementMode;
@@ -376,6 +376,7 @@ export default class DoctorSubscriptionPage extends Component {
 
                 await store.order(offer, {
                     googlePlay: {
+                        obfuscatedAccountId: this.doctor.id,
                         oldPurchaseToken,
                         oldProductId,
                         replacementMode: mode
@@ -383,7 +384,11 @@ export default class DoctorSubscriptionPage extends Component {
                 });
             } else {
                 // First-time purchase
-                await store.order(offer);
+                await store.order(offer, {
+                    googlePlay: {
+                        obfuscatedAccountId: this.doctor.id
+                    }
+                });
             }
 
         } catch (err) {
