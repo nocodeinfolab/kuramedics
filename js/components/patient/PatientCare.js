@@ -221,7 +221,7 @@ export default class PatientCare extends Component {
     
             const res = await api.post("/payments", {
                 booking_id: booking.id,
-                return_path: isNative ? "yeroscare://payment-callback" : "/#/patient/dashboard",
+                return_path: isNative ? "native" : "/#/patient/dashboard",
             });
             const payment = res.data || res;
     
@@ -255,21 +255,24 @@ export default class PatientCare extends Component {
     
         const urlListener = await App.addListener("appUrlOpen", async (event) => {
             if (!event.url.startsWith("yeroscare://payment-callback")) return;
-    
             urlListener.remove();
             finishListener.remove();
             await Browser.close();
             await this.confirmPayment(reference);
         });
     
-        // User dismissed the browser without completing payment
-        const finishListener = await Browser.addListener("browserFinished", () => {
+        const finishListener = await Browser.addListener("browserFinished", async () => {
             urlListener.remove();
             finishListener.remove();
-            if (this.payingBookingId) {
-                this.payingBookingId = null;
-                this.update();
-            }
+    
+            if (!this.payingBookingId) return;
+    
+            this.payingBookingId = null;
+            this.update();
+    
+            // Give the deep link a moment to win the race, then verify anyway.
+            await new Promise((r) => setTimeout(r, 1500));
+            await this.confirmPayment(reference);
         });
     
         await Browser.open({ url: checkoutUrl, presentationStyle: "popover" });
