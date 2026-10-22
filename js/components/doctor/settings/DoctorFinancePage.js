@@ -397,10 +397,13 @@ export default class DoctorFinancePage extends Component {
                   )
                 : h("p", { class: "dashboard-muted", style: "margin-top: var(--space-3);" }, "Add your bank details below so we can pay you directly for consultations."),
             payout.status === "pending_verification"
-                ? h("p", { class: "dashboard-muted", style: "margin-top: var(--space-2); font-size: 0.8rem;" }, "Your payout account activates automatically once your profile verification is approved.")
+                ? h("p", { class: "dashboard-muted", style: "margin-top: var(--space-2); font-size: 0.8rem;" },
+                      payout.reason === "recipient_missing"
+                          ? "Your bank details are saved and your profile is verified. We couldn't complete the payout setup — please re-save your bank details, or contact support if this persists."
+                          : "Your payout account activates automatically once your profile verification is approved.")
                 : null
-        );
-    }
+                    );
+                }
 
     renderBankForm() {
         return h(
