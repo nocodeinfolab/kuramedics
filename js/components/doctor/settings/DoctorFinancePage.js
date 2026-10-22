@@ -16,6 +16,9 @@ export default class DoctorFinancePage extends Component {
 
         this.bankForm = { bank_code: "", bank_name: "", account_number: "", account_name: "" };
         this.savingBank = false;
+        
+        this.bankPickerOpen = false;
+        this.bankSearchQuery = "";
     }
 
     async afterMount() {
@@ -32,7 +35,7 @@ export default class DoctorFinancePage extends Component {
             this.summary = res.data || res;
 
             this.bankForm = {
-                bank_code: this.bankForm.bank_code,
+                bank_code: this.summary.payoutAccount?.bank_code || this.bankForm.bank_code,
                 bank_name: this.summary.payoutAccount?.bank_name || "",
                 account_number: this.summary.payoutAccount?.account_number || "",
                 account_name: this.summary.payoutAccount?.account_name || "",
@@ -63,15 +66,69 @@ export default class DoctorFinancePage extends Component {
 
     setBankField(field, value) {
         this.bankForm = { ...this.bankForm, [field]: value };
-
-        if (field === "bank_code") {
-            const match = this.banks.find(b => b.code === value);
-            this.bankForm.bank_name = match?.name || "";
-        }
+    }
+    
+    openBankPicker() {
+        this.bankPickerOpen = true;
+        this.bankSearchQuery = "";
+        this.update();
+    
+        // Focus the search input after DOM is updated (works in Capacitor because
+        // the tap that opened the picker still counts as the user gesture).
+        setTimeout(() => {
+            const input = this.el?.querySelector('[data-bank-search]');
+            if (input) input.focus();
+        }, 50);
+    }
+    
+    closeBankPicker() {
+        if (!this.bankPickerOpen) return;
+        this.bankPickerOpen = false;
+        this.bankSearchQuery = "";
+        this.update();
+    }
+    
+    handleBankSearchInput(value) {
+        this.bankSearchQuery = value;
+        // Do NOT call this.update() — it would destroy the input and close the
+        // keyboard on iOS. Instead, refresh only the list container.
+        this.refreshBankList();
+    }
+    
+    getFilteredBanks() {
+        const q = this.bankSearchQuery.trim().toLowerCase();
+        if (!q) return this.banks;
+        return this.banks.filter(b => b.name.toLowerCase().includes(q));
+    }
+    
+    refreshBankList() {
+        const listEl = this.el?.querySelector('[data-bank-list]');
+        if (!listEl) return;
+        const filtered = this.getFilteredBanks();
+        listEl.replaceChildren(...this.renderBankListItems(filtered));
+    }
+    
+    selectBank(bank) {
+        this.bankForm = {
+            ...this.bankForm,
+            bank_code: bank.code,
+            bank_name: bank.name,
+        };
+        this.bankPickerOpen = false;
+        this.bankSearchQuery = "";
+        this.update();
     }
 
     async handleSaveBankDetails(e) {
         e.preventDefault();
+    
+        if (!this.bankForm.bank_code) {
+            this.errorMessage = "Please select a bank.";
+            this.successMessage = "";
+            this.update();
+            return;
+        }
+    
         this.savingBank = true;
         this.errorMessage = "";
         this.successMessage = "";
@@ -110,7 +167,90 @@ export default class DoctorFinancePage extends Component {
             this.renderAlerts(),
             this.loading
                 ? h("div", { class: "dashboard-card text-center py-4" }, h("p", { class: "dashboard-muted" }, "Loading finance details..."))
-                : this.renderContent()
+                : this.renderContent(),
+            this.bankPickerOpen ? this.renderBankPicker() : null
+        );
+    }
+    
+    renderBankPicker() {
+        return h(
+            "div",
+            {
+                "data-bank-picker": "true",
+                onpointerdown: (e) => {
+                    if (e.target === e.currentTarget) this.closeBankPicker();
+                },
+                style: "position: fixed; inset: 0; z-index: 1000; background: rgba(0,0,0,0.4); display: flex; align-items: flex-end;",
+            },
+            h(
+                "div",
+                {
+                    style: "background: #fff; width: 100%; max-height: 85vh; border-radius: 16px 16px 0 0; display: flex; flex-direction: column; padding-bottom: env(safe-area-inset-bottom, 0);",
+                },
+                // Header
+                h(
+                    "div",
+                    { style: "padding: 16px 16px 8px; display: flex; justify-content: space-between; align-items: center;" },
+                    h("h3", { style: "margin: 0; font-size: 1.05rem;" }, "Select Bank"),
+                    h(
+                        "button",
+                        {
+                            type: "button",
+                            onpointerdown: (e) => { e.preventDefault(); this.closeBankPicker(); },
+                            style: "background: none; border: none; font-size: 0.9rem; color: var(--color-ink-faint); padding: 6px 10px; cursor: pointer;",
+                        },
+                        "Close"
+                    )
+                ),
+                // Search input
+                h(
+                    "div",
+                    { style: "padding: 8px 16px;" },
+                    h("input", {
+                        "data-bank-search": "true",
+                        type: "text",
+                        placeholder: "Search banks...",
+                        inputmode: "search",
+                        autocomplete: "off",
+                        value: "",
+                        oninput: (e) => this.handleBankSearchInput(e.target.value),
+                        style: "width: 100%; padding: 0.7rem 0.8rem; border: 1px solid var(--color-line); border-radius: 10px; font-size: 0.95rem; box-sizing: border-box;",
+                    })
+                ),
+                // List
+                h(
+                    "div",
+                    {
+                        "data-bank-list": "true",
+                        style: "flex: 1; overflow-y: auto; padding: 4px 0 8px; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;",
+                    },
+                    ...this.renderBankListItems(this.getFilteredBanks())
+                )
+            )
+        );
+    }
+    
+    renderBankListItems(filtered) {
+        if (filtered.length === 0) {
+            return [
+                h("p", { style: "padding: 24px 16px; text-align: center; color: var(--color-ink-faint); font-size: 0.9rem;" },
+                    "No banks match your search")
+            ];
+        }
+    
+        return filtered.map(bank =>
+            h(
+                "div",
+                {
+                    onpointerdown: (e) => { e.preventDefault(); this.selectBank(bank); },
+                    style: `padding: 14px 16px; border-bottom: 1px solid var(--color-line); cursor: pointer; font-size: 0.95rem; user-select: none; -webkit-tap-highlight-color: transparent; touch-action: manipulation;${
+                        this.bankForm.bank_code === bank.code
+                            ? " background: var(--color-bg-muted, #f0f4f8); font-weight: 600;"
+                            : ""
+                    }`,
+                },
+                bank.name
+            )
         );
     }
 
@@ -142,6 +282,21 @@ export default class DoctorFinancePage extends Component {
                 "Track your earnings, manage your payout account, and review past transactions."
             )
         );
+    }
+    renderChevronDownIcon() {
+        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+        svg.setAttribute("width", "14");
+        svg.setAttribute("height", "14");
+        svg.setAttribute("viewBox", "0 0 24 24");
+        svg.setAttribute("fill", "none");
+        svg.setAttribute("stroke", "currentColor");
+        svg.setAttribute("stroke-width", "2");
+        svg.setAttribute("stroke-linecap", "round");
+        svg.setAttribute("stroke-linejoin", "round");
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        path.setAttribute("d", "M6 9l6 6 6-6");
+        svg.appendChild(path);
+        return svg;
     }
     renderChevronIcon() {
         const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -260,15 +415,15 @@ export default class DoctorFinancePage extends Component {
                     {},
                     h("label", { style: "display: block; margin-bottom: 5px; font-size: 0.82rem; font-weight: 600;" }, "Bank"),
                     h(
-                        "select",
+                        "button",
                         {
-                            value: this.bankForm.bank_code,
-                            required: true,
-                            onchange: (e) => this.setBankField("bank_code", e.target.value),
-                            style: "padding: 0.6rem 0.7rem; border: 1px solid var(--color-line); border-radius: 6px; width: 100%; font-size: 0.9rem;",
+                            type: "button",
+                            onclick: () => this.openBankPicker(),
+                            style: `width: 100%; text-align: left; padding: 0.6rem 0.7rem; border: 1px solid var(--color-line); border-radius: 6px; font-size: 0.9rem; background: #fff; cursor: pointer; color: ${this.bankForm.bank_name ? "inherit" : "var(--color-ink-faint)"}; display: flex; justify-content: space-between; align-items: center; gap: 8px;`,
                         },
-                        h("option", { value: "" }, "Select your bank..."),
-                        this.banks.map(bank => h("option", { value: bank.code }, bank.name))
+                        h("span", { style: "overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" },
+                            this.bankForm.bank_name || "Select your bank..."),
+                        this.renderChevronDownIcon()
                     )
                 ),
                 h(
