@@ -3,6 +3,7 @@
 import { Component } from "../../core/component.js";
 import { h } from "../../utils/dom.js";
 import api from "../../services/api.js";
+import { reconcilePendingPayment, hasPendingPaymentReference } from "../../services/deepLinkHandler.js";
 
 const icon = (paths, size = 18) => h("svg", { viewBox: "0 0 24 24", fill: "none", width: String(size), height: String(size), "aria-hidden": "true" }, ...paths.map(d => h("path", { d, stroke: "currentColor", "stroke-width": "1.8", "stroke-linecap": "round", "stroke-linejoin": "round" })));
 
@@ -49,12 +50,18 @@ export default class PatientCare extends Component {
     }
 
     async afterMount() {
+        // If the app was cold-started from a payment deeplink and the user
+        // was already logged in (or just logged in), reconcile the pending
+        // reference BEFORE loading the list — otherwise we'd show stale data.
+        if (hasPendingPaymentReference()) {
+            await reconcilePendingPayment().catch(() => {});
+        }
+    
         await Promise.all([
             this.loadTabCounts(),
             this.loadBookingsForTab(this.activeTab, { reset: true }),
         ]);
     }
-
     // ---------- Data loading ----------
 
     async loadData({ silent = false } = {}) {
