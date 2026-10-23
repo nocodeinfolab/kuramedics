@@ -5,6 +5,7 @@ import AdminVerifications from "./AdminVerifications.js";
 import AdminUsers from "./AdminUsers.js";
 import AdminSubscriptionSettings from "./AdminSubscriptionSettings.js";
 import AdminAppUpdates from "./AdminAppUpdates.js";
+import AdminRefundRequests from "./AdminRefundRequests.js";
 
 const Icons = {
     grid: () => h("svg", { width: "18", height: "18", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" },
@@ -23,6 +24,9 @@ const Icons = {
     refresh: () => h("svg", { width: "18", height: "18", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" },
         h("polyline", { points: "23 4 23 10 17 10" }), h("polyline", { points: "1 20 1 14 7 14" }),
         h("path", { d: "M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" })),
+    refund: () => h("svg", { width: "18", height: "18", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round" },
+        h("path", { d: "M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" }),
+        h("path", { d: "M3 3v5h5" })),
 };
 
 export default class AdminDashboardPage extends Component {
@@ -33,12 +37,14 @@ export default class AdminDashboardPage extends Component {
         this.admin = null;
         this.accessDenied = false;
         this.pendingCount = 0;
+        this.pendingRefundCount = 0;
         this._sectionInstances = {};
         this._sectionWrappers = {};
 
         this.sections = [
             { id: "overview", label: "Overview", icon: Icons.grid },
             { id: "verifications", label: "Verifications", icon: Icons.shield, badgeKey: "pendingCount" },
+            { id: "refunds", label: "Refunds", icon: Icons.refund, badgeKey: "pendingRefundCount" },
             { id: "users", label: "Users", icon: Icons.people },
             { id: "subscription", label: "Subscription Settings", icon: Icons.settings },
             { id: "updates", label: "App Updates", icon: Icons.refresh },
@@ -83,6 +89,11 @@ export default class AdminDashboardPage extends Component {
         if (this.activeSection === sectionId) return;
         this.activeSection = sectionId;
         this.updateContent();
+        this.updateSidebarActiveState();
+    }
+
+    onPendingRefundCountChanged(count) {
+        this.pendingRefundCount = count;
         this.updateSidebarActiveState();
     }
 
@@ -160,25 +171,33 @@ export default class AdminDashboardPage extends Component {
 
     updateSidebarActiveState() {
         if (!this.el) return;
+    
         this.el.querySelectorAll("[data-section]").forEach(btn => {
             const isActive = btn.dataset.section === this.activeSection;
             btn.classList.toggle("admin-sidebar__item--active", isActive);
         });
-
-        const verificationsBtn = this.el.querySelector('[data-section="verifications"]');
-        if (verificationsBtn) {
-            let badge = verificationsBtn.querySelector(".admin-sidebar__badge");
-            if (this.pendingCount > 0) {
+    
+        // Generic badge sync — works for any section that declares a badgeKey.
+        this.sections.forEach(section => {
+            if (!section.badgeKey) return;
+    
+            const btn = this.el.querySelector(`[data-section="${section.id}"]`);
+            if (!btn) return;
+    
+            const count = Number(this[section.badgeKey] || 0);
+            let badge = btn.querySelector(".admin-sidebar__badge");
+    
+            if (count > 0) {
                 if (!badge) {
                     badge = document.createElement("span");
                     badge.className = "admin-sidebar__badge";
-                    verificationsBtn.appendChild(badge);
+                    btn.appendChild(badge);
                 }
-                badge.textContent = String(this.pendingCount);
+                badge.textContent = String(count);
             } else if (badge) {
                 badge.remove();
             }
-        }
+        });
     }
 
     updateContent() {
@@ -209,6 +228,9 @@ export default class AdminDashboardPage extends Component {
                 break;
             case "verifications":
                 instance = new AdminVerifications((count) => this.onPendingCountChanged(count));
+                break;
+            case "refunds":
+                instance = new AdminRefundRequests((count) => this.onPendingRefundCountChanged(count));
                 break;
             case "users":
                 instance = new AdminUsers();
