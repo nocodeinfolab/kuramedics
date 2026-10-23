@@ -47,6 +47,11 @@ export default class PatientCare extends Component {
 
         this._lastFetchedAt = null;
         this._loadRequestId = 0;
+        
+        this.refundModalBookingId = null;
+        this.refundReason = "";
+        this.refundSubmitting = false;
+        this.refundError = "";
     }
 
     async afterMount() {
@@ -297,6 +302,71 @@ export default class PatientCare extends Component {
             this.update();
         }
     }
+
+    openRefundModal(bookingId) {
+        this.refundModalBookingId = bookingId;
+        this.refundReason = "";
+        this.refundError = "";
+        this.refundSubmitting = false;
+        this.update();
+    
+        // Focus the textarea once the modal is in the DOM. The 50ms delay
+        // is needed because update() replaces children synchronously and
+        // browsers don't apply focus to elements inserted in the same tick.
+        setTimeout(() => {
+            this.el?.querySelector("#refund-reason")?.focus();
+        }, 50);
+    }
+    
+    closeRefundModal() {
+        if (this.refundSubmitting) return; // don't let a slow network trap the button
+        this.refundModalBookingId = null;
+        this.refundReason = "";
+        this.refundError = "";
+        this.update();
+    }
+    
+    async submitRefundRequest() {
+        const reason = this.refundReason.trim();
+        if (reason.length < 10) {
+            this.refundError = "Please tell us why (at least 10 characters).";
+            this.update();
+            return;
+        }
+    
+        this.refundSubmitting = true;
+        this.refundError = "";
+        this.update();
+    
+        try {
+            await api.post(`/bookings/${this.refundModalBookingId}/refund-request`, { reason });
+            this.refundModalBookingId = null;
+            this.refundReason = "";
+            this.refundSubmitting = false;
+            // Don't call update() — loadData() will trigger it, and this way
+            // the modal stays visible ("Submitting…") until the refresh begins.
+            await this.loadData();
+        } catch (err) {
+            this.refundError = err.message || "Failed to submit request. Please try again.";
+            this.refundSubmitting = false;
+            this.update();
+        }
+    }
+    
+    async withdrawRefundRequest(bookingId) {
+        if (this.refundSubmitting) return;
+        if (!window.confirm("Withdraw your cancellation request? Your appointment will continue as scheduled.")) {
+            return;
+        }
+        try {
+            await api.post(`/bookings/${bookingId}/refund-request/withdraw`);
+            await this.loadData();
+        } catch (err) {
+            this.errorMessage = err.message || "Failed to withdraw request.";
+            this.update();
+        }
+    }
+    
     async downloadPrescription(booking) {
         try {
             const blob = await api.getBlob(`/consultations/booking/${booking.id}/prescription-pdf`);
@@ -370,25 +440,24 @@ export default class PatientCare extends Component {
     // ---------- Render ----------
 
     render() {
-      const isFirstRender = !this._hasRenderedOnce;
-      this._hasRenderedOnce = true;
-
-      return h(
-        "div",
-        { class: "patient-care" },
-        this.renderHeader(),
-        h(
-          "div",
-          { class: `pc-body${isFirstRender ? " pc-body--enter" : ""}` },
-          h(
-            "p",
-            { class: "pc-intro" },
-            "Track your appointments and view your consultation notes."
-          ),
-          this.renderAlerts(),
-          this.loading ? this.renderSkeleton() : this.renderContent()
-        )
-      );
+        const isFirstRender = !this._hasRenderedOnce;
+        this._hasRenderedOnce = true;
+    
+        return h(
+            "div",
+            { class: "patient-care" },
+            this.renderHeader(),
+            h(
+                "div",
+                { class: `pc-body${isFirstRender ? " pc-body--enter" : ""}` },
+                h("p", { class: "pc-intro" },
+                    "Track your appointments and view your consultation notes."
+                ),
+                this.renderAlerts(),
+                this.loading ? this.renderSkeleton() : this.renderContent()
+            ),
+            this.renderRefundModal()
+        );
     }
 
     renderHeader() {
@@ -616,10 +685,114 @@ export default class PatientCare extends Component {
         );
     }
 
+    renderCancelLink(booking) {
+        return h("p", { class: "pc-cancel-link-wrap" },
+            h("a", {
+                href: "#",
+                class: "pc-cancel-link",
+                onclick: (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.openRefundModal(booking.id);
+                }
+            }, "Need to cancel this appointment?")
+        );
+    }
+    
+    renderRefundPendingState(booking) {
+        const submittedAt = booking.refund_requested_at
+            ? new Date(booking.refund_requested_at).toLocaleDateString(undefined, {
+                  day: "numeric",
+                  month: "short",
+              })
+            : null;
+    
+        return h("div", { class: "pc-refund-pending" },
+            h("div", { class: "pc-refund-pending__head" },
+                h("span", { class: "pc-refund-pending__icon" },
+                    icon(
+                        ["M12 8v4", "M12 16h.01", "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20"],
+                        16
+                    )
+                ),
+                h("div", { class: "pc-refund-pending__text" },
+                    h("p", { class: "pc-refund-pending__title" }, "Cancellation under review"),
+                    h("p", { class: "pc-refund-pending__meta" },
+                        submittedAt ? `Submitted ${submittedAt} · ` : "",
+                        "We'll respond within 48 hours."
+                    )
+                )
+            ),
+            h("button", {
+                type: "button",
+                class: "pc-refund-withdraw",
+                onclick: (e) => {
+                    e.stopPropagation();
+                    this.withdrawRefundRequest(booking.id);
+                }
+            }, "Withdraw request")
+        );
+    }
+    
+    renderRefundModal() {
+        if (!this.refundModalBookingId) return null;
+    
+        const closeOnBackdrop = (e) => {
+            if (e.target === e.currentTarget && !this.refundSubmitting) {
+                this.closeRefundModal();
+            }
+        };
+    
+        return h("div", { class: "pc-modal-backdrop", onclick: closeOnBackdrop },
+            h("div", { class: "pc-modal", role: "dialog", "aria-modal": "true" },
+                h("h3", { class: "pc-modal__title" }, "Cancel this appointment?"),
+                h("p", { class: "pc-modal__body" },
+                    "Your doctor has reserved this time for you. If approved, you'll be refunded to your original payment method and the appointment will be cancelled."
+                ),
+                h("p", { class: "pc-modal__body pc-modal__body--muted" },
+                    "We'll respond within 48 hours."
+                ),
+                h("label", { class: "pc-modal__label", for: "refund-reason" },
+                    "Tell us why (required)"
+                ),
+                h("textarea", {
+                    id: "refund-reason",
+                    class: "pc-modal__textarea",
+                    rows: "4",
+                    placeholder: "e.g. I found a doctor closer to my home",
+                    value: this.refundReason,
+                    disabled: this.refundSubmitting,
+                    oninput: (e) => { this.refundReason = e.target.value; }
+                }),
+                this.refundError
+                    ? h("p", { class: "pc-modal__error" }, this.refundError)
+                    : null,
+                h("div", { class: "pc-modal__actions" },
+                    h("button", {
+                        type: "button",
+                        class: "pc-modal__btn pc-modal__btn--ghost",
+                        disabled: this.refundSubmitting,
+                        onclick: () => this.closeRefundModal()
+                    }, "Keep appointment"),
+                    h("button", {
+                        type: "button",
+                        class: "pc-modal__btn pc-modal__btn--primary",
+                        disabled: this.refundSubmitting,
+                        onclick: () => this.submitRefundRequest()
+                    }, this.refundSubmitting ? "Submitting…" : "Submit request")
+                )
+            )
+        );
+    }
+
     renderConfirmedActions(booking) {
         const isPaid = booking.payment_status === "paid";
         const isMessaging = this.messageLoadingId === booking.id;
         const isPaying = this.payingBookingId === booking.id;
+        
+        if (booking.payment_status === "paid" && booking.refund_request_status === "requested") {
+            return this.renderRefundPendingState(booking);
+        }
 
         if (!isPaid) {
             return h(
@@ -678,7 +851,8 @@ export default class PatientCare extends Component {
                     icon(["M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"], 16),
                     h("span", null, isMessaging ? "Opening…" : "Message")
                 )
-            )
+            ),
+            this.renderCancelLink(booking) 
         );
     }
     renderRescheduleComparison(booking) {
