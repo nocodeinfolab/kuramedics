@@ -558,7 +558,34 @@ export class DoctorLoginPage extends Component {
   }
 
   afterMount() {
-    this.mountGoogleButton();
+      
+      if (this.redirectIfAlreadyAuthenticated()) {
+          return;
+      }
+  
+      this.mountGoogleButton();
+  }
+  
+  redirectIfAlreadyAuthenticated() {
+      try {
+          const raw = localStorage.getItem("user");
+          if (!raw) return false;
+          const user = JSON.parse(raw);
+          if (user?.role !== "doctor") return false;
+  
+          const hasToken = Boolean(
+              localStorage.getItem("accessToken") ||
+              localStorage.getItem("token") ||
+              localStorage.getItem("authToken")
+          );
+          if (!hasToken) return false;
+  
+          window.location.hash = "/doctor/dashboard";
+          return true;
+      } catch {
+          // Corrupt or unreadable storage — let the user log in fresh.
+          return false;
+      }
   }
 
   mountGoogleButton() {
