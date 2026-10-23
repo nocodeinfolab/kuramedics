@@ -215,4 +215,30 @@ export class LandingPage extends Component {
       )
     );
   }
+  afterMount() {
+      const user = this.readStoredUser();
+      if (!user?.role) return;
+  
+      const routes = {
+          patient: "/patient/dashboard",
+          doctor: "/doctor/dashboard",
+      };
+  
+      const target = routes[user.role];
+      if (target) {
+          window.location.hash = target;
+      }
+  }
+  
+  readStoredUser() {
+      try {
+          const raw = localStorage.getItem("user");
+          if (!raw) return null;
+          const parsed = JSON.parse(raw);
+          if (!parsed?.role) return null;
+          return parsed;
+      } catch {
+          return null;
+      }
+  }
 }
