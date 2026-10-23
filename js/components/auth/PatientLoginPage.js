@@ -3,6 +3,7 @@ import { h } from "../../utils/dom.js";
 import GoogleAuth from "./GoogleAuth.js";
 import pushNotifications from "../../services/pushNotifications.js";
 import api from "../../services/api.js";
+import { reconcilePendingPayment } from "../../services/deepLinkHandler.js";
 
 // Backend routes for authService.requestLoginOtp / verifyLoginOtp:
 //   POST /auth/otp/request  { email, role } -> { message, isNewAccount }
@@ -439,16 +440,21 @@ export class PatientLoginPage extends Component {
     );
   }
 
-  onAuthSuccess(user) {
-    console.log("Patient login successful.");
-    console.log(user);
-
-    pushNotifications.init((data) => {
-      console.log("Notification tapped:", data);
+  async onAuthSuccess(user) {
+      console.log("Patient login successful.");
+      console.log(user);
+  
+      await Promise.race([
+          reconcilePendingPayment().catch(() => false),
+          new Promise((resolve) => setTimeout(resolve, 5000)),
+      ]);
+  
+      pushNotifications.init((data) => {
+          console.log("Notification tapped:", data);
+          window.location.hash = "/patient/dashboard";
+      });
+  
       window.location.hash = "/patient/dashboard";
-    });
-
-    window.location.hash = "/patient/dashboard";
   }
 
   // ---------- Segmented OTP digit boxes ----------
@@ -576,7 +582,7 @@ export class PatientLoginPage extends Component {
       api.setAccessToken(accessToken);
       localStorage.setItem("user", JSON.stringify(user));
 
-      this.onAuthSuccess(result.data);
+      await this.onAuthSuccess(result.data);
     } catch (err) {
       console.error("OTP verify failed:", err);
       this.error = err.message || "Invalid or expired code.";
