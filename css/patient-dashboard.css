@@ -4308,3 +4308,73 @@
 .pc-modal__btn--primary:not(:disabled):active {
     background: #b91c1c;
 }
+/* ---------- Card header: chip + menu row ---------- */
+.pc-card-head-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+/* ---------- Card menu (⋯ overflow) ---------- */
+.pc-card-menu {
+    position: relative;
+}
+
+.pc-card-menu-trigger {
+    background: transparent;
+    border: none;
+    padding: 2px 8px;
+    font-size: 1.15rem;
+    line-height: 1;
+    color: var(--color-ink-faint);
+    cursor: pointer;
+    border-radius: 4px;
+    min-width: 32px;
+    min-height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pc-card-menu-trigger:active {
+    background: var(--color-bg-muted, #f1f5f9);
+}
+
+.pc-card-menu-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    background: transparent;
+}
+
+.pc-card-menu-dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    right: 0;
+    z-index: 21;
+    background: #fff;
+    border: 1px solid var(--color-line);
+    border-radius: 8px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    min-width: 190px;
+    overflow: hidden;
+    padding: 4px 0;
+}
+
+.pc-card-menu-item {
+    display: block;
+    width: 100%;
+    padding: 10px 14px;
+    background: transparent;
+    border: none;
+    text-align: left;
+    font-size: 0.85rem;
+    font-family: inherit;
+    color: var(--color-ink);
+    cursor: pointer;
+}
+
+.pc-card-menu-item:active {
+    background: var(--color-bg-muted, #f1f5f9);
+}
