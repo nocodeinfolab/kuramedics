@@ -52,6 +52,7 @@ export default class PatientCare extends Component {
         this.refundReason = "";
         this.refundSubmitting = false;
         this.refundError = "";
+        this.openMenuBookingId = null;
     }
 
     async afterMount() {
@@ -301,6 +302,69 @@ export default class PatientCare extends Component {
             await this.loadData({ silent: true });
             this.update();
         }
+    }
+
+    toggleCardMenu(bookingId) {
+        this.openMenuBookingId = this.openMenuBookingId === bookingId ? null : bookingId;
+        this.update();
+    }
+    
+    closeCardMenu() {
+        if (this.openMenuBookingId) {
+            this.openMenuBookingId = null;
+            this.update();
+        }
+    }
+    
+    renderCardMenu(booking) {
+        const isOpen = this.openMenuBookingId === booking.id;
+    
+        return h(
+            "div",
+            { class: "pc-card-menu" },
+            h(
+                "button",
+                {
+                    type: "button",
+                    class: "pc-card-menu-trigger",
+                    "aria-label": "More actions",
+                    "aria-expanded": isOpen ? "true" : "false",
+                    onclick: (e) => {
+                        e.stopPropagation();
+                        this.toggleCardMenu(booking.id);
+                    },
+                },
+                h("span", { "aria-hidden": "true" }, "⋯")
+            ),
+            isOpen
+                ? h("div", {
+                      class: "pc-card-menu-backdrop",
+                      onclick: (e) => {
+                          e.stopPropagation();
+                          this.closeCardMenu();
+                      },
+                  })
+                : null,
+            isOpen
+                ? h(
+                      "div",
+                      { class: "pc-card-menu-dropdown" },
+                      h(
+                          "button",
+                          {
+                              type: "button",
+                              class: "pc-card-menu-item",
+                              onclick: (e) => {
+                                  e.stopPropagation();
+                                  this.closeCardMenu();
+                                  this.openRefundModal(booking.id);
+                              },
+                          },
+                          "Request cancellation"
+                      )
+                  )
+                : null
+        );
     }
 
     openRefundModal(bookingId) {
@@ -655,9 +719,14 @@ export default class PatientCare extends Component {
                     )
                 ),
                 h(
-                    "span",
-                    { class: `pc-chip pc-chip--${chipTone}` },
-                    statusLabel
+                    "div",
+                    { class: "pc-card-head-actions" },
+                    h("span", { class: `pc-chip pc-chip--${chipTone}` }, statusLabel),
+                    CONFIRMED_STATUSES.includes(booking.status) &&
+                    booking.payment_status === "paid" &&
+                    booking.refund_request_status !== "requested"
+                        ? this.renderCardMenu(booking)
+                        : null
                 )
             ),
 
@@ -685,20 +754,6 @@ export default class PatientCare extends Component {
         );
     }
 
-    renderCancelLink(booking) {
-        return h("p", { class: "pc-cancel-link-wrap" },
-            h("a", {
-                href: "#",
-                class: "pc-cancel-link",
-                onclick: (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.openRefundModal(booking.id);
-                }
-            }, "Need to cancel this appointment?")
-        );
-    }
-    
     renderRefundPendingState(booking) {
         const submittedAt = booking.refund_requested_at
             ? new Date(booking.refund_requested_at).toLocaleDateString(undefined, {
@@ -851,8 +906,7 @@ export default class PatientCare extends Component {
                     icon(["M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"], 16),
                     h("span", null, isMessaging ? "Opening…" : "Message")
                 )
-            ),
-            this.renderCancelLink(booking) 
+            ) 
         );
     }
     renderRescheduleComparison(booking) {
