@@ -423,7 +423,19 @@ export class PatientLoginPage extends Component {
   }
 
   afterMount() {
-    this.mountGoogleButton();
+      
+      try {
+          const raw = localStorage.getItem("user");
+          const user = raw ? JSON.parse(raw) : null;
+          if (user?.role === "patient") {
+              window.location.hash = "/patient/dashboard";
+              return;
+          }
+      } catch {
+          // Corrupt storage — let them log in fresh
+      }
+  
+      this.mountGoogleButton();
   }
 
   mountGoogleButton() {
