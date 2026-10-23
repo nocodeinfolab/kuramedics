@@ -9,6 +9,7 @@ import AdminDashboardPage from "./components/admin/AdminDashboardPage.js";
 import PrescriptionVerificationPage from "./components/public/PrescriptionVerificationPage.js";
 import PublicDoctorProfilePage from "./components/public/PublicDoctorProfilePage.js";
 import { initUpdater } from "./services/otaUpdater.js";
+import { initDeepLinkHandler } from "./services/deepLinkHandler.js";
 
 registerRoute("/", () => new LandingPage());
 registerRoute("/patient/login", () => new PatientLoginPage());
@@ -20,6 +21,8 @@ registerRoute("/admin/dashboard", () => new AdminDashboardPage());
 registerRoute("/verify/prescription/:id", (params) => new PrescriptionVerificationPage(params.id));
 registerRoute("/doctor/:id", (params) => new PublicDoctorProfilePage(params.id));
 startRouter();
+
+initDeepLinkHandler().catch(() => {});
 
 // Fire-and-forget: checks for an OTA update in the background. Never
 // awaited here, and internally never throws — a slow or failed update
