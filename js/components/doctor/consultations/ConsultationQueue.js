@@ -55,7 +55,8 @@ const STATUS_TONES = {
     pending_confirmation: "info",
     reschedule_requested: "warning",
     confirmed: "success",
-    completed: "neutral"
+    completed: "neutral",
+    cancelled: "neutral"
 };
 
 const getInitials = name => {
@@ -856,6 +857,16 @@ export default class DoctorQueuePage extends Component {
                 )
             ),
             this.renderReasonSection(booking),
+
+            booking.status === "cancelled" && booking.payment_status === "refunded"
+                ? h(
+                      "p",
+                      { class: "booking-card__note booking-card__note--refund" },
+                      icon(QI.check, 14),
+                      h("span", {}, "Refund processed to the patient. No action needed.")
+                  )
+                : null,
+            
             this.renderCardActions(booking, isProcessing),
             CONFIRMED_STATUSES.includes(booking.status) && booking.payment_status !== "paid"
                 ? h(
