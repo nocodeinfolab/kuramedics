@@ -4426,3 +4426,9 @@
     line-height: 1.45;
     font-style: italic;
 }
+.pc-card-refund-note {
+    margin: 10px 0 0;
+    font-size: 0.78rem;
+    color: var(--color-ink-faint);
+    line-height: 1.4;
+}
