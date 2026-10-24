@@ -754,6 +754,37 @@ export default class PatientCare extends Component {
         );
     }
 
+    renderRefundDeclinedBanner(booking) {
+        const note = (booking.refund_admin_note || "").trim();
+        const resolvedAt = booking.refund_resolved_at
+            ? new Date(booking.refund_resolved_at).toLocaleDateString(undefined, {
+                  day: "numeric",
+                  month: "short",
+              })
+            : null;
+    
+        return h("div", { class: "pc-refund-declined" },
+            h("div", { class: "pc-refund-declined__head" },
+                h("span", { class: "pc-refund-declined__icon" },
+                    icon(
+                        ["M12 8v4", "M12 16h.01", "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20"],
+                        16
+                    )
+                ),
+                h("div", { class: "pc-refund-declined__text" },
+                    h("p", { class: "pc-refund-declined__title" }, "Cancellation request declined"),
+                    h("p", { class: "pc-refund-declined__meta" },
+                        resolvedAt ? `Reviewed ${resolvedAt} · ` : "",
+                        "Your appointment still stands."
+                    )
+                )
+            ),
+            note
+                ? h("p", { class: "pc-refund-declined__note" }, note)
+                : null
+        );
+    }
+
     renderRefundPendingState(booking) {
         const submittedAt = booking.refund_requested_at
             ? new Date(booking.refund_requested_at).toLocaleDateString(undefined, {
@@ -845,8 +876,23 @@ export default class PatientCare extends Component {
         const isMessaging = this.messageLoadingId === booking.id;
         const isPaying = this.payingBookingId === booking.id;
         
-        if (booking.payment_status === "paid" && booking.refund_request_status === "requested") {
-            return this.renderRefundPendingState(booking);
+        if (booking.payment_status === "paid" && booking.refund_request_status === "declined") {
+            return h(
+                "div",
+                { class: "pc-actions" },
+                this.renderRefundDeclinedBanner(booking),
+                h("div", { class: "pc-action-row" },
+                    h("button", {
+                        class: "pc-secondary-btn",
+                        type: "button",
+                        disabled: this.messageLoadingId === booking.id,
+                        onclick: () => this.handleMessageDoctor(booking),
+                    },
+                        icon(["M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"], 16),
+                        h("span", null, this.messageLoadingId === booking.id ? "Opening…" : "Message")
+                    )
+                )
+            );
         }
 
         if (!isPaid) {
