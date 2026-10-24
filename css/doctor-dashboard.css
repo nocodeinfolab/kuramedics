@@ -3222,3 +3222,21 @@
   }
   .consultation-services-page .cs-card { padding: var(--space-3); }
 }
+.booking-card__note--refund {
+    color: var(--color-ink-faint);
+    background: #f8fafc;                       /* very subtle grey-blue */
+    border: 1px solid var(--color-line);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    line-height: 1.4;
+    margin-top: 4px;
+}
+
+.booking-card__note--refund svg {
+    color: #10b981;                            /* green tick */
+    flex-shrink: 0;
+}
