@@ -693,6 +693,7 @@ export default class PatientCare extends Component {
             : booking.status === "completed" ? "muted"
             : booking.status === "reschedule_requested" ? "violet"
             : booking.status === "pending_confirmation" ? "warning"
+            : booking.status === "cancelled" ? "muted"
             : "info";
 
         return h(
@@ -730,6 +731,11 @@ export default class PatientCare extends Component {
                 )
             ),
 
+            booking.status === "cancelled" && booking.payment_status === "refunded"
+                ? h("p", { class: "pc-card-refund-note" },
+                    "Refund processed — please allow 5–7 business days for it to reach your account."
+                  )
+                : null,
             isRescheduleRequested ? this.renderRescheduleComparison(booking) : null,
             CONFIRMED_STATUSES.includes(booking.status) ? this.renderConfirmedActions(booking) : null,
 
