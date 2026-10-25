@@ -3862,6 +3862,249 @@
     .patient-messaging .pm-composer-input { padding: 10px 14px; font-size: 0.86rem; }
     .patient-messaging .pm-send-btn { width: 40px; height: 40px; }
 }
+
+/* ============================================================
+   Patient Messaging — file upload additions
+   ============================================================ */
+
+/* -------- Composer wrapper (holds pending preview + composer row) -------- */
+.patient-messaging .pm-composer-wrap {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--pm-border);
+    background: #ffffff;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* The composer now sits inside the wrapper — no need for it to double
+   up the border and safe-area inset that the wrapper owns. */
+.patient-messaging .pm-composer-wrap .pm-composer {
+    border-top: none;
+    padding-bottom: 10px;
+}
+
+/* -------- Attach (+) button -------- */
+.patient-messaging .pm-attach-btn {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    color: var(--color-muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background var(--duration-fast) var(--ease-out),
+                color var(--duration-fast) var(--ease-out);
+}
+.patient-messaging .pm-attach-btn:hover:not(:disabled) {
+    background: rgba(15, 23, 42, 0.05);
+    color: var(--color-ink);
+}
+.patient-messaging .pm-attach-btn:active:not(:disabled) {
+    background: rgba(15, 23, 42, 0.08);
+}
+.patient-messaging .pm-attach-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+/* -------- Pending file preview -------- */
+.patient-messaging .pm-pending-file {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: rgba(15, 23, 42, 0.03);
+    border-bottom: 1px solid var(--pm-border);
+}
+
+.patient-messaging .pm-pending-thumb {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: #e2e8f0;
+}
+
+.patient-messaging .pm-pending-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    background: #e2e8f0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--color-ink);
+}
+
+.patient-messaging .pm-pending-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.patient-messaging .pm-pending-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.patient-messaging .pm-pending-size {
+    font-size: 0.72rem;
+    color: var(--color-muted);
+}
+
+.patient-messaging .pm-pending-progress {
+    margin-top: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.patient-messaging .pm-pending-progress-track {
+    height: 4px;
+    background: #e2e8f0;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.patient-messaging .pm-pending-progress-bar {
+    height: 100%;
+    width: 0%;
+    background: var(--color-primary);
+    border-radius: 2px;
+    transition: width 0.15s ease;
+}
+
+.patient-messaging .pm-pending-progress-label {
+    font-size: 0.7rem;
+    color: var(--color-muted);
+}
+
+.patient-messaging .pm-pending-remove {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    color: var(--color-muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+    transition: background var(--duration-fast) var(--ease-out),
+                color var(--duration-fast) var(--ease-out);
+}
+.patient-messaging .pm-pending-remove:hover {
+    background: rgba(15, 23, 42, 0.06);
+    color: var(--color-ink);
+}
+
+/* -------- Media bubble (image) -------- */
+/* Two-class selector so it overrides .pm-bubble--mine's blue background. */
+.patient-messaging .pm-bubble.pm-bubble--media {
+    padding: 3px;
+    max-width: 260px;
+    min-width: 100px;
+    background: transparent;
+    box-shadow: none;
+    overflow: hidden;
+}
+
+.patient-messaging .pm-bubble--media > a {
+    display: block;
+    line-height: 0;          /* kills the 3-4px descender gap below images */
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.patient-messaging .pm-bubble--media .pm-bubble-image {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 320px;
+    border-radius: 15px;
+    background: rgba(15, 23, 42, 0.04);
+}
+
+/* Caption sits on the page (transparent media bubble) — must be dark text,
+   not inherited white from .pm-bubble--mine. */
+.patient-messaging .pm-bubble--media .pm-bubble-caption {
+    color: var(--color-ink);
+}
+
+/* -------- File bubble (PDFs etc.) -------- */
+.patient-messaging .pm-bubble.pm-bubble--file {
+    padding: 10px 12px;
+    max-width: 260px;
+}
+
+.patient-messaging .pm-bubble-file-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+}
+
+.patient-messaging .pm-bubble-file-icon {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.18);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.patient-messaging .pm-bubble-row--theirs .pm-bubble-file-icon {
+    background: rgba(15, 23, 42, 0.06);
+}
+
+.patient-messaging .pm-bubble-file-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;                 /* critical: allows ellipsis on long filenames */
+}
+
+.patient-messaging .pm-bubble-file-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 170px;
+}
+
+.patient-messaging .pm-bubble-file-size {
+    font-size: 0.7rem;
+    opacity: 0.72;
+}
+
+/* -------- Caption on media/file bubbles -------- */
+.patient-messaging .pm-bubble-caption {
+    margin: 6px 4px 2px;
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
 /* ============================================================
    Patient Profile — premium edit form
    Scoped under .patient-profile with the pp- prefix.
