@@ -881,7 +881,10 @@ export default class PatientCare extends Component {
         const isPaid = booking.payment_status === "paid";
         const isMessaging = this.messageLoadingId === booking.id;
         const isPaying = this.payingBookingId === booking.id;
-        
+        if (booking.payment_status === "paid" && booking.refund_request_status === "requested") {
+            return this.renderRefundPendingState(booking);
+        }
+            
         if (booking.payment_status === "paid" && booking.refund_request_status === "declined") {
             return h(
                 "div",
