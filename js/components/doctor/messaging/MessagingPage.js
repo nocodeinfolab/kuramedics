@@ -81,9 +81,15 @@ export default class MessagingPage extends Component {
 
         this.messageDraft = "";
         this.sending = false;
-
+        
+        // File upload state
+        this.pendingFile = null;
+        this.pendingFilePreviewUrl = null;
+        this.uploading = false;
+        this.uploadProgress = 0;
+        
         this.statusActionLoading = false;
-
+        
         this.pollTimer = null;
     }
 
@@ -93,6 +99,7 @@ export default class MessagingPage extends Component {
 
     beforeUnmount() {
         this.stopPolling();
+        this.clearPendingFile();
         if (this.activeConversationId) {
             this.socket?.emit("conversation:leave", { conversationId: this.activeConversationId });
         }
@@ -307,19 +314,139 @@ export default class MessagingPage extends Component {
 
     setMessageDraft(value) {
         this.messageDraft = value;
-        // No update() here on purpose — the send button no longer depends on
-        // draft content (see renderComposer), so we avoid re-rendering (and
-        // dropping textarea focus/cursor) on every keystroke.
+        
     }
 
+    pickFile() {
+        if (this.uploading || this.sending || !this.activeConversationId) return;
+    
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = "image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf";
+        input.onchange = (e) => {
+            const file = e.target.files?.[0];
+            if (file) this.handleFileSelected(file);
+        };
+        input.click();
+    }
+    
+    handleFileSelected(file) {
+        const MAX_BYTES = 10 * 1024 * 1024;
+        const ALLOWED_MIMES = [
+            "image/jpeg", "image/png", "image/webp", "image/heic", "image/heif",
+            "application/pdf",
+        ];
+    
+        if (file.size > MAX_BYTES) {
+            this.messagesError = "File is too large. Maximum is 10 MB.";
+            this.update();
+            return;
+        }
+    
+        // HEIC/HEIF from iPhones often report empty `type` from some pickers.
+        // Fall back to extension check so photos still pass validation.
+        const ext = file.name.split(".").pop()?.toLowerCase() || "";
+        const extAllowed = ["jpg", "jpeg", "png", "webp", "heic", "heif", "pdf"].includes(ext);
+        const mimeAllowed = ALLOWED_MIMES.includes(file.type);
+    
+        if (!mimeAllowed && !extAllowed) {
+            this.messagesError = "Only images (JPG, PNG, WebP, HEIC) and PDFs are allowed.";
+            this.update();
+            return;
+        }
+    
+        this.clearPendingFile();
+        this.pendingFile = file;
+    
+        const isImage = file.type.startsWith("image/") ||
+            ["jpg", "jpeg", "png", "webp", "heic", "heif"].includes(ext);
+    
+        if (isImage) {
+            try {
+                this.pendingFilePreviewUrl = URL.createObjectURL(file);
+            } catch {
+                this.pendingFilePreviewUrl = null;
+            }
+        }
+    
+        this.messagesError = "";
+        this.update();
+    }
+    
+    clearPendingFile() {
+        if (this.pendingFilePreviewUrl) {
+            URL.revokeObjectURL(this.pendingFilePreviewUrl);
+            this.pendingFilePreviewUrl = null;
+        }
+        this.pendingFile = null;
+        this.uploadProgress = 0;
+    }
+    
+    formatFileSize(bytes) {
+        const n = Number(bytes || 0);
+        if (n < 1024) return `${n} B`;
+        if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+        return `${(n / 1024 / 1024).toFixed(1)} MB`;
+    }
+    
+    async uploadAndSendFile() {
+        const file = this.pendingFile;
+        if (!file || !this.activeConversationId) return;
+    
+        this.uploading = true;
+        this.uploadProgress = 0;
+        this.messagesError = "";
+        this.update();
+    
+        try {
+            const fd = new FormData();
+            if (this.messageDraft.trim()) {
+                fd.append("body", this.messageDraft.trim());
+            }
+            fd.append("file", file);
+    
+            const uploadedMessage = await api.uploadFile(
+                `/chat/conversations/${this.activeConversationId}/attachments`,
+                fd,
+                {
+                    onProgress: (pct) => {
+                        this.uploadProgress = pct;
+                        const bar = this.el?.querySelector("#mp-upload-progress-bar");
+                        if (bar) bar.style.width = `${pct}%`;
+                        const label = this.el?.querySelector("#mp-upload-progress-label");
+                        if (label) label.textContent = `Uploading… ${pct}%`;
+                    },
+                }
+            );
+    
+            this.addMessageIfNew(uploadedMessage);
+            this.clearPendingFile();
+            this.messageDraft = "";
+        } catch (err) {
+            console.error("Upload failed:", err);
+            this.messagesError = err.message || "Failed to upload file.";
+        } finally {
+            this.uploading = false;
+            this.update();
+        }
+    }
+    
     async sendMessage() {
+        if (this.sending || this.uploading || !this.activeConversationId) return;
+    
+        // If a file is staged, the send button uploads it (caption is optional).
+        if (this.pendingFile) {
+            await this.uploadAndSendFile();
+            return;
+        }
+    
         const body = this.messageDraft.trim();
-        if (!body || this.sending || !this.activeConversationId) return;
-
+        if (!body) return;
+    
         this.sending = true;
         this.messagesError = "";
         this.update();
-
+    
         try {
             const res = await api.post(`/chat/conversations/${this.activeConversationId}/messages`, {
                 body,
@@ -336,7 +463,6 @@ export default class MessagingPage extends Component {
             this.update();
         }
     }
-
     async setConversationStatus(status) {
         if (!this.activeConversationId || this.statusActionLoading) return;
 
@@ -723,14 +849,77 @@ export default class MessagingPage extends Component {
         const isMine = message.sender_role === "doctor";
         const isDeleted = !!message.deleted_at;
     
+        const bubbleClass = `mp-bubble${isMine ? " mp-bubble--mine" : " mp-bubble--theirs"}${isDeleted ? " mp-bubble--deleted" : ""}`;
+    
+        const att = message.attachments?.[0];
+        const attachmentUrl = message.attachment_url || att?.file_url;
+        const attachmentName = message.attachment_name || att?.file_name;
+        const attachmentSize = message.attachment_size ?? att?.file_size;
+    
+        let content;
+    
+        if (isDeleted) {
+            content = h("div", { class: bubbleClass }, "This message was deleted");
+        } else if (message.message_type === "image" && attachmentUrl) {
+            content = h(
+                "div",
+                { class: `${bubbleClass} mp-bubble--media` },
+                h(
+                    "a",
+                    {
+                        href: attachmentUrl,
+                        target: "_blank",
+                        rel: "noopener noreferrer",
+                        onclick: (e) => e.stopPropagation(),
+                    },
+                    h("img", {
+                        class: "mp-bubble-image",
+                        src: attachmentUrl,
+                        alt: attachmentName || "Image attachment",
+                        loading: "lazy",
+                    })
+                ),
+                message.body ? h("p", { class: "mp-bubble-caption" }, message.body) : null
+            );
+        } else if (message.message_type === "file" && attachmentUrl) {
+            content = h(
+                "div",
+                { class: `${bubbleClass} mp-bubble--file` },
+                h(
+                    "a",
+                    {
+                        class: "mp-bubble-file-link",
+                        href: attachmentUrl,
+                        target: "_blank",
+                        rel: "noopener noreferrer",
+                        download: attachmentName,
+                        onclick: (e) => e.stopPropagation(),
+                    },
+                    h(
+                        "span",
+                        { class: "mp-bubble-file-icon" },
+                        icon(
+                            ["M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z", "M14 2v6h6"],
+                            22
+                        )
+                    ),
+                    h(
+                        "span",
+                        { class: "mp-bubble-file-info" },
+                        h("span", { class: "mp-bubble-file-name" }, attachmentName || "File"),
+                        h("span", { class: "mp-bubble-file-size" }, this.formatFileSize(attachmentSize))
+                    )
+                ),
+                message.body ? h("p", { class: "mp-bubble-caption" }, message.body) : null
+            );
+        } else {
+            content = h("div", { class: bubbleClass }, message.body || "");
+        }
+    
         return h(
             "div",
             { class: `mp-msg ${isMine ? "mp-msg--mine" : "mp-msg--theirs"}` },
-            h(
-                "div",
-                { class: `mp-bubble${isDeleted ? " mp-bubble--deleted" : ""}` },
-                isDeleted ? "This message was deleted" : (message.body || "")
-            ),
+            content,
             h(
                 "span",
                 { class: "mp-time" },
@@ -742,39 +931,127 @@ export default class MessagingPage extends Component {
     renderComposer() {
         const conversation = this.activeConversation || {};
         const isClosed = conversation.status === "closed";
+        const isBusy = this.sending || this.uploading;
+        const hasDraft = !!this.messageDraft.trim();
     
         return h(
             "div",
-            { class: "chat-composer mp-composer" },
-            h("textarea", {
-                rows: 1,
-                class: "mp-composer__input",
-                "aria-label": "Message",
-                placeholder: isClosed ? "Reopen the conversation to send a message" : "Type a message...",
-                value: this.messageDraft,
-                disabled: isClosed || this.sending,
-                oninput: e => this.setMessageDraft(e.target.value),
-                onkeydown: e => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        this.sendMessage();
-                    }
-                },
-            }),
+            { class: "mp-composer-wrap" },
+            this.renderPendingFilePreview(),
             h(
-                "button",
-                {
-                    type: "button",
-                    class: "mp-send",
-                    "aria-label": "Send message",
-                    disabled: isClosed || this.sending,
-                    onclick: () => this.sendMessage(),
-                },
-                this.sending ? h("span", { class: "btn-spinner" }) : icon(MI.send, 18)
+                "div",
+                { class: "chat-composer mp-composer" },
+                h(
+                    "button",
+                    {
+                        type: "button",
+                        class: "mp-attach-btn",
+                        "aria-label": "Attach file",
+                        disabled: isClosed || isBusy,
+                        onclick: () => this.pickFile(),
+                    },
+                    icon(["M12 5v14", "M5 12h14"], 22)
+                ),
+                h("textarea", {
+                    rows: 1,
+                    class: "mp-composer__input",
+                    "aria-label": "Message",
+                    placeholder: isClosed
+                        ? "Reopen the conversation to send a message"
+                        : this.pendingFile
+                            ? "Add a caption (optional)…"
+                            : "Type a message...",
+                    value: this.messageDraft,
+                    disabled: isClosed || isBusy,
+                    oninput: (e) => this.setMessageDraft(e.target.value),
+                    onkeydown: (e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            this.sendMessage();
+                        }
+                    },
+                }),
+                h(
+                    "button",
+                    {
+                        type: "button",
+                        class: "mp-send",
+                        "aria-label": "Send message",
+                        disabled: isClosed || isBusy || (!this.pendingFile && !hasDraft),
+                        onclick: () => this.sendMessage(),
+                    },
+                    isBusy
+                        ? h("span", { class: "btn-spinner" })
+                        : icon(MI.send, 18)
+                )
             )
         );
     }
-
+    
+    renderPendingFilePreview() {
+        if (!this.pendingFile) return null;
+        const file = this.pendingFile;
+        const ext = file.name.split(".").pop()?.toLowerCase() || "";
+        const isImage = file.type.startsWith("image/") ||
+            ["jpg", "jpeg", "png", "webp", "heic", "heif"].includes(ext);
+        const isUploading = this.uploading;
+    
+        return h(
+            "div",
+            { class: "mp-pending-file" },
+            isImage && this.pendingFilePreviewUrl
+                ? h("img", { src: this.pendingFilePreviewUrl, class: "mp-pending-thumb", alt: "" })
+                : h(
+                      "span",
+                      { class: "mp-pending-icon" },
+                      icon(
+                          ["M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z", "M14 2v6h6"],
+                          22
+                      )
+                  ),
+            h(
+                "div",
+                { class: "mp-pending-info" },
+                h("span", { class: "mp-pending-name" }, file.name),
+                h("span", { class: "mp-pending-size" }, this.formatFileSize(file.size)),
+                isUploading
+                    ? h(
+                          "div",
+                          { class: "mp-pending-progress" },
+                          h(
+                              "div",
+                              { class: "mp-pending-progress-track" },
+                              h("div", {
+                                  class: "mp-pending-progress-bar",
+                                  id: "mp-upload-progress-bar",
+                                  style: `width: ${this.uploadProgress}%`,
+                              })
+                          ),
+                          h(
+                              "span",
+                              { class: "mp-pending-progress-label", id: "mp-upload-progress-label" },
+                              `Uploading… ${this.uploadProgress}%`
+                          )
+                      )
+                    : null
+            ),
+            !isUploading
+                ? h(
+                      "button",
+                      {
+                          type: "button",
+                          class: "mp-pending-remove",
+                          "aria-label": "Remove file",
+                          onclick: () => {
+                              this.clearPendingFile();
+                              this.update();
+                          },
+                      },
+                      icon(["M18 6L6 18", "M6 6l12 12"], 16)
+                  )
+                : null
+        );
+    }
     update() {
         if (!this.el) return;
         const focus = captureFocus(this.el);
