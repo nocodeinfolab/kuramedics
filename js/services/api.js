@@ -408,6 +408,60 @@ class ApiService {
         return result;
 
     }
+    async uploadFile(endpoint, formData, { onProgress } = {}, retry = true) {
+        const token = this.getAccessToken();
+        const csrfToken = await this.getCsrfToken();
+
+        return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.open("POST", `${API_BASE_URL}${endpoint}`);
+            xhr.withCredentials = true;
+
+            if (token) {
+                xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+            }
+            if (csrfToken) {
+                xhr.setRequestHeader("X-CSRF-Token", csrfToken);
+            }
+
+            xhr.upload.onprogress = (e) => {
+                if (e.lengthComputable && typeof onProgress === "function") {
+                    onProgress(Math.round((e.loaded / e.total) * 100));
+                }
+            };
+
+            xhr.onload = async () => {
+                if (xhr.status === 401 && retry) {
+                    // Token expired — refresh and retry once. FormData is
+                    // reusable across XHR.send() calls per the spec, so we
+                    // can resend the same object without rebuilding it.
+                    try {
+                        await this.refreshAccessToken();
+                        const result = await this.uploadFile(endpoint, formData, { onProgress }, false);
+                        resolve(result);
+                    } catch (err) {
+                        reject(err);
+                    }
+                    return;
+                }
+
+                let parsed = null;
+                try { parsed = JSON.parse(xhr.responseText); } catch { /* non-JSON response */ }
+
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    resolve(parsed?.data ?? parsed);
+                } else {
+                    reject(new Error(parsed?.message || `Upload failed (${xhr.status})`));
+                }
+            };
+
+            xhr.onerror = () => reject(new Error("Network error during upload"));
+            xhr.ontimeout = () => reject(new Error("Upload timed out"));
+            xhr.timeout = 120000; // uploads get a longer budget than normal requests
+
+            xhr.send(formData);
+        });
+    }
 
 }
 
