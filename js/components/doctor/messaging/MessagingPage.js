@@ -672,8 +672,10 @@ export default class MessagingPage extends Component {
     
         const previewText = conversation.last_message_deleted_at
             ? "This message was deleted"
-            : conversation.last_message_type && conversation.last_message_type !== "text"
-            ? `Sent a ${conversation.last_message_type}`
+            : conversation.last_message_type === "image"
+            ? "📷 Photo"
+            : conversation.last_message_type === "file"
+            ? "📎 Attachment"
             : conversation.last_message_body || "No messages yet";
     
         return h(
