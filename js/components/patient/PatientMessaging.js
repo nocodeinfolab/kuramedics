@@ -316,63 +316,24 @@ export default class PatientMessaging extends Component {
     
         try {
             const fd = new FormData();
-            // body first so multer sees it before the file (defensive; order
-            // doesn't strictly matter for memoryStorage but is safer).
             if (this.messageDraft.trim()) {
                 fd.append("body", this.messageDraft.trim());
             }
             fd.append("file", file);
     
-            const token = localStorage.getItem("accessToken");
-            const csrfToken = localStorage.getItem("csrfToken");
-    
-            // Resolve the API base. Handles the common shapes an api service
-            // might expose; falls back to the route prefix we know is used.
-            const rawBase =
-                api.baseURL ||
-                (api.defaults && api.defaults.baseURL) ||
-                "/api/v1";
-            const base = String(rawBase).replace(/\/+$/, "");
-            const url = `${base}/chat/conversations/${this.activeConversationId}/attachments`;
-    
-            const uploadedMessage = await new Promise((resolve, reject) => {
-                const xhr = new XMLHttpRequest();
-                xhr.open("POST", url);
-                xhr.setRequestHeader("Authorization", `Bearer ${token}`);
-                if (csrfToken) xhr.setRequestHeader("X-CSRF-Token", csrfToken);
-    
-                xhr.upload.onprogress = (e) => {
-                    if (!e.lengthComputable) return;
-                    this.uploadProgress = Math.round((e.loaded / e.total) * 100);
-                    const bar = this.el?.querySelector("#upload-progress-bar");
-                    if (bar) bar.style.width = `${this.uploadProgress}%`;
-                    const label = this.el?.querySelector("#upload-progress-label");
-                    if (label) label.textContent = `Uploading… ${this.uploadProgress}%`;
-                };
-    
-                xhr.onload = () => {
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        try {
-                            const parsed = JSON.parse(xhr.responseText);
-                            resolve(parsed.data || parsed);
-                        } catch {
-                            reject(new Error("Invalid server response"));
-                        }
-                    } else {
-                        try {
-                            const parsed = JSON.parse(xhr.responseText);
-                            reject(new Error(parsed.message || `Upload failed (${xhr.status})`));
-                        } catch {
-                            reject(new Error(`Upload failed (${xhr.status})`));
-                        }
-                    }
-                };
-    
-                xhr.onerror = () => reject(new Error("Network error during upload"));
-                xhr.ontimeout = () => reject(new Error("Upload timed out"));
-                xhr.timeout = 120000;
-                xhr.send(fd);
-            });
+            const uploadedMessage = await api.uploadFile(
+                `/chat/conversations/${this.activeConversationId}/attachments`,
+                fd,
+                {
+                    onProgress: (pct) => {
+                        this.uploadProgress = pct;
+                        const bar = this.el?.querySelector("#upload-progress-bar");
+                        if (bar) bar.style.width = `${pct}%`;
+                        const label = this.el?.querySelector("#upload-progress-label");
+                        if (label) label.textContent = `Uploading… ${pct}%`;
+                    },
+                }
+            );
     
             this.addMessageIfNew(uploadedMessage);
             this.clearPendingFile();
@@ -385,7 +346,6 @@ export default class PatientMessaging extends Component {
             this.update();
         }
     }
-
     async sendMessage() {
         if (this.sending || this.uploading || !this.activeConversationId) return;
     
