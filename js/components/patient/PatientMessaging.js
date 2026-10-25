@@ -44,13 +44,20 @@ export default class PatientMessaging extends Component {
     
         this.messageDraft = "";
         this.sending = false;
-    
+        
+        // File upload state
+        this.pendingFile = null;
+        this.pendingFilePreviewUrl = null;
+        this.uploading = false;
+        this.uploadProgress = 0;
+        
         this.pollTimer = null;
         this._loadRequestId = 0;
     }
     
     beforeUnmount() {
         this.stopPolling();
+        this.clearPendingFile();
     }
 
     // ---------- Data loading ----------
@@ -221,15 +228,175 @@ export default class PatientMessaging extends Component {
         }
     }
 
-    // ---------- Actions ----------
 
     setMessageDraft(value) {
         this.messageDraft = value;
     }
 
+    pickFile() {
+        if (this.uploading || this.sending || !this.activeConversationId) return;
+    
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = "image/jpeg,image/png,image/webp,image/heic,image/heif,application/pdf";
+        input.onchange = (e) => {
+            const file = e.target.files?.[0];
+            if (file) this.handleFileSelected(file);
+        };
+        input.click();
+    }
+    
+    handleFileSelected(file) {
+        const MAX_BYTES = 10 * 1024 * 1024;
+        const ALLOWED_MIMES = [
+            "image/jpeg", "image/png", "image/webp", "image/heic", "image/heif",
+            "application/pdf",
+        ];
+    
+        if (file.size > MAX_BYTES) {
+            this.messagesError = "File is too large. Maximum is 10 MB.";
+            this.update();
+            return;
+        }
+    
+        // HEIC/HEIF from iPhones often report empty `type` from some pickers.
+        // Fall back to extension check so photos still pass validation.
+        const ext = file.name.split(".").pop()?.toLowerCase() || "";
+        const extAllowed = ["jpg", "jpeg", "png", "webp", "heic", "heif", "pdf"].includes(ext);
+        const mimeAllowed = ALLOWED_MIMES.includes(file.type);
+    
+        if (!mimeAllowed && !extAllowed) {
+            this.messagesError = "Only images (JPG, PNG, WebP, HEIC) and PDFs are allowed.";
+            this.update();
+            return;
+        }
+    
+        this.clearPendingFile();
+        this.pendingFile = file;
+    
+        const isImage = file.type.startsWith("image/") ||
+            ["jpg", "jpeg", "png", "webp", "heic", "heif"].includes(ext);
+    
+        if (isImage) {
+            try {
+                this.pendingFilePreviewUrl = URL.createObjectURL(file);
+            } catch {
+                this.pendingFilePreviewUrl = null;
+            }
+        }
+    
+        this.messagesError = "";
+        this.update();
+    }
+    
+    clearPendingFile() {
+        if (this.pendingFilePreviewUrl) {
+            URL.revokeObjectURL(this.pendingFilePreviewUrl);
+            this.pendingFilePreviewUrl = null;
+        }
+        this.pendingFile = null;
+        this.uploadProgress = 0;
+    }
+    
+    formatFileSize(bytes) {
+        const n = Number(bytes || 0);
+        if (n < 1024) return `${n} B`;
+        if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KB`;
+        return `${(n / 1024 / 1024).toFixed(1)} MB`;
+    }
+    
+    async uploadAndSendFile() {
+        const file = this.pendingFile;
+        if (!file || !this.activeConversationId) return;
+    
+        this.uploading = true;
+        this.uploadProgress = 0;
+        this.messagesError = "";
+        this.update();
+    
+        try {
+            const fd = new FormData();
+            // body first so multer sees it before the file (defensive; order
+            // doesn't strictly matter for memoryStorage but is safer).
+            if (this.messageDraft.trim()) {
+                fd.append("body", this.messageDraft.trim());
+            }
+            fd.append("file", file);
+    
+            const token = localStorage.getItem("accessToken");
+            const csrfToken = localStorage.getItem("csrfToken");
+    
+            // Resolve the API base. Handles the common shapes an api service
+            // might expose; falls back to the route prefix we know is used.
+            const rawBase =
+                api.baseURL ||
+                (api.defaults && api.defaults.baseURL) ||
+                "/api/v1";
+            const base = String(rawBase).replace(/\/+$/, "");
+            const url = `${base}/chat/conversations/${this.activeConversationId}/attachments`;
+    
+            const uploadedMessage = await new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open("POST", url);
+                xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+                if (csrfToken) xhr.setRequestHeader("X-CSRF-Token", csrfToken);
+    
+                xhr.upload.onprogress = (e) => {
+                    if (!e.lengthComputable) return;
+                    this.uploadProgress = Math.round((e.loaded / e.total) * 100);
+                    const bar = this.el?.querySelector("#upload-progress-bar");
+                    if (bar) bar.style.width = `${this.uploadProgress}%`;
+                    const label = this.el?.querySelector("#upload-progress-label");
+                    if (label) label.textContent = `Uploading… ${this.uploadProgress}%`;
+                };
+    
+                xhr.onload = () => {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        try {
+                            const parsed = JSON.parse(xhr.responseText);
+                            resolve(parsed.data || parsed);
+                        } catch {
+                            reject(new Error("Invalid server response"));
+                        }
+                    } else {
+                        try {
+                            const parsed = JSON.parse(xhr.responseText);
+                            reject(new Error(parsed.message || `Upload failed (${xhr.status})`));
+                        } catch {
+                            reject(new Error(`Upload failed (${xhr.status})`));
+                        }
+                    }
+                };
+    
+                xhr.onerror = () => reject(new Error("Network error during upload"));
+                xhr.ontimeout = () => reject(new Error("Upload timed out"));
+                xhr.timeout = 120000;
+                xhr.send(fd);
+            });
+    
+            this.addMessageIfNew(uploadedMessage);
+            this.clearPendingFile();
+            this.messageDraft = "";
+        } catch (err) {
+            console.error("Upload failed:", err);
+            this.messagesError = err.message || "Failed to upload file.";
+        } finally {
+            this.uploading = false;
+            this.update();
+        }
+    }
+
     async sendMessage() {
+        if (this.sending || this.uploading || !this.activeConversationId) return;
+    
+        // If a file is staged, the send button uploads it (caption is optional).
+        if (this.pendingFile) {
+            await this.uploadAndSendFile();
+            return;
+        }
+    
         const body = this.messageDraft.trim();
-        if (!body || this.sending || !this.activeConversationId) return;
+        if (!body) return;
     
         this.sending = true;
         this.messagesError = "";
@@ -251,7 +418,6 @@ export default class PatientMessaging extends Component {
             this.update();
         }
     }
-
     setSearchTerm(term) {
         this.searchTerm = term;
         this.update(); 
@@ -498,8 +664,10 @@ export default class PatientMessaging extends Component {
 
         const previewText = conversation.last_message_deleted_at
             ? "This message was deleted"
-            : conversation.last_message_type && conversation.last_message_type !== "text"
-            ? `Sent a ${conversation.last_message_type}`
+            : conversation.last_message_type === "image"
+            ? "📷 Photo"
+            : conversation.last_message_type === "file"
+            ? "📎 Attachment"
             : conversation.last_message_body || "No messages yet";
 
         const chipTone =
@@ -715,17 +883,82 @@ export default class PatientMessaging extends Component {
     renderMessageBubble(message) {
         const isMine = message.sender_role === "patient";
         const isDeleted = !!message.deleted_at;
-
+    
+        const bubbleClass = `pm-bubble${isMine ? " pm-bubble--mine" : " pm-bubble--theirs"}${isDeleted ? " pm-bubble--deleted" : ""}`;
+        const rowClass = `pm-bubble-row${isMine ? " pm-bubble-row--mine" : " pm-bubble-row--theirs"}`;
+    
+        // Normalize two response shapes:
+        // - Upload endpoint returns attachment_* fields at the top level
+        // - listMessages returns attachments[0] with file_* fields
+        const att = message.attachments?.[0];
+        const attachmentUrl = message.attachment_url || att?.file_url;
+        const attachmentName = message.attachment_name || att?.file_name;
+        const attachmentSize = message.attachment_size ?? att?.file_size;
+    
+        let content;
+    
+        if (isDeleted) {
+            content = h("div", { class: bubbleClass }, "This message was deleted");
+        } else if (message.message_type === "image" && attachmentUrl) {
+            content = h(
+                "div",
+                { class: `${bubbleClass} pm-bubble--media` },
+                h(
+                    "a",
+                    {
+                        href: attachmentUrl,
+                        target: "_blank",
+                        rel: "noopener noreferrer",
+                        onclick: (e) => e.stopPropagation(),
+                    },
+                    h("img", {
+                        class: "pm-bubble-image",
+                        src: attachmentUrl,
+                        alt: attachmentName || "Image attachment",
+                        loading: "lazy",
+                    })
+                ),
+                message.body ? h("p", { class: "pm-bubble-caption" }, message.body) : null
+            );
+        } else if (message.message_type === "file" && attachmentUrl) {
+            content = h(
+                "div",
+                { class: `${bubbleClass} pm-bubble--file` },
+                h(
+                    "a",
+                    {
+                        class: "pm-bubble-file-link",
+                        href: attachmentUrl,
+                        target: "_blank",
+                        rel: "noopener noreferrer",
+                        download: attachmentName,
+                        onclick: (e) => e.stopPropagation(),
+                    },
+                    h(
+                        "span",
+                        { class: "pm-bubble-file-icon" },
+                        icon(
+                            ["M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z", "M14 2v6h6"],
+                            22
+                        )
+                    ),
+                    h(
+                        "span",
+                        { class: "pm-bubble-file-info" },
+                        h("span", { class: "pm-bubble-file-name" }, attachmentName || "File"),
+                        h("span", { class: "pm-bubble-file-size" }, this.formatFileSize(attachmentSize))
+                    )
+                ),
+                message.body ? h("p", { class: "pm-bubble-caption" }, message.body) : null
+            );
+        } else {
+            content = h("div", { class: bubbleClass }, message.body || "");
+        }
+    
         return h(
             "div",
-            { class: `pm-bubble-row${isMine ? " pm-bubble-row--mine" : " pm-bubble-row--theirs"}` },
-            h(
-                "div",
-                {
-                    class: `pm-bubble${isMine ? " pm-bubble--mine" : " pm-bubble--theirs"}${isDeleted ? " pm-bubble--deleted" : ""}`,
-                },
-                isDeleted ? "This message was deleted" : (message.body || "")
-            ),
+            { class: rowClass },
+            content,
             h(
                 "span",
                 { class: "pm-bubble-time" },
@@ -737,37 +970,127 @@ export default class PatientMessaging extends Component {
     renderComposer() {
         const conversation = this.activeConversation || {};
         const isClosed = conversation.status !== "open";
-
+        const isBusy = this.sending || this.uploading;
+        const hasDraft = !!this.messageDraft.trim();
+    
         return h(
             "div",
-            { class: "pm-composer" },
-            h("textarea", {
-                rows: 1,
-                class: "pm-composer-input",
-                placeholder: isClosed ? "This conversation is no longer open" : "Type a message…",
-                value: this.messageDraft,
-                disabled: isClosed || this.sending,
-                oninput: e => this.setMessageDraft(e.target.value),
-                onkeydown: e => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        this.sendMessage();
-                    }
-                },
-            }),
+            { class: "pm-composer-wrap" },
+            this.renderPendingFilePreview(),
             h(
-                "button",
-                {
-                    class: "pm-send-btn",
-                    type: "button",
-                    "aria-label": "Send message",
-                    disabled: this.sending || isClosed,
-                    onclick: () => this.sendMessage(),
-                },
-                this.sending
-                    ? h("span", { class: "pm-spinner" })
-                    : icon(["M22 2L11 13", "M22 2l-7 20-4-9-9-4 20-7z"], 18)
+                "div",
+                { class: "pm-composer" },
+                h(
+                    "button",
+                    {
+                        class: "pm-attach-btn",
+                        type: "button",
+                        "aria-label": "Attach file",
+                        disabled: isClosed || isBusy,
+                        onclick: () => this.pickFile(),
+                    },
+                    icon(
+                        ["M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"],
+                        20
+                    )
+                ),
+                h("textarea", {
+                    rows: 1,
+                    class: "pm-composer-input",
+                    placeholder: isClosed
+                        ? "This conversation is no longer open"
+                        : this.pendingFile
+                            ? "Add a caption (optional)…"
+                            : "Type a message…",
+                    value: this.messageDraft,
+                    disabled: isClosed || isBusy,
+                    oninput: (e) => this.setMessageDraft(e.target.value),
+                    onkeydown: (e) => {
+                        if (e.key === "Enter" && !e.shiftKey) {
+                            e.preventDefault();
+                            this.sendMessage();
+                        }
+                    },
+                }),
+                h(
+                    "button",
+                    {
+                        class: "pm-send-btn",
+                        type: "button",
+                        "aria-label": "Send",
+                        disabled: isBusy || isClosed || (!this.pendingFile && !hasDraft),
+                        onclick: () => this.sendMessage(),
+                    },
+                    isBusy
+                        ? h("span", { class: "pm-spinner" })
+                        : icon(["M22 2L11 13", "M22 2l-7 20-4-9-9-4 20-7z"], 18)
+                )
             )
+        );
+    }
+    
+    renderPendingFilePreview() {
+        if (!this.pendingFile) return null;
+        const file = this.pendingFile;
+        const ext = file.name.split(".").pop()?.toLowerCase() || "";
+        const isImage = file.type.startsWith("image/") ||
+            ["jpg", "jpeg", "png", "webp", "heic", "heif"].includes(ext);
+        const isUploading = this.uploading;
+    
+        return h(
+            "div",
+            { class: "pm-pending-file" },
+            isImage && this.pendingFilePreviewUrl
+                ? h("img", { src: this.pendingFilePreviewUrl, class: "pm-pending-thumb", alt: "" })
+                : h(
+                      "span",
+                      { class: "pm-pending-icon" },
+                      icon(
+                          ["M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z", "M14 2v6h6"],
+                          22
+                      )
+                  ),
+            h(
+                "div",
+                { class: "pm-pending-info" },
+                h("span", { class: "pm-pending-name" }, file.name),
+                h("span", { class: "pm-pending-size" }, this.formatFileSize(file.size)),
+                isUploading
+                    ? h(
+                          "div",
+                          { class: "pm-pending-progress" },
+                          h(
+                              "div",
+                              { class: "pm-pending-progress-track" },
+                              h("div", {
+                                  class: "pm-pending-progress-bar",
+                                  id: "upload-progress-bar",
+                                  style: `width: ${this.uploadProgress}%`,
+                              })
+                          ),
+                          h(
+                              "span",
+                              { class: "pm-pending-progress-label", id: "upload-progress-label" },
+                              `Uploading… ${this.uploadProgress}%`
+                          )
+                      )
+                    : null
+            ),
+            !isUploading
+                ? h(
+                      "button",
+                      {
+                          class: "pm-pending-remove",
+                          type: "button",
+                          "aria-label": "Remove file",
+                          onclick: () => {
+                              this.clearPendingFile();
+                              this.update();
+                          },
+                      },
+                      icon(["M18 6L6 18", "M6 6l12 12"], 16)
+                  )
+                : null
         );
     }
 
