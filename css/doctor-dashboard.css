@@ -3240,3 +3240,241 @@
     color: #10b981;                            /* green tick */
     flex-shrink: 0;
 }
+   
+/* ============================================================
+   Doctor Messaging — file upload additions
+   ============================================================ */
+
+/* Composer wrapper (holds pending preview + composer row) */
+.doctor-messages .mp-composer-wrap {
+    display: flex;
+    flex-direction: column;
+    border-top: 1px solid var(--color-line, rgba(15, 23, 42, 0.08));
+    background: #ffffff;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* The composer inside the wrap — drop the redundant border it carries
+   on the standalone version. */
+.doctor-messages .mp-composer-wrap .chat-composer.mp-composer {
+    border-top: none;
+}
+
+/* Attach (+) button */
+.doctor-messages .mp-attach-btn {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    color: var(--color-muted, #64748b);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+.doctor-messages .mp-attach-btn:hover:not(:disabled) {
+    background: rgba(15, 23, 42, 0.05);
+    color: var(--color-ink, #0f172a);
+}
+.doctor-messages .mp-attach-btn:active:not(:disabled) {
+    background: rgba(15, 23, 42, 0.08);
+}
+.doctor-messages .mp-attach-btn:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+/* Pending file preview */
+.doctor-messages .mp-pending-file {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    background: rgba(15, 23, 42, 0.03);
+    border-bottom: 1px solid var(--color-line, rgba(15, 23, 42, 0.08));
+}
+
+.doctor-messages .mp-pending-thumb {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    object-fit: cover;
+    flex-shrink: 0;
+    background: #e2e8f0;
+}
+
+.doctor-messages .mp-pending-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    background: #e2e8f0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--color-ink, #0f172a);
+}
+
+.doctor-messages .mp-pending-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.doctor-messages .mp-pending-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-ink, #0f172a);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.doctor-messages .mp-pending-size {
+    font-size: 0.72rem;
+    color: var(--color-muted, #64748b);
+}
+
+.doctor-messages .mp-pending-progress {
+    margin-top: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.doctor-messages .mp-pending-progress-track {
+    height: 4px;
+    background: #e2e8f0;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.doctor-messages .mp-pending-progress-bar {
+    height: 100%;
+    width: 0%;
+    background: var(--color-primary);
+    border-radius: 2px;
+    transition: width 0.15s ease;
+}
+
+.doctor-messages .mp-pending-progress-label {
+    font-size: 0.7rem;
+    color: var(--color-muted, #64748b);
+}
+
+.doctor-messages .mp-pending-remove {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    color: var(--color-muted, #64748b);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    -webkit-tap-highlight-color: transparent;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+.doctor-messages .mp-pending-remove:hover {
+    background: rgba(15, 23, 42, 0.06);
+    color: var(--color-ink, #0f172a);
+}
+
+/* Media bubble (image) — two-class selector overrides the role bubble bg */
+.doctor-messages .mp-bubble.mp-bubble--media {
+    padding: 3px;
+    max-width: 260px;
+    min-width: 100px;
+    background: transparent;
+    box-shadow: none;
+    overflow: hidden;
+}
+
+.doctor-messages .mp-bubble--media > a {
+    display: block;
+    line-height: 0;
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.doctor-messages .mp-bubble--media .mp-bubble-image {
+    display: block;
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 320px;
+    border-radius: 15px;
+    background: rgba(15, 23, 42, 0.04);
+}
+
+/* Caption on media bubble must be dark even inside mp-bubble--mine */
+.doctor-messages .mp-bubble--media .mp-bubble-caption {
+    color: var(--color-ink, #0f172a);
+}
+
+/* File bubble (PDFs) */
+.doctor-messages .mp-bubble.mp-bubble--file {
+    padding: 10px 12px;
+    max-width: 260px;
+}
+
+.doctor-messages .mp-bubble-file-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+}
+
+.doctor-messages .mp-bubble-file-icon {
+    flex-shrink: 0;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.18);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+.doctor-messages .mp-msg--theirs .mp-bubble-file-icon {
+    background: rgba(15, 23, 42, 0.06);
+}
+
+.doctor-messages .mp-bubble-file-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.doctor-messages .mp-bubble-file-name {
+    font-size: 0.85rem;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 170px;
+}
+
+.doctor-messages .mp-bubble-file-size {
+    font-size: 0.7rem;
+    opacity: 0.72;
+}
+
+/* Caption on file bubble */
+.doctor-messages .mp-bubble-caption {
+    margin: 6px 4px 2px;
+    font-size: 0.85rem;
+    line-height: 1.4;
+}
