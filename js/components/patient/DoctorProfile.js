@@ -182,8 +182,14 @@ export default class DoctorProfile extends Component {
                 profile.avatar_url
                     ? h("img", {
                           class: "dp-avatar",
-                          src: profile.avatar_url,
+                          src: api.resolveUrl(profile.avatar_url),
                           alt: profile.full_name || "Doctor",
+                          onerror: (e) => {
+                              
+                              e.target.replaceWith(
+                                  h("div", { class: "dp-avatar dp-avatar--initial" }, initial)
+                              );
+                          },
                       })
                     : h("div", { class: "dp-avatar dp-avatar--initial" }, initial),
                 h(
