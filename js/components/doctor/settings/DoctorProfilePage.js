@@ -9,14 +9,14 @@ export default class DoctorProfilePage extends Component {
         this.onBack = onBack;
 
         this.loading = true;
-        this.profileLoaded = false;   // guards against re-fetching on every afterMount()
-        this.loadingProfile = false;  // guards against overlapping fetches
+        this.profileLoaded = false;  
+        this.loadingProfile = false;  
         this.saving = false;
         this.uploadingAvatar = false;
         this.saveError = null;
         this.saveSuccess = false;
         this.avatarError = null;
-        this.avatarPreviewUrl = null; // local object URL for instant preview
+        this.avatarPreviewUrl = null; 
 
         this.profile = {
             full_name: "",
@@ -201,7 +201,7 @@ export default class DoctorProfilePage extends Component {
                 h(
                     "p",
                     { class: "settings-avatar-hint" },
-                    "JPG, PNG or WebP · max 2 MB"
+                    "JPG, PNG or WebP · max 5 MB"
                 ),
                 h(
                     "div",
@@ -282,13 +282,13 @@ export default class DoctorProfilePage extends Component {
 
     async handleAvatarChange(e) {
         const file = e.target.files?.[0];
-        e.target.value = ""; // ← critical: allows re-selecting the same file
+        e.target.value = "";
         if (!file) return;
     
         this.avatarError = null;
     
         const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
-        const MAX_BYTES = 2 * 1024 * 1024;
+        const MAX_BYTES = 5 * 1024 * 1024;
     
         if (!ALLOWED.includes(file.type)) {
             this.avatarError = "Please choose a JPG, PNG, or WebP image.";
@@ -301,16 +301,26 @@ export default class DoctorProfilePage extends Component {
             return;
         }
     
-        // Instant local preview
         this.avatarPreviewUrl = URL.createObjectURL(file);
         this.uploadingAvatar = true;
         this.update();
     
         try {
-            const result = await doctorProfileService.uploadAvatar(file);
-            const newUrl = result?.data?.avatar_url;
+            
+            const UPLOAD_TIMEOUT_MS = 90000;
+            const result = await Promise.race([
+                doctorProfileService.uploadAvatar(file),
+                new Promise((_, reject) =>
+                    setTimeout(
+                        () => reject(new Error("Upload is taking too long. Please try again on a better connection.")),
+                        UPLOAD_TIMEOUT_MS
+                    )
+                ),
+            ]);
+    
+           
+            const newUrl = result?.avatar_url ?? result?.data?.avatar_url;
             if (newUrl) {
-                // Cache-bust so the browser doesn't show the old image
                 this.profile.avatar_url = newUrl.includes("?")
                     ? `${newUrl}&t=${Date.now()}`
                     : `${newUrl}?t=${Date.now()}`;
