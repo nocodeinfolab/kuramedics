@@ -333,8 +333,15 @@ export default class DoctorList extends Component {
                 doctor.avatar_url
                     ? h("img", {
                           class: "dl-avatar",
-                          src: doctor.avatar_url,
+                          src: api.resolveUrl(doctor.avatar_url),
                           alt: doctor.full_name || "Doctor",
+                          onerror: (e) => {
+                              // If the file is missing on disk (or still 404/401s), fall
+                              // back to the initial badge instead of showing a broken image.
+                              e.target.replaceWith(
+                                  h("div", { class: "dl-avatar dl-avatar--initial" }, initial)
+                              );
+                          },
                       })
                     : h("div", { class: "dl-avatar dl-avatar--initial" }, initial),
                 h(
