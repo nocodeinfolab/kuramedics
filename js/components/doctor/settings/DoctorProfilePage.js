@@ -296,7 +296,7 @@ export default class DoctorProfilePage extends Component {
             return;
         }
         if (file.size > MAX_BYTES) {
-            this.avatarError = "Image must be under 2 MB.";
+            this.avatarError = "Image must be under 5 MB.";
             this.update();
             return;
         }
@@ -324,6 +324,10 @@ export default class DoctorProfilePage extends Component {
                 this.profile.avatar_url = newUrl.includes("?")
                     ? `${newUrl}&t=${Date.now()}`
                     : `${newUrl}?t=${Date.now()}`;
+            
+                window.dispatchEvent(new CustomEvent("doctor:avatar-updated", {
+                    detail: { avatar_url: this.profile.avatar_url },
+                }));
             }
         } catch (error) {
             console.error("Avatar upload failed:", error);
@@ -347,6 +351,10 @@ export default class DoctorProfilePage extends Component {
         try {
             await doctorProfileService.removeAvatar?.();
             this.profile.avatar_url = null;
+            
+            window.dispatchEvent(new CustomEvent("doctor:avatar-updated", {
+                detail: { avatar_url: null },
+            }));
         } catch (error) {
             console.error("Avatar removal failed:", error);
             this.avatarError = error.message || "Could not remove photo.";
