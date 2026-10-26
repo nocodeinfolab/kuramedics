@@ -113,6 +113,18 @@ export default class DoctorDashboardPage extends Component {
 
     afterMount() {
         console.log("DoctorDashboardPage: afterMount()");
+    
+        this._avatarListener = (e) => {
+            const next = e.detail?.avatar_url ?? null;
+            this.doctor = { ...(this.doctor || {}), avatar_url: next };
+    
+            if (this.activeTab === "home" && this._currentStaticInstance?.update) {
+                this._currentStaticInstance.doctor = this.doctor;
+                this._currentStaticInstance.update();
+            }
+        };
+        window.addEventListener("doctor:avatar-updated", this._avatarListener);
+    
         this.checkForPaymentReturn();
         this.loadDoctor();
         this.connectSocket();
@@ -211,13 +223,15 @@ export default class DoctorDashboardPage extends Component {
     }
 
     beforeUnmount() {
-
         this.socket?.disconnect();
         this._tabInstances?.messages?.unmount?.();
         this._currentStaticInstance?.unmount?.();
         if (this._paymentBannerTimer) clearTimeout(this._paymentBannerTimer);
         if (this._doctorPollTimer) clearInterval(this._doctorPollTimer);
-
+        if (this._avatarListener) {
+            window.removeEventListener("doctor:avatar-updated", this._avatarListener);
+            this._avatarListener = null;
+        }
     }
     // ---------- Realtime (WebSocket) ----------
 
