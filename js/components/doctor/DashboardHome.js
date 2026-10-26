@@ -78,8 +78,15 @@ export default class DashboardHome extends Component {
     }
 
     async afterMount() {
+        this._avatarListener = (e) => {
+            const next = e.detail?.avatar_url ?? null;
+            this.doctor = { ...this.doctor, avatar_url: next };
+            this.update();
+        };
+        window.addEventListener("doctor:avatar-updated", this._avatarListener);
+    
         await this.loadDashboardSummary();
-
+    
         this._pollTimer = setInterval(() => {
             if (this.isAppVisible()) {
                 this.loadDashboardSummary({ silent: true });
@@ -93,6 +100,10 @@ export default class DashboardHome extends Component {
 
     beforeUnmount() {
         if (this._pollTimer) clearInterval(this._pollTimer);
+        if (this._avatarListener) {
+            window.removeEventListener("doctor:avatar-updated", this._avatarListener);
+            this._avatarListener = null;
+        }
     }
 
     async loadDashboardSummary({ silent = false } = {}) {
