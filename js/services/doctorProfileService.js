@@ -20,39 +20,10 @@ class DoctorProfileService {
     }
 
     async uploadAvatar(file) {
-
         const formData = new FormData();
-
-        formData.append(
-            "avatar",
-            file
-        );
-
-        return api.request(
-            "/doctor-profile/me/avatar",
-            {
-                method: "POST",
-                body: formData
-            }
-        ).then(async response => {
-
-            const result = await response.json();
-
-            if (!response.ok) {
-
-                throw new Error(
-                    result.message ||
-                    "Avatar upload failed."
-                );
-
-            }
-
-            return result;
-
-        });
-
+        formData.append("avatar", file);
+        return api.uploadFile("/doctor-profile/me/avatar", formData);
     }
-
     async regenerateBookingLink() {
 
         return api.post(
