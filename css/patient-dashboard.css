@@ -4706,9 +4706,24 @@
     background: #fff;
 }
 
-.cs-schedule__row--on {
-    background: color-mix(in srgb, var(--color-primary) 6%, transparent);
-    border-color: color-mix(in srgb, var(--color-primary) 24%, transparent);
+.cs-schedule__time {
+    display: none;
+}
+.cs-schedule__off {
+    display: inline;
+    font-size: 0.78rem;
+    color: var(--color-muted);
+    font-style: italic;
+}
+
+/* When the row is enabled, flip them */
+.cs-schedule__row--on .cs-schedule__time {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.cs-schedule__row--on .cs-schedule__off {
+    display: none;
 }
 
 .cs-schedule__day {
