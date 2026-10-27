@@ -4834,3 +4834,36 @@
         text-align: right;
     }
 }
+.patient-doctor-profile .dp-service-schedule {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 8px 0 0 32px;
+}
+
+.patient-doctor-profile .dp-service-schedule-line {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-size: 0.82rem;
+    color: var(--color-muted, #64748b);
+    line-height: 1.4;
+}
+
+.patient-doctor-profile .dp-service-schedule-line svg {
+    flex-shrink: 0;
+    opacity: 0.75;
+}
+
+
+.patient-doctor-profile .dp-service-note--locations {
+    font-weight: 600;
+    color: var(--color-primary);
+}
+
+@media (max-width: 360px) {
+    .patient-doctor-profile .dp-service-schedule {
+        margin-left: 0;
+    }
+}
