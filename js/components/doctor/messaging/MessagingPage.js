@@ -614,7 +614,17 @@ export default class MessagingPage extends Component {
             "div",
             { class: "mp-alert", role: "alert" },
             icon(MI.alert, 18),
-            h("span", {}, this.errorMessage)
+            h("span", { style: "flex: 1; min-width: 0;" }, this.errorMessage),
+            h(
+                "button",
+                {
+                    type: "button",
+                    class: "btn btn-outline",
+                    style: "padding: 4px 10px; font-size: 0.75rem; flex-shrink: 0;",
+                    onclick: () => this.loadConversations({ reset: true }),
+                },
+                "Retry"
+            )
         );
     }
 
@@ -757,7 +767,21 @@ export default class MessagingPage extends Component {
                       "div",
                       { class: "mp-thread__error", role: "alert" },
                       icon(MI.alert, 16),
-                      h("span", {}, this.messagesError)
+                      h("span", { style: "flex: 1; min-width: 0;" }, this.messagesError),
+                      h(
+                          "button",
+                          {
+                              type: "button",
+                              class: "btn btn-outline",
+                              style: "padding: 4px 10px; font-size: 0.75rem; flex-shrink: 0;",
+                              onclick: () => {
+                                  if (this.activeConversationId) {
+                                      this.loadMessages(this.activeConversationId);
+                                  }
+                              },
+                          },
+                          "Retry"
+                      )
                   )
                 : null,
             h(
