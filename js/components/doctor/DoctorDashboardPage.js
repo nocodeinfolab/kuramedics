@@ -129,12 +129,6 @@ export default class DoctorDashboardPage extends Component {
         this.loadDoctor();
         this.connectSocket();
         pushNotifications.init((data) => this.handlePushNotificationTap(data));
-    
-        this._doctorPollTimer = setInterval(() => {
-            if (this.isAppVisible()) {
-                this.loadDoctor({ silent: true });
-            }
-        }, 60000);
     }
     
     async handlePushNotificationTap(data) {
@@ -227,7 +221,6 @@ export default class DoctorDashboardPage extends Component {
         this._tabInstances?.messages?.unmount?.();
         this._currentStaticInstance?.unmount?.();
         if (this._paymentBannerTimer) clearTimeout(this._paymentBannerTimer);
-        if (this._doctorPollTimer) clearInterval(this._doctorPollTimer);
         if (this._avatarListener) {
             window.removeEventListener("doctor:avatar-updated", this._avatarListener);
             this._avatarListener = null;
