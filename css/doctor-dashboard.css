@@ -3478,3 +3478,7 @@
     font-size: 0.85rem;
     line-height: 1.4;
 }
+.doctor-messages .mp-alert,
+.doctor-messages .mp-thread__error {
+    align-items: center;
+}
