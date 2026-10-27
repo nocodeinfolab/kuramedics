@@ -5,7 +5,14 @@ import { h } from "../../utils/dom.js";
 import api from "../../services/api.js";
 
 const icon = (paths, size = 18) => h("svg", { viewBox: "0 0 24 24", fill: "none", width: String(size), height: String(size), "aria-hidden": "true" }, ...paths.map(d => h("path", { d, stroke: "currentColor", "stroke-width": "1.8", "stroke-linecap": "round", "stroke-linejoin": "round" })));
-
+const CLOCK_ICON = [
+    "M12 8v4l3 2",
+    "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20",
+];
+const LOCATION_ICON = [
+    "M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z",
+    "M12 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6z",
+];
 
 export default class DoctorProfile extends Component {
     /**
@@ -77,6 +84,68 @@ export default class DoctorProfile extends Component {
     formatDuration(minutes) {
         if (!minutes) return null;
         return `${minutes} min`;
+    }
+    formatTimeLabel(time24) {
+        if (!time24 || typeof time24 !== "string") return "";
+        const [hh, mm] = time24.split(":");
+        const hour = Number(hh);
+        if (!Number.isInteger(hour)) return time24;
+        const ampm = hour >= 12 ? "PM" : "AM";
+        const h12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+        return mm === "00" ? `${h12} ${ampm}` : `${h12}:${mm} ${ampm}`;
+    }
+    
+    compressDayRange(dayKeys) {
+        const SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+        const FULL = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+        const indices = dayKeys
+            .map(k => FULL.indexOf(k))
+            .filter(i => i >= 0)
+            .sort((a, b) => a - b);
+        if (indices.length === 0) return "";
+    
+        const parts = [];
+        let runStart = indices[0];
+        let runEnd = indices[0];
+        const flush = () => {
+            const count = runEnd - runStart + 1;
+            if (count === 1) parts.push(SHORT[runStart]);
+            else if (count === 2) parts.push(`${SHORT[runStart]}, ${SHORT[runEnd]}`);
+            else parts.push(`${SHORT[runStart]}–${SHORT[runEnd]}`);
+        };
+        for (let i = 1; i < indices.length; i++) {
+            if (indices[i] === runEnd + 1) runEnd = indices[i];
+            else { flush(); runStart = indices[i]; runEnd = indices[i]; }
+        }
+        flush();
+        return parts.join(", ");
+    }
+    
+    getScheduleLines(schedule) {
+        if (!schedule || typeof schedule !== "object") return [];
+        const DAY_ORDER = [
+            "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
+        ];
+    
+        // Group days that share the same time block
+        const groups = new Map();
+        for (const key of DAY_ORDER) {
+            const entry = schedule[key];
+            if (!entry || !entry.enabled) continue;
+            const timeKey = `${entry.start}|${entry.end}`;
+            if (!groups.has(timeKey)) groups.set(timeKey, []);
+            groups.get(timeKey).push(key);
+        }
+    
+        const lines = [];
+        for (const [timeKey, dayKeys] of groups) {
+            const [start, end] = timeKey.split("|");
+            lines.push({
+                days: this.compressDayRange(dayKeys),
+                time: `${this.formatTimeLabel(start)} – ${this.formatTimeLabel(end)}`,
+            });
+        }
+        return lines;
     }
 
     // ---------- Render ----------
@@ -261,7 +330,11 @@ export default class DoctorProfile extends Component {
         const isSelected = this.selectedServiceId === service.id;
         const price = this.formatPrice(service.first_time_price_amount);
         const duration = this.formatDuration(service.duration_minutes);
-
+        const isHomeVisit = service.service_type === "home_visit";
+    
+        const scheduleLines = this.getScheduleLines(service.availability_schedule);
+        const note = (service.availability_note || "").trim();
+    
         return h(
             "button",
             {
@@ -293,15 +366,38 @@ export default class DoctorProfile extends Component {
                         : null
                 )
             ),
+    
+            // Weekly availability, one line per distinct time block.
+            scheduleLines.length > 0
+                ? h(
+                      "div",
+                      { class: "dp-service-schedule" },
+                      ...scheduleLines.map(({ days, time }) =>
+                          h(
+                              "p",
+                              { class: "dp-service-schedule-line" },
+                              icon(CLOCK_ICON, 14),
+                              h("span", null, `${days} · ${time}`)
+                          )
+                      )
+                  )
+                : null,
+    
             service.description
                 ? h("p", { class: "dp-service-desc" }, service.description)
                 : null,
-            service.availability_note
+    
+            // Note for regular services, "Locations covered" for home visits.
+            note
                 ? h(
                       "p",
-                      { class: "dp-service-note" },
-                      icon(["M12 8v4l3 2", "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20"], 14),
-                      h("span", null, service.availability_note)
+                      { class: `dp-service-note${isHomeVisit ? " dp-service-note--locations" : ""}` },
+                      icon(isHomeVisit ? LOCATION_ICON : CLOCK_ICON, 14),
+                      h(
+                          "span",
+                          null,
+                          isHomeVisit ? `Locations covered: ${note}` : note
+                      )
                   )
                 : null
         );
