@@ -494,10 +494,17 @@ export default class DoctorConsultationServicesPage extends Component {
                 "Pick the days and hours patients can book this service."
             ),
             ...WEEKDAYS.map(({ key, label }) => {
-                const entry = this.formData.availability_schedule?.[key] || { enabled: false, start: "09:00", end: "17:00" };
+                const entry = this.formData.availability_schedule?.[key] || {
+                    enabled: false,
+                    start: "09:00",
+                    end: "17:00",
+                };
                 return h(
                     "div",
-                    { class: `cs-schedule__row${entry.enabled ? " cs-schedule__row--on" : ""}` },
+                    {
+                        class: `cs-schedule__row${entry.enabled ? " cs-schedule__row--on" : ""}`,
+                        "data-day-row": key,
+                    },
                     h(
                         "label",
                         { class: "cs-schedule__day", for: `sched-${key}` },
@@ -507,32 +514,38 @@ export default class DoctorConsultationServicesPage extends Component {
                             checked: entry.enabled,
                             onchange: (e) => {
                                 this.setScheduleDay(key, { enabled: e.target.checked });
-                                this.update();
+                                
+                                const row = e.target.closest(".cs-schedule__row");
+                                if (row) {
+                                    row.classList.toggle(
+                                        "cs-schedule__row--on",
+                                        e.target.checked
+                                    );
+                                }
                             },
                         }),
                         h("span", { class: "cs-schedule__day-name" }, label)
                     ),
-                    entry.enabled
-                        ? h(
-                              "div",
-                              { class: "cs-schedule__time" },
-                              h("input", {
-                                  type: "time",
-                                  class: "cs-schedule__input",
-                                  value: entry.start,
-                                  "aria-label": `${label} start time`,
-                                  oninput: (e) => this.setScheduleDay(key, { start: e.target.value }),
-                              }),
-                              h("span", { class: "cs-schedule__dash" }, "–"),
-                              h("input", {
-                                  type: "time",
-                                  class: "cs-schedule__input",
-                                  value: entry.end,
-                                  "aria-label": `${label} end time`,
-                                  oninput: (e) => this.setScheduleDay(key, { end: e.target.value }),
-                              })
-                          )
-                        : h("span", { class: "cs-schedule__off" }, "Not available")
+                    h(
+                        "div",
+                        { class: "cs-schedule__time" },
+                        h("input", {
+                            type: "time",
+                            class: "cs-schedule__input",
+                            value: entry.start,
+                            "aria-label": `${label} start time`,
+                            oninput: (e) => this.setScheduleDay(key, { start: e.target.value }),
+                        }),
+                        h("span", { class: "cs-schedule__dash" }, "–"),
+                        h("input", {
+                            type: "time",
+                            class: "cs-schedule__input",
+                            value: entry.end,
+                            "aria-label": `${label} end time`,
+                            oninput: (e) => this.setScheduleDay(key, { end: e.target.value }),
+                        })
+                    ),
+                    h("span", { class: "cs-schedule__off" }, "Not available")
                 );
             })
         );
