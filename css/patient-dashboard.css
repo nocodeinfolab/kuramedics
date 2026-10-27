@@ -4676,6 +4676,7 @@
     line-height: 1.4;
 }
 
+
 .cs-schedule {
     display: flex;
     flex-direction: column;
@@ -4695,6 +4696,7 @@
     color: var(--color-muted);
 }
 
+/* ---------- Row (one per weekday) ---------- */
 .cs-schedule__row {
     display: flex;
     align-items: center;
@@ -4704,28 +4706,15 @@
     border: 1px solid var(--color-line);
     border-radius: 10px;
     background: #fff;
+    transition: background 0.15s ease, border-color 0.15s ease;
 }
 
-.cs-schedule__time {
-    display: none;
-}
-.cs-schedule__off {
-    display: inline;
-    font-size: 0.78rem;
-    color: var(--color-muted);
-    font-style: italic;
+.cs-schedule__row--on {
+    background: color-mix(in srgb, var(--color-primary) 6%, transparent);
+    border-color: color-mix(in srgb, var(--color-primary) 24%, transparent);
 }
 
-/* When the row is enabled, flip them */
-.cs-schedule__row--on .cs-schedule__time {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-.cs-schedule__row--on .cs-schedule__off {
-    display: none;
-}
-
+/* ---------- Day label + checkbox ---------- */
 .cs-schedule__day {
     display: inline-flex;
     align-items: center;
@@ -4748,11 +4737,16 @@
     color: var(--color-ink);
 }
 
+/* ---------- Time block — hidden unless row is enabled ---------- */
 .cs-schedule__time {
-    display: inline-flex;
+    display: none;
     align-items: center;
     gap: 6px;
     flex-shrink: 0;
+}
+
+.cs-schedule__row--on .cs-schedule__time {
+    display: inline-flex;
 }
 
 .cs-schedule__input {
@@ -4778,13 +4772,20 @@
     font-size: 0.85rem;
 }
 
+/* ---------- "Not available" text — visible unless row is enabled ---------- */
 .cs-schedule__off {
+    display: inline;
     font-size: 0.78rem;
     color: var(--color-muted);
     font-style: italic;
+    flex-shrink: 0;
 }
 
-/* ---------- Card display ---------- */
+.cs-schedule__row--on .cs-schedule__off {
+    display: none;
+}
+
+/* ---------- Card display (read-only summary on the service card) ---------- */
 .cs-card__availability {
     display: flex;
     flex-direction: column;
@@ -4798,13 +4799,38 @@
     font-style: italic;
 }
 
-/* ---------- Small screens ---------- */
-@media (max-width: 360px) {
-    .cs-schedule__input {
-        width: 92px;
-        font-size: 0.78rem;
+/* ============================================================
+   Mobile: stack day label above time inputs so nothing overflows
+   ============================================================ */
+@media (max-width: 480px) {
+    .cs-schedule__row {
+        flex-wrap: wrap;
+        row-gap: 8px;
     }
+
+    /* Day label takes the full first line */
     .cs-schedule__day {
-        min-width: 96px;
+        flex: 1 0 100%;
+        min-width: 0;
+        margin-bottom: 2px;
+    }
+
+    /* Time inputs take the full second line when enabled */
+    .cs-schedule__row--on .cs-schedule__time {
+        flex: 1 0 100%;
+        justify-content: flex-start;
+    }
+
+    /* Time inputs stretch to fill the row */
+    .cs-schedule__input {
+        width: auto;
+        flex: 1;
+        min-width: 0;
+    }
+
+    /* "Not available" also goes on its own line, right-aligned */
+    .cs-schedule__off {
+        flex: 1 0 100%;
+        text-align: right;
     }
 }
