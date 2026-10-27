@@ -12,6 +12,16 @@ const SERVICE_TYPE_OPTIONS = [
     { value: "walk_in_clinic", label: "Walk-in Clinic Consultation" }
 ];
 
+const WEEKDAYS = [
+    { key: "monday",    label: "Monday" },
+    { key: "tuesday",   label: "Tuesday" },
+    { key: "wednesday", label: "Wednesday" },
+    { key: "thursday",  label: "Thursday" },
+    { key: "friday",    label: "Friday" },
+    { key: "saturday",  label: "Saturday" },
+    { key: "sunday",    label: "Sunday" },
+];
+
 export default class DoctorConsultationServicesPage extends Component {
     constructor(doctor = {}, onBack = () => {}) {
         super();
@@ -29,6 +39,59 @@ export default class DoctorConsultationServicesPage extends Component {
         this.formData = this.getInitialFormData();
     }
 
+    getEmptySchedule() {
+        const schedule = {};
+        for (const { key } of WEEKDAYS) {
+            schedule[key] = { enabled: false, start: "09:00", end: "17:00" };
+        }
+        return schedule;
+    }
+    
+    getScheduleFromService(service) {
+        // Defensive: backend may return null, {}, or a partial object.
+        const base = this.getEmptySchedule();
+        const incoming = service?.availability_schedule || {};
+        for (const { key } of WEEKDAYS) {
+            const entry = incoming[key];
+            if (entry && entry.enabled) {
+                base[key] = {
+                    enabled: true,
+                    start: entry.start || "09:00",
+                    end: entry.end || "17:00",
+                };
+            }
+        }
+        return base;
+    }
+    
+    setScheduleDay(dayKey, patch) {
+        this.formData.availability_schedule = {
+            ...this.formData.availability_schedule,
+            [dayKey]: { ...this.formData.availability_schedule[dayKey], ...patch },
+        };
+    }
+    
+    formatTimeLabel(value) {
+        if (!value || typeof value !== "string") return "";
+        const [hh, mm] = value.split(":");
+        const hour = Number(hh);
+        if (Number.isNaN(hour)) return "";
+        const ampm = hour >= 12 ? "PM" : "AM";
+        const displayHour = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+        return `${displayHour}${mm === "00" ? "" : `:${mm}`} ${ampm}`;
+    }
+    
+    formatScheduleForDisplay(schedule) {
+        if (!schedule || typeof schedule !== "object") return "";
+        const parts = [];
+        for (const { key, label } of WEEKDAYS) {
+            const entry = schedule[key];
+            if (!entry?.enabled) continue;
+            parts.push(`${label.slice(0, 3)} ${this.formatTimeLabel(entry.start)}–${this.formatTimeLabel(entry.end)}`);
+        }
+        return parts.join(" · ");
+    }
+
     getInitialFormData() {
         return {
             service_type: "video_consultation",
@@ -40,7 +103,8 @@ export default class DoctorConsultationServicesPage extends Component {
             duration_minutes: 30,
             is_enabled: true,
             requires_payment: true,
-            availability_note: ""
+            availability_note: "",
+            availability_schedule: this.getEmptySchedule(),
         };
     }
 
@@ -78,7 +142,8 @@ export default class DoctorConsultationServicesPage extends Component {
                 duration_minutes: service.duration_minutes || 30,
                 is_enabled: service.is_enabled ?? true,
                 requires_payment: service.requires_payment ?? true,
-                availability_note: service.availability_note || ""
+                availability_note: service.availability_note || "",
+                availability_schedule: this.getScheduleFromService(service),
             };
         } else {
             this.editingServiceId = null;
@@ -371,14 +436,30 @@ export default class DoctorConsultationServicesPage extends Component {
                 )
             ),
 
-            service.availability_note
-                ? h(
-                      "p",
-                      { class: "cs-card__note" },
-                      icon(["M12 8v4l3 2", "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20"], 14),
-                      h("span", {}, service.availability_note)
-                  )
-                : null,
+            (() => {
+                const scheduleStr = this.formatScheduleForDisplay(service.availability_schedule);
+                const noteStr = (service.availability_note || "").trim();
+                if (!scheduleStr && !noteStr) return null;
+                return h(
+                    "div",
+                    { class: "cs-card__availability" },
+                    scheduleStr
+                        ? h(
+                              "p",
+                              { class: "cs-card__note" },
+                              icon(["M12 8v4l3 2", "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20"], 14),
+                              h("span", {}, scheduleStr)
+                          )
+                        : null,
+                    noteStr
+                        ? h(
+                              "p",
+                              { class: "cs-card__note cs-card__note--muted" },
+                              h("span", {}, `Note: ${noteStr}`)
+                          )
+                        : null
+                );
+            })(),
 
             h(
                 "div",
@@ -400,6 +481,60 @@ export default class DoctorConsultationServicesPage extends Component {
                     h("span", {}, "Edit")
                 )
             )
+        );
+    }
+    renderScheduleEditor() {
+        return h(
+            "div",
+            { class: "cs-schedule" },
+            h("p", { class: "cs-schedule__label" }, "Weekly availability"),
+            h(
+                "p",
+                { class: "cs-schedule__hint" },
+                "Pick the days and hours patients can book this service."
+            ),
+            ...WEEKDAYS.map(({ key, label }) => {
+                const entry = this.formData.availability_schedule?.[key] || { enabled: false, start: "09:00", end: "17:00" };
+                return h(
+                    "div",
+                    { class: `cs-schedule__row${entry.enabled ? " cs-schedule__row--on" : ""}` },
+                    h(
+                        "label",
+                        { class: "cs-schedule__day", for: `sched-${key}` },
+                        h("input", {
+                            type: "checkbox",
+                            id: `sched-${key}`,
+                            checked: entry.enabled,
+                            onchange: (e) => {
+                                this.setScheduleDay(key, { enabled: e.target.checked });
+                                this.update();
+                            },
+                        }),
+                        h("span", { class: "cs-schedule__day-name" }, label)
+                    ),
+                    entry.enabled
+                        ? h(
+                              "div",
+                              { class: "cs-schedule__time" },
+                              h("input", {
+                                  type: "time",
+                                  class: "cs-schedule__input",
+                                  value: entry.start,
+                                  "aria-label": `${label} start time`,
+                                  oninput: (e) => this.setScheduleDay(key, { start: e.target.value }),
+                              }),
+                              h("span", { class: "cs-schedule__dash" }, "–"),
+                              h("input", {
+                                  type: "time",
+                                  class: "cs-schedule__input",
+                                  value: entry.end,
+                                  "aria-label": `${label} end time`,
+                                  oninput: (e) => this.setScheduleDay(key, { end: e.target.value }),
+                              })
+                          )
+                        : h("span", { class: "cs-schedule__off" }, "Not available")
+                );
+            })
         );
     }
     renderModal() {
@@ -552,17 +687,24 @@ export default class DoctorConsultationServicesPage extends Component {
                             })
                         ),
 
+                        this.renderScheduleEditor(),
+
                         h(
                             "div",
                             { class: "form-group" },
-                            h("label", { class: "form-label" }, "Availability note"),
+                            h("label", { class: "form-label" }, "Exceptions note (optional)"),
                             h("input", {
                                 type: "text",
                                 class: "form-input",
-                                placeholder: "e.g. Weekdays between 9 AM – 4 PM",
+                                placeholder: "e.g. Closed on public holidays",
                                 value: this.formData.availability_note,
                                 oninput: e => (this.formData.availability_note = e.target.value)
-                            })
+                            }),
+                            h(
+                                "p",
+                                { class: "form-hint" },
+                                "Use this for one-off exceptions. Regular hours are set above."
+                            )
                         ),
 
                         h(
