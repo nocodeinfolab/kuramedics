@@ -85,6 +85,8 @@ export default class DashboardHome extends Component {
         };
         window.addEventListener("doctor:avatar-updated", this._avatarListener);
     
+        await this.refreshDoctor({ render: false });
+    
         await this.loadDashboardSummary();
     
         this._pollTimer = setInterval(() => {
@@ -92,6 +94,31 @@ export default class DashboardHome extends Component {
                 this.loadDashboardSummary({ silent: true });
             }
         }, 60000);
+    }
+    async refreshDoctor({ render = true } = {}) {
+        try {
+            const res = await api.get("/doctor-profile/me");
+            const fresh = res.data?.user || res.data || null;
+            if (!fresh) return;
+    
+            const meaningful =
+                fresh.avatar_url             !== this.doctor?.avatar_url             ||
+                fresh.subscription_status    !== this.doctor?.subscription_status    ||
+                fresh.subscription_plan_name !== this.doctor?.subscription_plan_name ||
+                fresh.verification_status    !== this.doctor?.verification_status    ||
+                fresh.todays_queue           !== this.doctor?.todays_queue           ||
+                fresh.upcoming               !== this.doctor?.upcoming               ||
+                fresh.completed              !== this.doctor?.completed              ||
+                fresh.patients               !== this.doctor?.patients;
+    
+            if (meaningful) {
+                this.doctor = { ...this.doctor, ...fresh };
+                if (render) this.update();
+            }
+        } catch (err) {
+            
+            console.warn("refreshDoctor failed (showing cached data):", err?.message || err);
+        }
     }
 
     isAppVisible() {
