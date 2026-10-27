@@ -78,17 +78,21 @@ export default class AdminAppUpdates extends Component {
             // Content-Type: application/json, breaking a file upload.
             // request() leaves headers alone (besides auth/CSRF), so
             // fetch sets the multipart boundary itself.
-            const response = await apiService.request("/admin/updates", {
-                method: "POST",
-                body: formData,
-            });
-
-            const result = await response.json();
-            if (!response.ok) {
-                throw new Error(result.message || "Failed to publish bundle.");
-            }
-
-            this.publishSuccess = `Version ${result.data.version} published.`;
+            const result = await apiService.uploadFile(
+                "/admin/updates",
+                formData,
+                {
+                    onProgress: (pct) => {
+                        this.publishProgress = pct;
+                        const bar = this.el?.querySelector("#ota-upload-progress-bar");
+                        if (bar) bar.style.width = `${pct}%`;
+                        const label = this.el?.querySelector("#ota-upload-progress-label");
+                        if (label) label.textContent = `Uploading… ${pct}%`;
+                    },
+                }
+            );
+            
+            this.publishSuccess = `Version ${result.version} published.`;
             this.selectedFile = null;
             this.versionInput = "";
             this.mandatoryInput = false;
