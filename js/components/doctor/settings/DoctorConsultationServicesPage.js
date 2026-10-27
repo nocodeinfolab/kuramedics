@@ -91,6 +91,11 @@ export default class DoctorConsultationServicesPage extends Component {
         }
         return parts.join(" · ");
     }
+    swapAvailabilityField() {
+        const current = this.el?.querySelector("#cs-availability-note-field");
+        if (!current) return;
+        current.replaceWith(this.renderAvailabilityNoteField());
+    }
 
     getInitialFormData() {
         return {
@@ -483,6 +488,41 @@ export default class DoctorConsultationServicesPage extends Component {
             )
         );
     }
+    renderAvailabilityNoteField() {
+        const isHomeVisit = this.formData.service_type === "home_visit";
+        const isRequired = isHomeVisit && this.formData.is_enabled;
+    
+        return h(
+            "div",
+            { class: "form-group", id: "cs-availability-note-field" },
+            h(
+                "label",
+                { class: "form-label" },
+                isHomeVisit ? "Locations covered" : "Exceptions note (optional)",
+                isRequired
+                    ? h("span", { style: "color: #ef4444; margin-left: 2px;" }, "*")
+                    : null
+            ),
+            h("input", {
+                type: "text",
+                class: "form-input",
+                required: isRequired,
+                placeholder: isHomeVisit
+                    ? "e.g. Lekki, Ikoyi, Victoria Island"
+                    : "e.g. Closed on public holidays",
+                value: this.formData.availability_note,
+                oninput: (e) => (this.formData.availability_note = e.target.value),
+            }),
+            h(
+                "p",
+                { class: "form-hint" },
+                isHomeVisit
+                    ? "List the areas where you offer home visits. Patients outside these areas cannot book this service."
+                    : "Use this for one-off exceptions. Regular hours are set above."
+            )
+        );
+    }
+    
     renderScheduleEditor() {
         return h(
             "div",
@@ -611,6 +651,7 @@ export default class DoctorConsultationServicesPage extends Component {
                                             if (selected && !this.formData.display_name) {
                                                 this.formData.display_name = selected.label;
                                             }
+                                            this.swapAvailabilityField();
                                         }
                                     },
                                     SERVICE_TYPE_OPTIONS.map(opt =>
@@ -702,23 +743,7 @@ export default class DoctorConsultationServicesPage extends Component {
 
                         this.renderScheduleEditor(),
 
-                        h(
-                            "div",
-                            { class: "form-group" },
-                            h("label", { class: "form-label" }, "Exceptions note (optional)"),
-                            h("input", {
-                                type: "text",
-                                class: "form-input",
-                                placeholder: "e.g. Closed on public holidays",
-                                value: this.formData.availability_note,
-                                oninput: e => (this.formData.availability_note = e.target.value)
-                            }),
-                            h(
-                                "p",
-                                { class: "form-hint" },
-                                "Use this for one-off exceptions. Regular hours are set above."
-                            )
-                        ),
+                        this.renderAvailabilityNoteField(),
 
                         h(
                             "div",
@@ -730,7 +755,14 @@ export default class DoctorConsultationServicesPage extends Component {
                                     type: "checkbox",
                                     id: "chk_service_enabled",
                                     checked: this.formData.is_enabled,
-                                    onchange: e => (this.formData.is_enabled = e.target.checked)
+                                    onchange: e => {
+                                        this.formData.is_enabled = e.target.checked;
+                                        // Home visit's required state depends on is_enabled — swap the
+                                        // field so the asterisk and required attribute stay in sync.
+                                        if (this.formData.service_type === "home_visit") {
+                                            this.swapAvailabilityField();
+                                        }
+                                    }
                                 }),
                                 h("span", { class: "cs-check__box" }, icon(["M20 6L9 17l-5-5"], 14)),
                                 h("span", { class: "cs-check__text" }, "Service enabled")
