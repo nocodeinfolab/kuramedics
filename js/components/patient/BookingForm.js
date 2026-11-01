@@ -32,6 +32,8 @@ export default class BookingForm extends Component {
         this.selectedServiceId = "";
         this.feeType = "first_time";
         this.bookingDate = "";
+        this.useCustomDate = false;
+        this.showAllTimes = false;    
         this.consentGiven = false;
         this.emergencyAcknowledged = false;
 
@@ -41,6 +43,17 @@ export default class BookingForm extends Component {
 
     async afterMount() {
         await this.loadDoctorProfile();
+    
+        if (this.selectedServiceId && !this.bookingDate) {
+            const service = this.getSelectedService();
+            if (service) {
+                const first = this.findFirstAvailableSlot(service);
+                if (first) {
+                    this.bookingDate = `${first.dateStr}T${first.timeStr}`;
+                    this.update();
+                }
+            }
+        }
     }
 
     // ---------- Data loading ----------
@@ -82,6 +95,172 @@ export default class BookingForm extends Component {
         return this.feeType === "follow_up"
             ? service.follow_up_price_amount
             : service.first_time_price_amount;
+    }
+    // ---------- Schedule helpers ----------
+
+    formatTimeLabel(time24) {
+        if (!time24 || typeof time24 !== "string") return "";
+        const [hh, mm] = time24.split(":");
+        const hour = Number(hh);
+        if (!Number.isInteger(hour)) return time24;
+        const ampm = hour >= 12 ? "PM" : "AM";
+        const h12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+        return mm === "00" ? `${h12} ${ampm}` : `${h12}:${mm} ${ampm}`;
+    }
+    
+    getScheduleLines(schedule) {
+        if (!schedule || typeof schedule !== "object") return [];
+        const ORDER = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
+        const SHORT = {
+            monday: "Mon", tuesday: "Tue", wednesday: "Wed",
+            thursday: "Thu", friday: "Fri", saturday: "Sat", sunday: "Sun",
+        };
+    
+        const groups = new Map();
+        for (const key of ORDER) {
+            const entry = schedule[key];
+            if (!entry || !entry.enabled) continue;
+            const timeKey = `${entry.start}|${entry.end}`;
+            if (!groups.has(timeKey)) groups.set(timeKey, []);
+            groups.get(timeKey).push(key);
+        }
+    
+        const lines = [];
+        for (const [timeKey, keys] of groups) {
+            const [start, end] = timeKey.split("|");
+            const indices = keys.map(k => ORDER.indexOf(k)).filter(i => i >= 0).sort((a, b) => a - b);
+    
+            const parts = [];
+            let runStart = indices[0];
+            let runEnd = indices[0];
+            const flush = () => {
+                const count = runEnd - runStart + 1;
+                const a = SHORT[ORDER[runStart]];
+                const b = SHORT[ORDER[runEnd]];
+                if (count === 1) parts.push(a);
+                else if (count === 2) parts.push(`${a}, ${b}`);
+                else parts.push(`${a}–${b}`);
+            };
+            for (let i = 1; i < indices.length; i++) {
+                if (indices[i] === runEnd + 1) runEnd = indices[i];
+                else { flush(); runStart = indices[i]; runEnd = indices[i]; }
+            }
+            flush();
+    
+            lines.push({
+                days: parts.join(", "),
+                time: `${this.formatTimeLabel(start)} – ${this.formatTimeLabel(end)}`,
+            });
+        }
+        return lines;
+    }
+    
+    toLocalDateStr(date) {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, "0");
+        const d = String(date.getDate()).padStart(2, "0");
+        return `${y}-${m}-${d}`;
+    }
+    
+    getNextNDays(n = 14) {
+        const days = [];
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        for (let i = 0; i < n; i++) {
+            const d = new Date(today);
+            d.setDate(d.getDate() + i);
+            days.push(d);
+        }
+        return days;
+    }
+    
+    getDayAvailability(date, service) {
+        const schedule = service?.availability_schedule;
+        if (!schedule || typeof schedule !== "object" || Object.keys(schedule).length === 0) {
+            return { hasSchedule: false, enabled: true, start: null, end: null };
+        }
+        const dayKey = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"][date.getDay()];
+        const slot = schedule[dayKey];
+        return {
+            hasSchedule: true,
+            enabled: !!slot?.enabled,
+            start: slot?.start || null,
+            end: slot?.end || null,
+        };
+    }
+    
+    getTimeSlots(date, service) {
+        const avail = this.getDayAvailability(date, service);
+        if (!avail.hasSchedule || !avail.enabled || !avail.start || !avail.end) return [];
+    
+        const [sH, sM] = avail.start.split(":").map(Number);
+        const [eH, eM] = avail.end.split(":").map(Number);
+        const startMin = sH * 60 + sM;
+        const endMin = eH * 60 + eM;
+    
+        // 30-minute increments; service must fit within the doctor's window.
+        const slots = [];
+        for (let m = startMin; m + 30 <= endMin; m += 30) {
+            const h = Math.floor(m / 60);
+            const mm = m % 60;
+            slots.push(`${String(h).padStart(2, "0")}:${String(mm).padStart(2, "0")}`);
+        }
+    
+        // For today, drop times in the past.
+        const todayStr = this.toLocalDateStr(new Date());
+        if (this.toLocalDateStr(date) === todayStr) {
+            const now = new Date();
+            const nowMin = now.getHours() * 60 + now.getMinutes();
+            return slots.filter(t => {
+                const [h, m] = t.split(":").map(Number);
+                return h * 60 + m > nowMin;
+            });
+        }
+    
+        return slots;
+    }
+    
+    getSelectedDayStr() {
+        if (!this.bookingDate) return null;
+        const idx = this.bookingDate.indexOf("T");
+        return idx >= 0 ? this.bookingDate.slice(0, idx) : this.bookingDate;
+    }
+    
+    getSelectedTimeStr() {
+        if (!this.bookingDate) return null;
+        const idx = this.bookingDate.indexOf("T");
+        return idx >= 0 ? this.bookingDate.slice(idx + 1, idx + 6) : null;
+    }
+    
+    setSelectedDay(dateStr) {
+        const service = this.getSelectedService();
+        const date = new Date(`${dateStr}T00:00:00`);
+        const slots = this.getTimeSlots(date, service);
+        if (slots.length === 0) return;
+    
+        const currentTime = this.getSelectedTimeStr();
+        const newTime = slots.includes(currentTime) ? currentTime : slots[0];
+    
+        this.bookingDate = `${dateStr}T${newTime}`;
+        this.showAllTimes = false;   
+        this.update();
+    }
+    
+    setSelectedTime(timeStr) {
+        const dayStr = this.getSelectedDayStr();
+        if (!dayStr) return;
+        this.bookingDate = `${dayStr}T${timeStr}`;
+        this.update();
+    }
+    
+    findFirstAvailableSlot(service) {
+        for (const day of this.getNextNDays(14)) {
+            const slots = this.getTimeSlots(day, service);
+            if (slots.length > 0) {
+                return { dateStr: this.toLocalDateStr(day), timeStr: slots[0] };
+            }
+        }
+        return null;
     }
     formatTimeLabel(time24) {
         if (!time24 || typeof time24 !== "string") return "";
@@ -352,7 +531,19 @@ export default class BookingForm extends Component {
                                       id: "bf-service",
                                       class: "bf-select",
                                       value: this.selectedServiceId,
-                                      onchange: e => this.setField("selectedServiceId", e.target.value),
+                                      onchange: e => {
+                                            this.selectedServiceId = e.target.value;
+                                            this.useCustomDate = false;
+                                            this.bookingDate = "";
+                                        
+                                            // Re-pick the first available slot for the newly selected service.
+                                            const service = this.getSelectedService();
+                                            if (service) {
+                                                const first = this.findFirstAvailableSlot(service);
+                                                if (first) this.bookingDate = `${first.dateStr}T${first.timeStr}`;
+                                            }
+                                            this.update();
+                                        },
                                   },
                                   h("option", { value: "" }, "Select a service..."),
                                   this.services.map(service =>
@@ -414,75 +605,7 @@ export default class BookingForm extends Component {
                       )
                     : null,
 
-                // Preferred date / time
-                (() => {
-                    // min stops the picker from offering past dates. Recomputed on every
-                    // render so a form left open overnight doesn't keep yesterday as "min".
-                    const now = new Date();
-                    const pad = n => String(n).padStart(2, "0");
-                    const minLocal = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
-                
-                    const service = this.getSelectedService();
-                    const scheduleLines = this.getScheduleLines(service?.availability_schedule);
-                    const check = this.bookingDate
-                        ? this.isDateInSchedule(this.bookingDate, service)
-                        : { ok: true };
-                
-                    return h(
-                        "div",
-                        { class: "bf-field" },
-                        h("label", { class: "bf-label", for: "bf-date" }, "Preferred date and time"),
-                
-                        // Available hours hint (only when the selected service has a schedule)
-                        scheduleLines.length > 0
-                            ? h(
-                                  "div",
-                                  { class: "bf-availability" },
-                                  h("p", { class: "bf-availability-title" },
-                                      `Available hours (${service.display_name})`),
-                                  ...scheduleLines.map(({ days, time }) =>
-                                      h(
-                                          "p",
-                                          { class: "bf-availability-line" },
-                                          icon(["M12 8v4l3 2", "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20"], 14),
-                                          h("span", null, `${days} · ${time}`)
-                                      )
-                                  )
-                              )
-                            : null,
-                
-                        h(
-                            "div",
-                            { class: "bf-input-wrap" },
-                            h(
-                                "span",
-                                { class: "bf-input-icon" },
-                                icon(["M8 2v4", "M16 2v4", "M3 10h18", "M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2"], 16)
-                            ),
-                            h("input", {
-                                id: "bf-date",
-                                type: "datetime-local",
-                                class: `bf-input bf-input--with-icon${!check.ok ? " bf-input--invalid" : ""}`,
-                                min: minLocal,
-                                value: this.bookingDate,
-                                oninput: e => this.setField("bookingDate", e.target.value),
-                            })
-                        ),
-                
-                        // Inline error when the picked time is outside the schedule
-                        !check.ok
-                            ? h("p", { class: "bf-error" }, check.reason)
-                            : null,
-                
-                        h(
-                            "p",
-                            { class: "bf-hint" },
-                            check.ok
-                                ? "This is your requested time. The doctor may confirm it or suggest another time."
-                                : "Please pick a time that matches the doctor's available hours above."
-                        )
-                    );
-                })(),
+                this.renderDateTimePicker(),
                 // Triage summary
                 this.triageResult
                     ? h(
@@ -551,6 +674,224 @@ export default class BookingForm extends Component {
                     ? h("span", { class: "bf-spinner" })
                     : icon(["M5 12h14", "M12 5l7 7-7 7"], 18),
                 h("span", null, this.submitting ? "Sending request…" : "Request appointment")
+            )
+        );
+    }
+    renderDateTimePicker() {
+        const service = this.getSelectedService();
+        const scheduleLines = this.getScheduleLines(service?.availability_schedule);
+        const hasSchedule = scheduleLines.length > 0;
+    
+        // No schedule → fall back to native datetime input (existing behavior)
+        if (!hasSchedule) return this.renderNativeDateInput();
+    
+        // Patient explicitly asked to suggest a custom time
+        if (this.useCustomDate) {
+            return h(
+                "div",
+                { class: "bf-field" },
+                h("label", { class: "bf-label", for: "bf-date" }, "Preferred date and time"),
+                h(
+                    "div",
+                    { class: "bf-input-wrap" },
+                    h(
+                        "span",
+                        { class: "bf-input-icon" },
+                        icon(["M8 2v4", "M16 2v4", "M3 10h18", "M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2"], 16)
+                    ),
+                    h("input", {
+                        id: "bf-date",
+                        type: "datetime-local",
+                        class: "bf-input bf-input--with-icon",
+                        value: this.bookingDate,
+                        oninput: e => this.setField("bookingDate", e.target.value),
+                    })
+                ),
+                h(
+                    "p",
+                    { class: "bf-hint" },
+                    "This is outside the doctor's usual hours. They may suggest a different time."
+                ),
+                h(
+                    "button",
+                    {
+                        type: "button",
+                        class: "bf-custom-toggle",
+                        onclick: () => {
+                            this.useCustomDate = false;
+                            this.bookingDate = "";
+                            const first = this.findFirstAvailableSlot(service);
+                            if (first) this.bookingDate = `${first.dateStr}T${first.timeStr}`;
+                            this.update();
+                        },
+                    },
+                    "← Back to available times"
+                )
+            );
+        }
+    
+        // Standard slot picker
+        const days = this.getNextNDays(14);
+        const selectedDay = this.getSelectedDayStr();
+        const selectedTime = this.getSelectedTimeStr();
+        const todayStr = this.toLocalDateStr(new Date());
+    
+        const dayRows = days.map(d => {
+            const dateStr = this.toLocalDateStr(d);
+            const avail = this.getDayAvailability(d, service);
+            const slots = this.getTimeSlots(d, service);
+            const isAvailable = avail.enabled && slots.length > 0;
+            return { date: d, dateStr, isAvailable };
+        });
+    
+        const selectedDate = selectedDay ? new Date(`${selectedDay}T00:00:00`) : null;
+        const timeSlots = selectedDate ? this.getTimeSlots(selectedDate, service) : [];
+    
+        const SHORT_WEEKDAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+    
+        return h(
+            "div",
+            { class: "bf-field" },
+            h("label", { class: "bf-label" }, "Preferred date and time"),
+    
+            // Compact availability reference
+            h(
+                "div",
+                { class: "bf-hours-compact" },
+                ...scheduleLines.map(({ days: dayLabel, time }) =>
+                    h(
+                        "p",
+                        { class: "bf-hours-line" },
+                        icon(["M12 8v4l3 2", "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20"], 12),
+                        h("span", null, `${dayLabel} · ${time}`)
+                    )
+                )
+            ),
+    
+            // Day strip
+            h(
+                "div",
+                { class: "bf-day-strip", role: "radiogroup", "aria-label": "Choose a day" },
+                ...dayRows.map(row =>
+                    h(
+                        "button",
+                        {
+                            type: "button",
+                            class: `bf-day-chip${!row.isAvailable ? " bf-day-chip--disabled" : ""}${selectedDay === row.dateStr ? " bf-day-chip--selected" : ""}`,
+                            disabled: !row.isAvailable,
+                            role: "radio",
+                            "aria-checked": selectedDay === row.dateStr ? "true" : "false",
+                            onclick: () => this.setSelectedDay(row.dateStr),
+                        },
+                        h("span", { class: "bf-day-chip__weekday" }, SHORT_WEEKDAY[row.date.getDay()]),
+                        h("span", { class: "bf-day-chip__num" }, String(row.date.getDate()))
+                    )
+                )
+            ),
+    
+            // Time grid (capped at 8 unless expanded)
+            (() => {
+                if (timeSlots.length === 0) {
+                    return h(
+                        "p",
+                        { class: "bf-time-empty" },
+                        selectedDay ? "No more times left for this day." : "Pick a day to see available times."
+                    );
+                }
+            
+                const CAP = 8;
+                const visibleSlots = this.showAllTimes ? timeSlots : timeSlots.slice(0, CAP);
+                const hiddenCount = timeSlots.length - visibleSlots.length;
+            
+                return h(
+                    "div",
+                    { class: "bf-time-grid-wrap" },
+                    h(
+                        "div",
+                        { class: "bf-time-grid", role: "radiogroup", "aria-label": "Choose a time" },
+                        ...visibleSlots.map(t =>
+                            h(
+                                "button",
+                                {
+                                    type: "button",
+                                    class: `bf-time-slot${selectedTime === t ? " bf-time-slot--selected" : ""}`,
+                                    role: "radio",
+                                    "aria-checked": selectedTime === t ? "true" : "false",
+                                    onclick: () => this.setSelectedTime(t),
+                                },
+                                this.formatTimeLabel(t)
+                            )
+                        )
+                    ),
+                    hiddenCount > 0
+                        ? h(
+                              "button",
+                              {
+                                  type: "button",
+                                  class: "bf-time-expand",
+                                  onclick: () => {
+                                      this.showAllTimes = true;
+                                      this.update();
+                                  },
+                              },
+                              h("span", null, `Show ${hiddenCount} more time${hiddenCount === 1 ? "" : "s"}`),
+                              icon(["M6 9l6 6 6-6"], 14)
+                          )
+                        : null
+                );
+            })(),
+    
+            h(
+                "p",
+                { class: "bf-hint" },
+                "This is your requested time. The doctor may confirm it or suggest another time."
+            ),
+    
+            h(
+                "button",
+                {
+                    type: "button",
+                    class: "bf-custom-toggle",
+                    onclick: () => {
+                        this.useCustomDate = true;
+                        this.update();
+                    },
+                },
+                "Need a time outside these hours? Suggest one"
+            )
+        );
+    }
+    
+    renderNativeDateInput() {
+        const now = new Date();
+        const pad = n => String(n).padStart(2, "0");
+        const minLocal = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+    
+        return h(
+            "div",
+            { class: "bf-field" },
+            h("label", { class: "bf-label", for: "bf-date" }, "Preferred date and time"),
+            h(
+                "div",
+                { class: "bf-input-wrap" },
+                h(
+                    "span",
+                    { class: "bf-input-icon" },
+                    icon(["M8 2v4", "M16 2v4", "M3 10h18", "M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2"], 16)
+                ),
+                h("input", {
+                    id: "bf-date",
+                    type: "datetime-local",
+                    class: "bf-input bf-input--with-icon",
+                    min: minLocal,
+                    value: this.bookingDate,
+                    oninput: e => this.setField("bookingDate", e.target.value),
+                })
+            ),
+            h(
+                "p",
+                { class: "bf-hint" },
+                "This is your requested time. The doctor may confirm it or suggest another time."
             )
         );
     }
