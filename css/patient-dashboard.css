@@ -5341,3 +5341,46 @@
     color: var(--color-muted);
     line-height: 1.4;
 }
+/* ---------- Tab-specific message (below tabs, above list) ---------- */
+.patient-care .pc-tab-message {
+    margin: -2px 0 0;
+    padding: 0 2px;
+    font-size: 0.82rem;
+    line-height: 1.5;
+    color: var(--color-muted);
+}
+
+/* ---------- Empty-state CTA (jumps to the suggested tab) ---------- */
+.patient-care .pc-empty-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin-top: 6px;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 999px;
+    background: var(--pc-primary-soft);
+    color: var(--color-primary);
+    font-family: inherit;
+    font-size: 0.82rem;
+    font-weight: 600;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    transition: background var(--duration-fast) var(--ease-out);
+}
+
+.patient-care .pc-empty-action:hover,
+.patient-care .pc-empty-action:active {
+    background: color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
+
+.patient-care .pc-empty-action svg {
+    flex-shrink: 0;
+}
+
+.patient-care .pc-empty-action-hint {
+    margin: 6px 0 0;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--color-primary);
+}
