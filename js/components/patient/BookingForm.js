@@ -767,6 +767,7 @@ export default class BookingForm extends Component {
                     )
                 )
             ),
+            h("p", { class: "bf-pick-hint" }, "Select from available date and time slots below"),
     
             // Day strip
             h(
@@ -845,20 +846,9 @@ export default class BookingForm extends Component {
                 "p",
                 { class: "bf-hint" },
                 "This is your requested time. The doctor may confirm it or suggest another time."
-            ),
-    
-            h(
-                "button",
-                {
-                    type: "button",
-                    class: "bf-custom-toggle",
-                    onclick: () => {
-                        this.useCustomDate = true;
-                        this.update();
-                    },
-                },
-                "Need a time outside these hours? Suggest one"
             )
+    
+            
         );
     }
     
