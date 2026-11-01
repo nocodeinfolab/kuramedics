@@ -24,10 +24,11 @@ const STATUS_LABELS = {
 const SECTION_ORDER = ["Outcome", "Plan", "Follow-up"];
 
 export default class PatientCare extends Component {
-    constructor(patient, onOpenConversation, initialTab = "upcoming") {
+    constructor(patient, onOpenConversation, initialTab = "upcoming", onNavigate = null) {
         super();
         this.patient = patient ?? {};
         this.onOpenConversation = onOpenConversation;
+        this.onNavigate = typeof onNavigate === "function" ? onNavigate : null;
 
         this.loading = true;
         this.loadingMore = false;
@@ -586,8 +587,59 @@ export default class PatientCare extends Component {
             "div",
             { class: "pc-stack" },
             this.renderTabs(),
+            this.bookings.length > 0 ? this.renderTabMessage() : null,
             this.renderList()
         );
+    }
+    renderTabMessage() {
+        const message = this.getTabMessage(this.activeTab);
+        if (!message) return null;
+        return h("p", { class: "pc-tab-message" }, message);
+    }
+    
+    getTabMessage(tab) {
+        switch (tab) {
+            case "upcoming":
+                return "Requests you've sent, waiting on your doctor to confirm a time. Already confirmed? Check the Confirmed tab.";
+            case "confirmed":
+                return "Appointments with a set time — pay, message your doctor, or request cancellation. Looking for past visits? Check Completed.";
+            case "completed":
+                return "Past consultations with notes and prescriptions. Tap any card to expand. Looking for an upcoming visit? Check Confirmed.";
+            default:
+                return "";
+        }
+    }
+    
+    getEmptyState(tab) {
+        switch (tab) {
+            case "upcoming":
+                return {
+                    title: "No appointment requests",
+                    text: "Request a consultation and it will appear here while you wait for the doctor to confirm.",
+                    action: this.onNavigate
+                        ? { label: "Find a doctor", onClick: () => this.onNavigate("find") }
+                        : { label: "Find a doctor" },
+                };
+            case "confirmed":
+                return {
+                    title: "No confirmed appointments",
+                    text: "Once a doctor confirms a requested time, it will show up here.",
+                    action: { label: "Check Upcoming", onClick: () => this.setTab("upcoming") },
+                };
+            case "completed":
+                return {
+                    title: "No completed consultations yet",
+                    text: "After your first consultation, the notes and prescriptions will appear here.",
+                    action: this.onNavigate
+                        ? { label: "Book a doctor", onClick: () => this.onNavigate("find") }
+                        : { label: "Book a doctor" },
+                };
+            default:
+                return {
+                    title: `No ${tab} appointments`,
+                    text: "New appointments will appear here as they're booked.",
+                };
+        }
     }
 
     renderTabs() {
@@ -623,6 +675,9 @@ export default class PatientCare extends Component {
 
     renderList() {
         if (this.bookings.length === 0) {
+            const empty = this.getEmptyState(this.activeTab);
+            const hasAction = empty.action && typeof empty.action.onClick === "function";
+        
             return h(
                 "div",
                 { class: "pc-empty" },
@@ -639,18 +694,22 @@ export default class PatientCare extends Component {
                         22
                     )
                 ),
-                h(
-                    "p",
-                    { class: "pc-empty-title" },
-                    `No ${this.activeTab} appointments`
-                ),
-                h(
-                    "p",
-                    { class: "pc-empty-text" },
-                    this.activeTab === "completed"
-                        ? "Your past consultations will appear here."
-                        : "New appointments will appear here as they’re booked."
-                )
+                h("p", { class: "pc-empty-title" }, empty.title),
+                h("p", { class: "pc-empty-text" }, empty.text),
+                hasAction
+                    ? h(
+                          "button",
+                          {
+                              type: "button",
+                              class: "pc-empty-action",
+                              onclick: empty.action.onClick,
+                          },
+                          h("span", null, empty.action.label),
+                          icon(["M9 6l6 6-6 6"], 14)
+                      )
+                    : empty.action
+                        ? h("p", { class: "pc-empty-action-hint" }, `→ ${empty.action.label}`)
+                        : null
             );
         }
 
