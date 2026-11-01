@@ -83,6 +83,99 @@ export default class BookingForm extends Component {
             ? service.follow_up_price_amount
             : service.first_time_price_amount;
     }
+    formatTimeLabel(time24) {
+        if (!time24 || typeof time24 !== "string") return "";
+        const [hh, mm] = time24.split(":");
+        const hour = Number(hh);
+        if (!Number.isInteger(hour)) return time24;
+        const ampm = hour >= 12 ? "PM" : "AM";
+        const h12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
+        return mm === "00" ? `${h12} ${ampm}` : `${h12}:${mm} ${ampm}`;
+    }
+    
+    getScheduleLines(schedule) {
+        if (!schedule || typeof schedule !== "object") return [];
+        const DAY_ORDER = ["monday","tuesday","wednesday","thursday","friday","saturday","sunday"];
+        const SHORT = {
+            monday: "Mon", tuesday: "Tue", wednesday: "Wed",
+            thursday: "Thu", friday: "Fri", saturday: "Sat", sunday: "Sun",
+        };
+    
+        const groups = new Map();
+        for (const key of DAY_ORDER) {
+            const entry = schedule[key];
+            if (!entry || !entry.enabled) continue;
+            const timeKey = `${entry.start}|${entry.end}`;
+            if (!groups.has(timeKey)) groups.set(timeKey, []);
+            groups.get(timeKey).push(key);
+        }
+    
+        const lines = [];
+        for (const [timeKey, dayKeys] of groups) {
+            const [start, end] = timeKey.split("|");
+            const indices = dayKeys
+                .map(k => DAY_ORDER.indexOf(k))
+                .filter(i => i >= 0)
+                .sort((a, b) => a - b);
+    
+            const parts = [];
+            let runStart = indices[0];
+            let runEnd = indices[0];
+            const flush = () => {
+                const count = runEnd - runStart + 1;
+                const a = SHORT[DAY_ORDER[runStart]];
+                const b = SHORT[DAY_ORDER[runEnd]];
+                if (count === 1) parts.push(a);
+                else if (count === 2) parts.push(`${a}, ${b}`);
+                else parts.push(`${a}–${b}`);
+            };
+            for (let i = 1; i < indices.length; i++) {
+                if (indices[i] === runEnd + 1) runEnd = indices[i];
+                else { flush(); runStart = indices[i]; runEnd = indices[i]; }
+            }
+            flush();
+    
+            lines.push({
+                days: parts.join(", "),
+                time: `${this.formatTimeLabel(start)} – ${this.formatTimeLabel(end)}`,
+            });
+        }
+        return lines;
+    }
+    
+    isDateInSchedule(dateStr, service) {
+        if (!dateStr || !service?.availability_schedule) return { ok: true };
+        const schedule = service.availability_schedule;
+        if (typeof schedule !== "object" || Object.keys(schedule).length === 0) {
+            return { ok: true };
+        }
+    
+        const date = new Date(dateStr);
+        if (isNaN(date.getTime())) return { ok: true };
+    
+        const dayKey = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"][date.getDay()];
+        const slot = schedule[dayKey];
+    
+        if (!slot || !slot.enabled) {
+            return {
+                ok: false,
+                reason: `The doctor isn't available on ${dayKey.charAt(0).toUpperCase() + dayKey.slice(1)}s.`,
+            };
+        }
+    
+        const hh = String(date.getHours()).padStart(2, "0");
+        const mm = String(date.getMinutes()).padStart(2, "0");
+        const time = `${hh}:${mm}`;
+    
+        if (time < slot.start || time >= slot.end) {
+            return {
+                ok: false,
+                reason: `On this day the doctor is only available ${this.formatTimeLabel(slot.start)} – ${this.formatTimeLabel(slot.end)}.`,
+            };
+        }
+    
+        return { ok: true };
+    }
 
     buildReasonText() {
         if (!this.triageResult) return "";
@@ -104,9 +197,13 @@ export default class BookingForm extends Component {
     }
 
     isFormValid() {
+        const service = this.getSelectedService();
+        const scheduleOk = this.isDateInSchedule(this.bookingDate, service).ok;
+    
         return (
             this.selectedServiceId &&
             this.bookingDate &&
+            scheduleOk &&
             this.consentGiven &&
             this.emergencyAcknowledged
         );
@@ -318,33 +415,74 @@ export default class BookingForm extends Component {
                     : null,
 
                 // Preferred date / time
-                h(
-                    "div",
-                    { class: "bf-field" },
-                    h("label", { class: "bf-label", for: "bf-date" }, "Preferred date and time"),
-                    h(
+                (() => {
+                    // min stops the picker from offering past dates. Recomputed on every
+                    // render so a form left open overnight doesn't keep yesterday as "min".
+                    const now = new Date();
+                    const pad = n => String(n).padStart(2, "0");
+                    const minLocal = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+                
+                    const service = this.getSelectedService();
+                    const scheduleLines = this.getScheduleLines(service?.availability_schedule);
+                    const check = this.bookingDate
+                        ? this.isDateInSchedule(this.bookingDate, service)
+                        : { ok: true };
+                
+                    return h(
                         "div",
-                        { class: "bf-input-wrap" },
+                        { class: "bf-field" },
+                        h("label", { class: "bf-label", for: "bf-date" }, "Preferred date and time"),
+                
+                        // Available hours hint (only when the selected service has a schedule)
+                        scheduleLines.length > 0
+                            ? h(
+                                  "div",
+                                  { class: "bf-availability" },
+                                  h("p", { class: "bf-availability-title" },
+                                      `Available hours (${service.display_name})`),
+                                  ...scheduleLines.map(({ days, time }) =>
+                                      h(
+                                          "p",
+                                          { class: "bf-availability-line" },
+                                          icon(["M12 8v4l3 2", "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20"], 14),
+                                          h("span", null, `${days} · ${time}`)
+                                      )
+                                  )
+                              )
+                            : null,
+                
                         h(
-                            "span",
-                            { class: "bf-input-icon" },
-                            icon(["M8 2v4", "M16 2v4", "M3 10h18", "M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2"], 16)
+                            "div",
+                            { class: "bf-input-wrap" },
+                            h(
+                                "span",
+                                { class: "bf-input-icon" },
+                                icon(["M8 2v4", "M16 2v4", "M3 10h18", "M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2"], 16)
+                            ),
+                            h("input", {
+                                id: "bf-date",
+                                type: "datetime-local",
+                                class: `bf-input bf-input--with-icon${!check.ok ? " bf-input--invalid" : ""}`,
+                                min: minLocal,
+                                value: this.bookingDate,
+                                oninput: e => this.setField("bookingDate", e.target.value),
+                            })
                         ),
-                        h("input", {
-                            id: "bf-date",
-                            type: "datetime-local",
-                            class: "bf-input bf-input--with-icon",
-                            value: this.bookingDate,
-                            oninput: e => this.setField("bookingDate", e.target.value),
-                        })
-                    ),
-                    h(
-                        "p",
-                        { class: "bf-hint" },
-                        "This is your requested time. The doctor may confirm it or suggest another time."
-                    )
-                ),
-
+                
+                        // Inline error when the picked time is outside the schedule
+                        !check.ok
+                            ? h("p", { class: "bf-error" }, check.reason)
+                            : null,
+                
+                        h(
+                            "p",
+                            { class: "bf-hint" },
+                            check.ok
+                                ? "This is your requested time. The doctor may confirm it or suggest another time."
+                                : "Please pick a time that matches the doctor's available hours above."
+                        )
+                    );
+                })(),
                 // Triage summary
                 this.triageResult
                     ? h(
