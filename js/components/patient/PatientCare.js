@@ -1118,12 +1118,28 @@ export default class PatientCare extends Component {
             { class: "pc-notes-block pc-notes-block--prescription" },
             h(
                 "div",
-                { class: "pc-notes-block__header" },
-                h("span", { class: "pc-notes-block__icon" }, 
-                    icon(["M10.5 20.5 3.5 13.5a5 5 0 0 1 7-7l7 7a5 5 0 0 1-7 7z", "M8.5 8.5l7 7"], 18)
+                { class: "pc-notes-block__header pc-notes-block__header--with-action" },
+                h(
+                    "div",
+                    { class: "pc-notes-block__title-wrap" },
+                    h("span", { class: "pc-notes-block__icon" }, 
+                        icon(["M10.5 20.5 3.5 13.5a5 5 0 0 1 7-7l7 7a5 5 0 0 1-7 7z", "M8.5 8.5l7 7"], 18)
+                    ),
+                    h("h4", { class: "pc-notes-block__title" }, "Prescription")
                 ),
-                h("h4", { class: "pc-notes-block__title" }, "Prescription"),
-                // Optional: Add download button here if you still want it inline
+                h(
+                    "button",
+                    {
+                        type: "button",
+                        class: "pc-prescription-download",
+                        onclick: e => {
+                            e.stopPropagation();
+                            this.downloadPrescription(booking);
+                        },
+                    },
+                    icon(["M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4", "M7 10l5 5 5-5", "M12 15V3"], 14),
+                    h("span", null, "PDF")
+                )
             ),
             h(
                 "div",
