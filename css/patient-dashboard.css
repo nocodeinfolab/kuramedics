@@ -644,16 +644,19 @@
   margin: 0 0 2px;
   font-family: var(--font-mono);
   font-size: 0.68rem;
-  font-weight: 600;
+  font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.78);
+  color: #ffffff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 .patient-home .ph-feature__text {
   margin: 0;
   font-size: 0.95rem;
   line-height: 1.45;
-  color: var(--color-white);
+  color: #ffffff;
+  font-weight: 700;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
 }
 .patient-home .ph-feature__btn {
   display: flex;
