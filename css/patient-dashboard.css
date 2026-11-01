@@ -5328,3 +5328,10 @@
 .booking-form .bf-time-expand:active {
     background: var(--color-bg-muted, #f8fafc);
 }
+.booking-form .bf-pick-hint {
+    margin: 4px 0 2px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--color-ink);
+    letter-spacing: 0.01em;
+}
