@@ -777,7 +777,12 @@ export default class PatientDashboardPage extends Component {
         if (tabId === "care") {
             const careInitialTab = this.pendingCareSubTab || "upcoming";
             this.pendingCareSubTab = null;
-            instance = new PatientCare(this.patient, (conversation) => this.openConversationInMessages(conversation), careInitialTab);
+            instance = new PatientCare(
+                this.patient,
+                (conversation) => this.openConversationInMessages(conversation),
+                careInitialTab,
+                (targetTabId) => this.setTab(targetTabId)
+            );
         } else if (tabId === "messages") {
             instance = new PatientMessaging(this.patient, this.socket, (count) => this.onMessagesRead(count));
         } else if (tabId === "find") {
