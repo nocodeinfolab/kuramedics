@@ -28,6 +28,7 @@ export default class PatientProfilePage extends Component {
         this.onProfileUpdated = onProfileUpdated;
 
         this.draft = {
+            full_name: this.patient.full_name || "",
             date_of_birth: this.patient.date_of_birth || "",
             gender: this.patient.gender || "",
             blood_group: this.patient.blood_group || "",
@@ -55,7 +56,13 @@ export default class PatientProfilePage extends Component {
 
     async saveProfile() {
         if (this.saving) return;
-
+    
+        const trimmedName = (this.draft.full_name || "").trim();
+        if (trimmedName.length < 2) {
+            this.saveError = "Please enter your full name (at least 2 characters).";
+            this.update();
+            return;
+        }
         if (!this.draft.date_of_birth || !this.draft.gender) {
             this.saveError = "Date of birth and gender are required.";
             this.update();
@@ -68,7 +75,10 @@ export default class PatientProfilePage extends Component {
         this.update();
 
         try {
-            const res = await api.put("/patient-profile/me", this.draft);
+            const res = await api.put("/patient-profile/me", {
+                ...this.draft,
+                full_name: trimmedName,
+            });
             const updatedProfile = res.data || res;
 
             this.patient = updatedProfile;
@@ -142,6 +152,7 @@ export default class PatientProfilePage extends Component {
                 "div",
                 { class: "pp-body" },
                 this.renderAlerts(),
+                this.renderPersonalCard(), 
                 this.renderMedicalCard(),
                 this.renderContactCard(),
                 this.renderEmergencyCard(),
@@ -185,6 +196,31 @@ export default class PatientProfilePage extends Component {
             { class: "pp-field" },
             h("label", { class: "pp-label" }, label),
             control
+        );
+    }
+    renderPersonalCard() {
+        return h(
+            "section",
+            { class: "pp-card" },
+            h("p", { class: "pp-section-eyebrow" }, "Personal information"),
+    
+            this.renderField({
+                label: "Full name",
+                control: h("input", {
+                    type: "text",
+                    class: "pp-input",
+                    autocomplete: "name",
+                    placeholder: "Your full name",
+                    value: this.draft.full_name,
+                    oninput: e => this.setField("full_name", e.target.value),
+                }),
+            }),
+    
+            h(
+                "p",
+                { class: "pp-hint" },
+                "This is the name doctors will see."
+            )
         );
     }
 
