@@ -1038,102 +1038,109 @@ export default class PatientCare extends Component {
         if (!record) {
             return h(
                 "div",
-                {
-                    class: "pc-notes",
-                    onclick: e => e.stopPropagation(),
-                },
-                h(
-                    "p",
-                    { class: "pc-notes-empty" },
-                    "No notes have been recorded for this consultation yet."
-                )
+                { class: "pc-notes", onclick: e => e.stopPropagation() },
+                h("p", { class: "pc-notes-empty" }, "No notes have been recorded for this consultation yet.")
             );
         }
 
         const sections = this.parseDoctorNotes(record.doctor_notes);
         const medications = Array.isArray(record.medications) ? record.medications : [];
 
+        
+        const getSectionBody = (title) => sections.find(s => s.title === title)?.body;
+
+        const outcomeBody = getSectionBody("Outcome");
+        const planBody = getSectionBody("Plan");
+        const followUpBody = getSectionBody("Follow-up");
+
         return h(
             "div",
-            {
-                class: "pc-notes",
-                onclick: e => e.stopPropagation(),
-            },
+            { class: "pc-notes", onclick: e => e.stopPropagation() },
 
-            record.follow_up_date
-                ? h(
-                      "div",
-                      { class: "pc-followup" },
-                      h(
-                          "span",
-                          { class: "pc-followup-icon" },
-                          icon(
-                              [
-                                  "M8 2v4",
-                                  "M16 2v4",
-                                  "M3 10h18",
-                                  "M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2",
-                              ],
-                              16
-                          )
-                      ),
-                      h(
-                          "span",
-                          null,
-                          `Follow-up recommended: ${this.formatShortDate(record.follow_up_date)}`
-                      )
-                  )
-                : null,
+            
+            outcomeBody ? this.renderNoteBlock(
+                "outcome", 
+                "Outcome", 
+                ["M22 11.08V12a10 10 0 1 1-5.93-9.14", "M22 4L12 14.01l-3-3"], 
+                outcomeBody
+            ) : null,
 
-            sections.map(section =>
-                h(
-                    "section",
-                    { class: "pc-notes-section" },
-                    h("h4", { class: "pc-notes-title" }, section.title),
-                    this.splitParagraphs(section.body).map(paragraph =>
-                        h("p", { class: "pc-notes-body" }, paragraph)
-                    ),
-                    section.title === "Plan" && medications.length > 0
-                        ? this.renderMedicationsList(medications, booking)
-                        : null
-                )
+            
+            planBody ? this.renderNoteBlock(
+                "plan", 
+                "Plan", 
+                ["M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2", "M15 2H9a1 1 0 0 0-1 1v2a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V3a1 1 0 0 0-1-1z"], 
+                planBody, 
+                true // isList = true
+            ) : null,
+
+           
+            medications.length > 0 ? this.renderPrescriptionBlock(medications, booking) : null,
+
+            
+            followUpBody ? this.renderNoteBlock(
+                "followup", 
+                "Follow-up", 
+                ["M8 2v4", "M16 2v4", "M3 10h18", "M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2"], 
+                followUpBody
+            ) : null
+        );
+    }
+
+    renderNoteBlock(type, title, iconPaths, content, isList = false) {
+        // If it's a list, split by line breaks and filter empty
+        const items = isList 
+            ? content.split(/\n/).map(line => line.replace(/^[-•*]\s*/, '').trim()).filter(Boolean)
+            : this.splitParagraphs(content);
+
+        return h(
+            "div",
+            { class: `pc-notes-block pc-notes-block--${type}` },
+            h(
+                "div",
+                { class: "pc-notes-block__header" },
+                h("span", { class: "pc-notes-block__icon" }, icon(iconPaths, 18)),
+                h("h4", { class: "pc-notes-block__title" }, title)
+            ),
+            h(
+                "div",
+                { class: "pc-notes-block__content" },
+                isList 
+                    ? h("ul", { class: "pc-notes-list" }, items.map(item => h("li", null, item)))
+                    : items.map(paragraph => h("p", { class: "pc-notes-body" }, paragraph))
             )
         );
     }
 
-    renderMedicationsList(medications, booking) {
+    renderPrescriptionBlock(medications, booking) {
         return h(
             "div",
-            { class: "pc-meds" },
+            { class: "pc-notes-block pc-notes-block--prescription" },
             h(
                 "div",
-                { class: "pc-meds-head" },
-                h("span", { class: "pc-meds-eyebrow" }, "Prescription"),
-                h(
-                    "button",
-                    {
-                        class: "pc-meds-download",
-                        type: "button",
-                        onclick: e => {
-                            e.stopPropagation();
-                            this.downloadPrescription(booking);
-                        },
-                    },
-                    icon(
-                        [
-                            "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4",
-                            "M7 10l5 5 5-5",
-                            "M12 15V3",
-                        ],
-                        14
-                    ),
-                    h("span", null, "Download")
-                )
+                { class: "pc-notes-block__header" },
+                h("span", { class: "pc-notes-block__icon" }, 
+                    icon(["M10.5 20.5 3.5 13.5a5 5 0 0 1 7-7l7 7a5 5 0 0 1-7 7z", "M8.5 8.5l7 7"], 18)
+                ),
+                h("h4", { class: "pc-notes-block__title" }, "Prescription"),
+                // Optional: Add download button here if you still want it inline
             ),
-            medications.map(med => this.renderMedicationCard(med))
+            h(
+                "div",
+                { class: "pc-notes-block__content pc-prescriptions" },
+                medications.map((med, index) => {
+                    const details = [med.dose, med.frequency, med.duration].filter(Boolean).join(" · ");
+                    return h(
+                        "div",
+                        { class: "pc-prescription-row" },
+                        h("span", { class: "pc-prescription-name" }, med.medication || "Unnamed medication"),
+                        h("span", { class: "pc-prescription-details" }, details),
+                        med.instructions ? h("p", { class: "pc-prescription-note" }, med.instructions) : null
+                    );
+                })
+            )
         );
     }
-
     renderMedicationCard(med) {
         const details = [med.dose, med.frequency, med.duration].filter(Boolean).join(" · ");
 
