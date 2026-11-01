@@ -914,6 +914,8 @@ export default class PatientDashboardPage extends Component {
                 : h(
                       "div",
                       { class: "services-list" },
+                      this.renderSymptomCheckCard(),
+                        
                       this.dashboardError
                           ? h(
                                 "div",
@@ -937,9 +939,9 @@ export default class PatientDashboardPage extends Component {
                           ? this.renderRecentConsultationCard(summary.recent_consultation)
                           : this.renderNoConsultationCard(),
     
-                      hasProfileGaps ? this.renderProfileNudgeCard() : null,
+                      hasProfileGaps ? this.renderProfileNudgeCard() : null
     
-                      this.renderSymptomCheckCard()
+                      
                   )
         );
     }
