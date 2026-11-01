@@ -5069,3 +5069,54 @@
 .patient-care .pc-prescription-download:hover {
     background: #bae6fd;
 }
+/* Available hours hint */
+.booking-form .bf-availability {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0 0 8px;
+    padding: 10px 12px;
+    border-radius: var(--radius-md, 14px);
+    background: color-mix(in srgb, var(--color-primary) 6%, transparent);
+    border: 1px solid color-mix(in srgb, var(--color-primary) 18%, transparent);
+}
+
+.booking-form .bf-availability-title {
+    margin: 0 0 4px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-primary);
+}
+
+.booking-form .bf-availability-line {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-size: 0.82rem;
+    color: var(--color-ink);
+    line-height: 1.4;
+}
+
+.booking-form .bf-availability-line svg {
+    flex-shrink: 0;
+    color: var(--color-primary);
+    opacity: 0.85;
+}
+
+/* Invalid-state input */
+.booking-form .bf-input--invalid {
+    border-color: #ef4444;
+    box-shadow: 0 0 0 3px color-mix(in srgb, #ef4444 15%, transparent);
+}
+
+/* Inline error text */
+.booking-form .bf-error {
+    margin: 4px 0 0;
+    font-size: 0.8rem;
+    color: #dc2626;
+    line-height: 1.4;
+}
