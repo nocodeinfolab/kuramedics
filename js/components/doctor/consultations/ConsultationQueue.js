@@ -137,12 +137,20 @@ export default class DoctorQueuePage extends Component {
             const res = await api.get(`/bookings?${params.toString()}`);
             const payload = res.data || res;
             const rows = payload.rows || payload.data || payload.items || [];
-            const total = payload.total ?? payload.count ?? rows.length;
-    
+            const pagination = payload.pagination || {};
+            
+            const totalItems = pagination.totalItems
+                ?? payload.total
+                ?? payload.count
+                ?? rows.length;
+            const currentPage = pagination.currentPage ?? nextPage;
+            const hasNextPage = pagination.hasNextPage
+                ?? (state.bookings.length + rows.length < totalItems);
+            
             state.bookings = reset ? rows : [...state.bookings, ...rows];
-            state.totalCount = total;
-            state.page = nextPage;
-            state.hasMore = state.bookings.length < total;
+            state.totalCount = totalItems;
+            state.page = currentPage;
+            state.hasMore = hasNextPage;
         } catch (error) {
             console.error(`Failed to load ${tab} bookings:`, error);
             this.errorMessage = error.message || "Failed to load appointment queue.";
