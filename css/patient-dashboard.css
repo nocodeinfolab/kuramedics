@@ -5335,3 +5335,9 @@
     color: var(--color-ink);
     letter-spacing: 0.01em;
 }
+.patient-profile .pp-hint {
+    margin: 4px 0 0;
+    font-size: 0.75rem;
+    color: var(--color-muted);
+    line-height: 1.4;
+}
