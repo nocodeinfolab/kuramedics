@@ -600,11 +600,11 @@ export default class PatientCare extends Component {
     getTabMessage(tab) {
         switch (tab) {
             case "upcoming":
-                return "Requests you've sent, waiting on your doctor to confirm a time. Already confirmed? Check the Confirmed tab.";
+                return "Appointments you've requested, waiting for the doctor to confirm. If the doctor has confirmed, check the Confirmed tab";
             case "confirmed":
-                return "Appointments with a set time — pay, message your doctor, or request cancellation. Looking for past visits? Check Completed.";
+                return "Appointments the doctor has confirmed. From here you can pay, message the doctor, or cancel. For past appointments, check the Completed tab.";
             case "completed":
-                return "Past consultations with notes and prescriptions. Tap any card to expand. Looking for an upcoming visit? Check Confirmed.";
+                return "Your past appointments and what the doctor wrote, including any prescriptions. Tap one to see the details. For upcoming appointments, check the Confirmed tab.";
             default:
                 return "";
         }
