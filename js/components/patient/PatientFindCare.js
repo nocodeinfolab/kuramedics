@@ -227,7 +227,9 @@ export default class PatientFindCare extends Component {
                     h(
                         "p",
                         { class: "pfc-info-text" },
-                        "The doctor will review your request and confirm the time. Once confirmed, you'll be able to complete payment for your consultation."
+                        "The doctor will review your request and confirm the time. You can follow your appointment in the ",
+                        h("strong", null, "My Care"),
+                        " tab. Once confirmed, you can pay for your consultation."
                     )
                 ),
                 h(
