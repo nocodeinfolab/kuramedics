@@ -7,6 +7,7 @@ import api from "../../services/api.js";
 const PENDING_DOCTOR_KEY = "pendingBookingDoctorId";
 const PENDING_SERVICE_KEY = "pendingBookingServiceId";
 const PENDING_INTENT_KEY = "pendingBookingIntent";
+const PENDING_DOCTOR_NAME_KEY = "pendingBookingDoctorName";
 
 const CLOCK_ICON = ["M12 8v4l3 2", "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20"];
 const LOCATION_ICON = ["M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z", "M12 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"];
@@ -131,10 +132,9 @@ export default class PublicDoctorProfilePage extends Component {
     handleBookClick(serviceId = null) {
         const doctorId = this.doctorId;
 
-        // Persist intent — this is what both the app (via deep link) and
-        // the web fallback flow will consume after login / on mount.
         localStorage.setItem(PENDING_DOCTOR_KEY, doctorId);
         localStorage.setItem(PENDING_INTENT_KEY, "book");
+        localStorage.setItem(PENDING_DOCTOR_NAME_KEY, this.getDisplayName());
         if (serviceId) {
             localStorage.setItem(PENDING_SERVICE_KEY, serviceId);
         } else {
