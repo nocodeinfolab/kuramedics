@@ -117,6 +117,7 @@ export class PatientLoginPage extends Component {
         { class: "auth-hero-lead" },
         "Sign in to begin AI triage, manage appointments and access your medical records."
       ),
+      this.renderBookingContextBanner(),
       this.renderProviderButtons(),
       this.renderDivider(),
       this.renderFooterSwitch()
@@ -342,8 +343,10 @@ export class PatientLoginPage extends Component {
           h(
             "p",
             { class: "auth-subtitle" },
-            "We'll create your patient account with this email."
-          )
+            this.hasPendingBooking()
+              ? "We'll create your patient account with this email, then continue your booking."
+              : "We'll create your patient account with this email."
+          ),
       ),
       this.isNewAccount &&
         h(
@@ -436,6 +439,53 @@ export class PatientLoginPage extends Component {
       }
   
       this.mountGoogleButton();
+  }
+  hasPendingBooking() {
+      try {
+          return Boolean(localStorage.getItem("pendingBookingDoctorId"));
+      } catch {
+          return false;
+      }
+  }
+  
+  getPendingBookingDoctorName() {
+      try {
+          return localStorage.getItem("pendingBookingDoctorName") || null;
+      } catch {
+          return null;
+      }
+  }
+  
+  renderBookingContextBanner() {
+      if (!this.hasPendingBooking()) return null;
+  
+      const doctorName = this.getPendingBookingDoctorName();
+      const message = doctorName
+          ? `You're booking ${doctorName}. Sign in or create an account, and we'll take you straight to your booking.`
+          : "Sign in or create an account. Once you're in, we'll take you straight to your booking.";
+  
+      return h(
+          "div",
+          { class: "auth-booking-banner" },
+          h(
+              "span",
+              { class: "auth-booking-banner__icon" },
+              h(
+                  "svg",
+                  { viewBox: "0 0 24 24", fill: "none", width: "16", height: "16", "aria-hidden": "true" },
+                  h("path", { d: "M8 2v4", stroke: "currentColor", "stroke-width": "1.8", "stroke-linecap": "round" }),
+                  h("path", { d: "M16 2v4", stroke: "currentColor", "stroke-width": "1.8", "stroke-linecap": "round" }),
+                  h("rect", { x: "3", y: "4", width: "18", height: "18", rx: "2", stroke: "currentColor", "stroke-width": "1.8" }),
+                  h("path", { d: "M3 10h18", stroke: "currentColor", "stroke-width": "1.8" })
+              )
+          ),
+          h(
+              "div",
+              { class: "auth-booking-banner__body" },
+              h("p", { class: "auth-booking-banner__eyebrow" }, "Continuing your booking"),
+              h("p", { class: "auth-booking-banner__text" }, message)
+          )
+      );
   }
 
   mountGoogleButton() {
