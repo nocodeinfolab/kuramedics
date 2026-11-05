@@ -14,6 +14,7 @@ const LOCATION_ICON = [
     "M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z",
     "M12 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6z",
 ];
+const ARROW_ICON = ["M5 12h14", "M12 5l7 7-7 7"];
 
 const svgIcon = (paths, size = 14) =>
     h(
@@ -57,10 +58,6 @@ export default class PublicDoctorProfilePage extends Component {
         this.update();
 
         try {
-            // Use api.get() rather than raw fetch so requests share the same
-            // timeout, error handling, and auth-header wiring as the rest
-            // of the app. The /directory endpoint itself is public — the
-            // token (if any) is simply ignored by the backend.
             const res = await api.get(`/directory/${this.doctorId}`);
             this.doctor = res.data || res;
         } catch (error) {
@@ -72,7 +69,7 @@ export default class PublicDoctorProfilePage extends Component {
         }
     }
 
-    // ---------- Schedule formatting ----------
+    // ---------- Formatting helpers ----------
 
     formatTimeLabel(time24) {
         if (!time24 || typeof time24 !== "string") return "";
@@ -134,8 +131,6 @@ export default class PublicDoctorProfilePage extends Component {
         return lines;
     }
 
-    // ---------- Name handling ----------
-
     getDisplayName() {
         const raw = (this.doctor?.full_name || "").trim();
         if (!raw) return "Doctor";
@@ -146,14 +141,8 @@ export default class PublicDoctorProfilePage extends Component {
 
     handleBookClick() {
         const isLoggedIn = !!localStorage.getItem("accessToken");
-
         localStorage.setItem(PENDING_BOOKING_KEY, this.doctorId);
-
-        if (!isLoggedIn) {
-            window.location.hash = "/patient/login";
-        } else {
-            window.location.hash = "/patient/dashboard";
-        }
+        window.location.hash = isLoggedIn ? "/patient/dashboard" : "/patient/login";
     }
 
     // ---------- Render ----------
@@ -161,152 +150,190 @@ export default class PublicDoctorProfilePage extends Component {
     render() {
         return h(
             "div",
-            { class: "landing" },
-            this.renderBrandHeader(),
+            { class: "public-doctor-page" },
+            this.renderHeader(),
             h(
                 "main",
-                { class: "landing__main" },
+                { class: "public-doctor-main" },
                 this.loading
-                    ? h("p", { class: "landing__lead", style: "text-align: center;" }, "Loading doctor profile...")
+                    ? this.renderLoading()
                     : this.error
                     ? this.renderError()
                     : this.renderDoctor()
             ),
-            this.renderLegalFooter()
+            this.renderFooter()
         );
     }
 
-    renderBrandHeader() {
+    renderHeader() {
         return h(
             "header",
-            { class: "landing__brand" },
-            h("div", { class: "landing__brand-mark" }),
-            h("span", { class: "landing__brand-name" }, "YerosCare")
+            { class: "public-doctor-header" },
+            h(
+                "div",
+                { class: "public-doctor-header__brand" },
+                h("img", {
+                    class: "public-doctor-header__logo",
+                    src: "/assets/yeroscarelogo.png",
+                    alt: "YerosCare",
+                })
+            )
         );
     }
 
-    renderLegalFooter() {
+    renderFooter() {
         return h(
             "footer",
-            { class: "landing__legal" },
-            h("p", {}, "Trusted care. Digitally delivered")
+            { class: "public-doctor-footer" },
+            h("p", null, "Trusted care. Digitally delivered.")
+        );
+    }
+
+    renderLoading() {
+        return h(
+            "div",
+            { class: "patient-doctor-profile" },
+            h(
+                "div",
+                { class: "dp-stack" },
+                h(
+                    "div",
+                    { class: "dp-card dp-hero-card" },
+                    h("div", { class: "dp-skel dp-skel--avatar" }),
+                    h(
+                        "div",
+                        { class: "dp-hero-body" },
+                        h("div", { class: "dp-skel dp-skel--line dp-skel--short" }),
+                        h("div", { class: "dp-skel dp-skel--line dp-skel--tiny" }),
+                        h("div", { class: "dp-skel dp-skel--line" })
+                    )
+                ),
+                h(
+                    "div",
+                    { class: "dp-card" },
+                    h("div", { class: "dp-skel dp-skel--line dp-skel--short" }),
+                    h("div", { class: "dp-skel dp-skel--line" })
+                )
+            )
         );
     }
 
     renderError() {
         return h(
             "div",
-            { class: "feature-chip", style: "border-color: #fecaca; background: #fef2f2;" },
-            h("span", { class: "feature-chip__label", style: "color: #ef4444;" }, this.error)
+            { class: "patient-doctor-profile" },
+            h(
+                "div",
+                { class: "dp-stack" },
+                h(
+                    "div",
+                    { class: "dp-alert", role: "alert" },
+                    h(
+                        "div",
+                        { class: "dp-alert-icon" },
+                        svgIcon(
+                            [
+                                "M12 9v4",
+                                "M12 17h.01",
+                                "M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z",
+                            ],
+                            18
+                        )
+                    ),
+                    h("p", { class: "dp-alert-text" }, this.error)
+                )
+            )
         );
     }
 
     renderDoctor() {
         const doctor = this.doctor;
-        const displayName = this.getDisplayName();
-        const initial = (doctor.full_name || "?").charAt(0).toUpperCase();
         const services = Array.isArray(doctor.services) ? doctor.services : [];
 
         return h(
             "div",
-            { style: "display: flex; flex-direction: column; gap: var(--space-6);" },
-
-            // ---------- Profile header ----------
+            { class: "patient-doctor-profile" },
             h(
                 "div",
-                { class: "landing__headline" },
-                doctor.avatar_url
-                    ? h("img", {
-                          src: api.resolveUrl(doctor.avatar_url),
-                          alt: doctor.full_name || displayName,
-                          style: "width: 80px; height: 80px; border-radius: 50%; object-fit: cover; margin: 0 auto;",
-                          onerror: (e) => {
-                              e.target.replaceWith(
-                                  h(
-                                      "div",
-                                      {
-                                          style: "width: 80px; height: 80px; border-radius: 50%; background: var(--color-primary-soft); color: var(--color-primary); display: flex; align-items: center; justify-content: center; font-size: 1.75rem; font-weight: 700; margin: 0 auto;",
-                                      },
-                                      initial
-                                  )
-                              );
-                          },
-                      })
-                    : h(
+                { class: "dp-stack" },
+
+                this.renderHeroCard(),
+
+                doctor.bio
+                    ? h(
                           "div",
-                          {
-                              style: "width: 80px; height: 80px; border-radius: 50%; background: var(--color-primary-soft); color: var(--color-primary); display: flex; align-items: center; justify-content: center; font-size: 1.75rem; font-weight: 700; margin: 0 auto;",
-                          },
-                          initial
-                      ),
-                h("h1", { class: "landing__title" }, displayName),
-                h("p", { class: "landing__lead" }, doctor.specialization || "General Practice")
-            ),
+                          { class: "dp-card" },
+                          h("p", { class: "dp-eyebrow" }, "About"),
+                          h("p", { class: "dp-bio" }, doctor.bio)
+                      )
+                    : null,
 
-            // ---------- Metadata chips ----------
-            doctor.years_of_experience || doctor.clinic_name
-                ? h(
-                      "ul",
-                      { class: "landing__features" },
-                      doctor.years_of_experience
-                          ? h(
-                                "li",
-                                { class: "feature-chip" },
-                                h("span", { class: "feature-chip__label" }, `${doctor.years_of_experience} Yrs Experience`)
-                            )
-                          : null,
-                      doctor.clinic_name
-                          ? h(
-                                "li",
-                                { class: "feature-chip" },
-                                h("span", { class: "feature-chip__label" }, doctor.clinic_name)
-                            )
-                          : null
-                  )
-                : null,
+                services.length > 0
+                    ? h(
+                          "div",
+                          { class: "dp-card" },
+                          h("p", { class: "dp-eyebrow" }, "Consultation options"),
+                          h(
+                              "div",
+                              { class: "public-services" },
+                              ...services.map(s => this.renderService(s))
+                          )
+                      )
+                    : null,
 
-            // ---------- Bio ----------
-            doctor.bio
-                ? h(
-                      "div",
-                      { class: "role-btn role-btn--outline", style: "cursor: default;" },
-                      h(
-                          "span",
-                          { class: "role-btn__label", style: "font-size: 0.82rem; color: var(--color-ink-faint); text-transform: uppercase;" },
-                          "About"
-                      ),
-                      h("p", { class: "landing__lead", style: "margin-top: 4px; font-size: 0.9rem;" }, doctor.bio)
-                  )
-                : null,
-
-            // ---------- Consultation options ----------
-            services.length > 0
-                ? h(
-                      "div",
-                      { style: "display: flex; flex-direction: column; gap: var(--space-3);" },
-                      h(
-                          "span",
-                          { class: "role-btn__label", style: "font-size: 0.82rem; color: var(--color-ink-faint); text-transform: uppercase;" },
-                          "Consultation Options"
-                      ),
-                      ...services.map(service => this.renderService(service))
-                  )
-                : null,
-
-            // ---------- Book button ----------
-            h(
-                "div",
-                { class: "landing__actions" },
                 h(
                     "button",
                     {
-                        class: "role-btn role-btn--primary",
-                        style: "width: 100%; border: none; cursor: pointer;",
+                        class: "dp-continue",
+                        type: "button",
                         onclick: () => this.handleBookClick(),
                     },
-                    h("span", { class: "role-btn__label" }, `Book ${displayName}`),
-                    h("span", { class: "role-btn__sub" }, "Continue to appointment booking")
+                    h("span", null, `Book ${this.getDisplayName()}`),
+                    svgIcon(ARROW_ICON, 18)
                 )
+            )
+        );
+    }
+
+    renderHeroCard() {
+        const doctor = this.doctor;
+        const displayName = this.getDisplayName();
+        const initial = (doctor.full_name || "?").charAt(0).toUpperCase();
+
+        return h(
+            "div",
+            { class: "dp-card dp-hero-card" },
+            doctor.avatar_url
+                ? h("img", {
+                      class: "dp-avatar",
+                      src: api.resolveUrl(doctor.avatar_url),
+                      alt: doctor.full_name || displayName,
+                      onerror: (e) => {
+                          e.target.replaceWith(
+                              h("div", { class: "dp-avatar dp-avatar--initial" }, initial)
+                          );
+                      },
+                  })
+                : h("div", { class: "dp-avatar dp-avatar--initial" }, initial),
+            h(
+                "div",
+                { class: "dp-hero-body" },
+                h("h2", { class: "dp-name" }, displayName),
+                h(
+                    "span",
+                    { class: "dp-chip" },
+                    doctor.specialization || "General Practice"
+                ),
+                doctor.years_of_experience
+                    ? h(
+                          "p",
+                          { class: "dp-meta" },
+                          `${doctor.years_of_experience} years of experience`
+                      )
+                    : null,
+                doctor.clinic_name
+                    ? h("p", { class: "dp-meta" }, doctor.clinic_name)
+                    : null
             )
         );
     }
@@ -315,7 +342,6 @@ export default class PublicDoctorProfilePage extends Component {
         const scheduleLines = this.getScheduleLines(service.availability_schedule);
         const isHomeVisit = service.service_type === "home_visit";
         const note = (service.availability_note || "").trim();
-
         const price = service.first_time_price_amount;
         const followUpPrice = service.follow_up_price_amount;
         const showFollowUp =
@@ -325,29 +351,24 @@ export default class PublicDoctorProfilePage extends Component {
 
         return h(
             "div",
-            {
-                class: "feature-chip",
-                style: "flex-direction: column; align-items: stretch; gap: 6px; padding: 12px 14px;",
-            },
-            // Row: name + primary price
+            { class: "public-service" },
             h(
                 "div",
-                { style: "display: flex; justify-content: space-between; align-items: center; gap: 8px;" },
-                h("span", { class: "feature-chip__label" }, service.display_name),
+                { class: "public-service__head" },
+                h("span", { class: "public-service__name" }, service.display_name),
                 price != null
                     ? h(
                           "span",
-                          { class: "feature-chip__label", style: "color: var(--color-primary); white-space: nowrap;" },
+                          { class: "public-service__price" },
                           `₦${Number(price).toLocaleString()}`
                       )
                     : null
             ),
 
-            // Sub-line: duration · follow-up price
             service.duration_minutes || showFollowUp
                 ? h(
                       "p",
-                      { style: "font-size: 0.78rem; color: var(--color-ink-faint); margin: 0; line-height: 1.4;" },
+                      { class: "public-service__meta" },
                       [
                           service.duration_minutes ? `${service.duration_minutes} min` : null,
                           showFollowUp
@@ -359,26 +380,18 @@ export default class PublicDoctorProfilePage extends Component {
                   )
                 : null,
 
-            // Description
             service.description
-                ? h(
-                      "p",
-                      { style: "font-size: 0.82rem; color: var(--color-ink); margin: 2px 0 0; line-height: 1.45;" },
-                      service.description
-                  )
+                ? h("p", { class: "public-service__desc" }, service.description)
                 : null,
 
-            // Weekly schedule lines
             scheduleLines.length > 0
                 ? h(
                       "div",
-                      { style: "display: flex; flex-direction: column; gap: 2px; margin-top: 4px;" },
+                      { class: "public-service__schedule" },
                       ...scheduleLines.map(({ days, time }) =>
                           h(
                               "p",
-                              {
-                                  style: "display: flex; align-items: center; gap: 6px; margin: 0; font-size: 0.78rem; color: var(--color-ink); line-height: 1.4;",
-                              },
+                              { class: "public-service__schedule-line" },
                               svgIcon(CLOCK_ICON, 12),
                               h("span", null, `${days} · ${time}`)
                           )
@@ -386,13 +399,10 @@ export default class PublicDoctorProfilePage extends Component {
                   )
                 : null,
 
-            // Home visit locations
             isHomeVisit && note
                 ? h(
                       "p",
-                      {
-                          style: "display: flex; align-items: flex-start; gap: 6px; margin: 4px 0 0; font-size: 0.78rem; font-weight: 600; color: var(--color-primary); line-height: 1.4;",
-                      },
+                      { class: "public-service__locations" },
                       svgIcon(LOCATION_ICON, 12),
                       h("span", null, `Locations covered: ${note}`)
                   )
