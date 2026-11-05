@@ -473,6 +473,7 @@ export default class PatientDashboardPage extends Component {
 
             this.patient = profile;
             this.needsOnboarding = false;
+            this.consumePendingBooking();
             this.loadDashboardSummary();
         } catch (error) {
             console.error("Failed to save patient profile:", error);
