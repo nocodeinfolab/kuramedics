@@ -410,14 +410,17 @@ export default class PatientDashboardPage extends Component {
     
         const pendingServiceId = localStorage.getItem("pendingBookingServiceId") || null;
         const pendingIntent = localStorage.getItem("pendingBookingIntent") || "view";
+        const pendingDoctorName = localStorage.getItem("pendingBookingDoctorName") || null;
     
         localStorage.removeItem("pendingBookingDoctorId");
         localStorage.removeItem("pendingBookingServiceId");
         localStorage.removeItem("pendingBookingIntent");
+        localStorage.removeItem("pendingBookingDoctorName");
     
         this.pendingBookingDoctorId = pendingDoctorId;
         this.pendingBookingServiceId = pendingServiceId;
         this.pendingBookingIntent = pendingIntent;
+        this.pendingBookingDoctorName = pendingDoctorName;
         this.activeTab = "find";
     }
 
@@ -595,6 +598,42 @@ export default class PatientDashboardPage extends Component {
             )
         );
     }
+    renderBookingContinuationBanner() {
+        
+        const pendingDoctorId = localStorage.getItem("pendingBookingDoctorId");
+        if (!pendingDoctorId) return null;
+    
+        const doctorName = localStorage.getItem("pendingBookingDoctorName");
+        const message = doctorName
+            ? h(
+                  "span",
+                  null,
+                  "Welcome! Please complete these details and we'll take you straight to book with ",
+                  h("strong", null, doctorName),
+                  "."
+              )
+            : h(
+                  "span",
+                  null,
+                  "Welcome! Complete these details and we'll take you straight to your appointment booking."
+              );
+    
+        return h(
+            "section",
+            { class: "ph-card ph-card--booking-continuation" },
+            h(
+                "div",
+                { class: "ph-card__row" },
+                h("span", { class: "ph-card__icon ph-card__icon--info" }, Icons.userCheck()),
+                h(
+                    "div",
+                    { class: "ph-card__body" },
+                    h("p", { class: "ph-card__eyebrow" }, "Continuing your booking"),
+                    h("p", { class: "ph-card__text" }, message)
+                )
+            )
+        );
+    }
 
     renderOnboarding() {
         const fieldLabelStyle = "display: block; margin-bottom: 5px; font-size: 0.82rem; font-weight: 600;";
@@ -637,6 +676,8 @@ export default class PatientDashboardPage extends Component {
                       h("p", { style: "color: #ef4444; margin: 0;" }, this.onboardingError)
                   )
                 : null,
+                
+            this.renderBookingContinuationBanner(),
 
             h(
                 "div",
