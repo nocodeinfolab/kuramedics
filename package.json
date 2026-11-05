@@ -14,9 +14,12 @@
       "@capacitor/app": "^8.1.1",
       "@capacitor/browser": "^8.0.4",
       "@capacitor/cli": "^8.0.0",
+      "@capacitor/clipboard": "^8.0.0",
       "@capacitor/core": "^8.5.0",
+      "@capacitor/filesystem": "^8.0.0",
       "@capacitor/push-notifications": "^8.0.0",
       "@capacitor/local-notifications": "^8.0.0",
+      "@capacitor/share": "^8.0.0",
       "@capawesome/capacitor-google-sign-in": "^0.1.2",
       "@capacitor/splash-screen": "^8.0.0",
       "@capgo/capacitor-updater": "^8.0.0"
