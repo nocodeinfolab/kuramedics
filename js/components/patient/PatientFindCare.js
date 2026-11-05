@@ -15,9 +15,11 @@ export default class PatientFindCare extends Component {
         super();
         this.patient = patient ?? {};
         this.pendingDoctorId = pendingDoctorId || null;
-
+        this.pendingBookingServiceId = null;
+        this.pendingBookingIntent = null;
+    
         this.step = "triage";
-
+    
         this.triageResult = null;
         this.selectedDoctor = null;
         this.selectedService = null;
@@ -25,11 +27,25 @@ export default class PatientFindCare extends Component {
     }
 
     afterMount() {
+        
         if (this.pendingDoctorId) {
-            this.step = "doctor_profile";
+            const hasBookingIntent = this.pendingBookingIntent === "book";
+            const hasService = Boolean(this.pendingBookingServiceId);
+    
             this.selectedDoctor = { doctor_id: this.pendingDoctorId };
+    
+            if (hasBookingIntent && hasService) {
+                this.selectedService = this.pendingBookingServiceId;
+                this.step = "booking";
+            } else {
+                this.step = "doctor_profile";
+            }
+    
             this.pendingDoctorId = null;
+            this.pendingBookingServiceId = null;
+            this.pendingBookingIntent = null;
         }
+    
         this.updatePage();
     }
 
