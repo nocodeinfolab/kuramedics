@@ -80,6 +80,10 @@ export default class PatientDashboardPage extends Component {
         this.dismissedCallBookingId = null;
         this.activeTab = "home";
         this.pendingCareSubTab = null;
+        
+        this.pendingBookingDoctorId = null;
+        this.pendingBookingServiceId = null;
+        this.pendingBookingIntent = null;
 
         this.tabs = [
             { id: "home", label: "Home", icon: "house" },
@@ -403,9 +407,17 @@ export default class PatientDashboardPage extends Component {
     consumePendingBooking() {
         const pendingDoctorId = localStorage.getItem("pendingBookingDoctorId");
         if (!pendingDoctorId) return;
-
+    
+        const pendingServiceId = localStorage.getItem("pendingBookingServiceId") || null;
+        const pendingIntent = localStorage.getItem("pendingBookingIntent") || "view";
+    
         localStorage.removeItem("pendingBookingDoctorId");
+        localStorage.removeItem("pendingBookingServiceId");
+        localStorage.removeItem("pendingBookingIntent");
+    
         this.pendingBookingDoctorId = pendingDoctorId;
+        this.pendingBookingServiceId = pendingServiceId;
+        this.pendingBookingIntent = pendingIntent;
         this.activeTab = "find";
     }
 
@@ -787,7 +799,17 @@ export default class PatientDashboardPage extends Component {
             instance = new PatientMessaging(this.patient, this.socket, (count) => this.onMessagesRead(count));
         } else if (tabId === "find") {
             instance = new PatientFindCare(this.patient, this.pendingBookingDoctorId);
+        
+            if (this.pendingBookingServiceId) {
+                instance.pendingBookingServiceId = this.pendingBookingServiceId;
+            }
+            if (this.pendingBookingIntent) {
+                instance.pendingBookingIntent = this.pendingBookingIntent;
+            }
+        
             this.pendingBookingDoctorId = null;
+            this.pendingBookingServiceId = null;
+            this.pendingBookingIntent = null;
         } else if (tabId === "profile") {
             instance = new PatientProfilePage(this.patient, (updatedPatient) => this.handleProfileUpdated(updatedPatient));
         }
