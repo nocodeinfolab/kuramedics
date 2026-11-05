@@ -34,7 +34,8 @@ export default class DoctorCardPage extends Component {
     }
 
     get shareUrl() {
-        return `${API_BASE_URL}/profilecard/${this.doctorId}/share`;
+      const base = window.location.origin.replace(/\/$/, '');
+      return `${base}/s/doctor/${this.doctorId}`;
     }
 
     get cardFileName() {
