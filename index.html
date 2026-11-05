@@ -17,6 +17,20 @@
       rel="stylesheet"
     />
 
+    <!-- Capacitor plugin imports are bare specifiers. This import map tells the
+         browser's module loader where to find them, keeping the project
+         build-tool-free. Must appear before any module script that imports them. -->
+    <script type="importmap">
+    {
+      "imports": {
+        "@capacitor/core": "https://cdn.jsdelivr.net/npm/@capacitor/core@8.5.2/+esm",
+        "@capacitor/share": "https://cdn.jsdelivr.net/npm/@capacitor/share@8.0.3/+esm",
+        "@capacitor/clipboard": "https://cdn.jsdelivr.net/npm/@capacitor/clipboard@8.0.1/+esm",
+        "@capacitor/filesystem": "https://cdn.jsdelivr.net/npm/@capacitor/filesystem@8.1.4/+esm"
+      }
+    }
+    </script>
+
     <link rel="stylesheet" href="/css/tokens.css" />
     <link rel="stylesheet" href="/css/base.css" />
     <link rel="stylesheet" href="/css/landing.css" />
