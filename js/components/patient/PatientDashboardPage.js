@@ -404,6 +404,13 @@ export default class PatientDashboardPage extends Component {
             }
         }
     }
+    hasPendingBookingIntent() {
+        try {
+            return Boolean(localStorage.getItem("pendingBookingDoctorId"));
+        } catch {
+            return false;
+        }
+    }
     consumePendingBooking() {
         const pendingDoctorId = localStorage.getItem("pendingBookingDoctorId");
         if (!pendingDoctorId) return;
@@ -600,8 +607,7 @@ export default class PatientDashboardPage extends Component {
     }
     renderBookingContinuationBanner() {
         
-        const pendingDoctorId = localStorage.getItem("pendingBookingDoctorId");
-        if (!pendingDoctorId) return null;
+        if (!this.hasPendingBookingIntent()) return null;
     
         const doctorName = localStorage.getItem("pendingBookingDoctorName");
         const message = doctorName
@@ -764,7 +770,11 @@ export default class PatientDashboardPage extends Component {
                         disabled: this.onboardingSaving,
                         onclick: () => this.submitOnboarding(),
                     },
-                    this.onboardingSaving ? "Saving..." : "Continue to dashboard"
+                    this.onboardingSaving
+                        ? "Saving..."
+                        : this.hasPendingBookingIntent()
+                            ? "Continue to booking"
+                            : "Continue to dashboard"
                 )
             )
             )
