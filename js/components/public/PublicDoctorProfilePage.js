@@ -4,16 +4,12 @@ import { Component } from "../../core/component.js";
 import { h } from "../../utils/dom.js";
 import api from "../../services/api.js";
 
-const PENDING_BOOKING_KEY = "pendingBookingDoctorId";
+const PENDING_DOCTOR_KEY = "pendingBookingDoctorId";
+const PENDING_SERVICE_KEY = "pendingBookingServiceId";
+const PENDING_INTENT_KEY = "pendingBookingIntent";
 
-const CLOCK_ICON = [
-    "M12 8v4l3 2",
-    "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20",
-];
-const LOCATION_ICON = [
-    "M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z",
-    "M12 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6z",
-];
+const CLOCK_ICON = ["M12 8v4l3 2", "M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20"];
+const LOCATION_ICON = ["M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z", "M12 7a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"];
 const ARROW_ICON = ["M5 12h14", "M12 5l7 7-7 7"];
 
 const svgIcon = (paths, size = 14) =>
@@ -42,7 +38,6 @@ export default class PublicDoctorProfilePage extends Component {
     constructor(doctorId) {
         super();
         this.doctorId = doctorId;
-
         this.loading = true;
         this.error = "";
         this.doctor = null;
@@ -69,7 +64,7 @@ export default class PublicDoctorProfilePage extends Component {
         }
     }
 
-    // ---------- Formatting helpers ----------
+    // ---------- Formatting ----------
 
     formatTimeLabel(time24) {
         if (!time24 || typeof time24 !== "string") return "";
@@ -84,12 +79,8 @@ export default class PublicDoctorProfilePage extends Component {
     compressDayRange(dayKeys) {
         const SHORT = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
         const FULL = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
-        const indices = dayKeys
-            .map(k => FULL.indexOf(k))
-            .filter(i => i >= 0)
-            .sort((a, b) => a - b);
+        const indices = dayKeys.map(k => FULL.indexOf(k)).filter(i => i >= 0).sort((a, b) => a - b);
         if (indices.length === 0) return "";
-
         const parts = [];
         let runStart = indices[0];
         let runEnd = indices[0];
@@ -110,7 +101,6 @@ export default class PublicDoctorProfilePage extends Component {
     getScheduleLines(schedule) {
         if (!schedule || typeof schedule !== "object") return [];
         const ORDER = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
-
         const groups = new Map();
         for (const key of ORDER) {
             const entry = schedule[key];
@@ -119,7 +109,6 @@ export default class PublicDoctorProfilePage extends Component {
             if (!groups.has(timeKey)) groups.set(timeKey, []);
             groups.get(timeKey).push(key);
         }
-
         const lines = [];
         for (const [timeKey, keys] of groups) {
             const [start, end] = timeKey.split("|");
@@ -137,12 +126,65 @@ export default class PublicDoctorProfilePage extends Component {
         return /^dr\.?\s/i.test(raw) ? raw : `Dr. ${raw}`;
     }
 
-    // ---------- Actions ----------
+    // ---------- Booking handoff ----------
 
-    handleBookClick() {
-        const isLoggedIn = !!localStorage.getItem("accessToken");
-        localStorage.setItem(PENDING_BOOKING_KEY, this.doctorId);
-        window.location.hash = isLoggedIn ? "/patient/dashboard" : "/patient/login";
+    handleBookClick(serviceId = null) {
+        const doctorId = this.doctorId;
+
+        // Persist intent — this is what both the app (via deep link) and
+        // the web fallback flow will consume after login / on mount.
+        localStorage.setItem(PENDING_DOCTOR_KEY, doctorId);
+        localStorage.setItem(PENDING_INTENT_KEY, "book");
+        if (serviceId) {
+            localStorage.setItem(PENDING_SERVICE_KEY, serviceId);
+        } else {
+            localStorage.removeItem(PENDING_SERVICE_KEY);
+        }
+
+        // If we're somehow inside the app's WebView, skip the deep link
+        // attempt — just route internally.
+        if (window.Capacitor?.isNativePlatform?.()) {
+            const isLoggedIn = !!localStorage.getItem("accessToken");
+            window.location.hash = isLoggedIn ? "/patient/dashboard" : "/patient/login";
+            return;
+        }
+
+        // Browser: try to hand off to the app; if the app doesn't open
+        // within 1.5s, fall back to the browser flow.
+        const deepLink = serviceId
+            ? `yeroscare://doctor/${encodeURIComponent(doctorId)}/book?service=${encodeURIComponent(serviceId)}`
+            : `yeroscare://doctor/${encodeURIComponent(doctorId)}/book`;
+
+        let fallbackTimer = null;
+
+        const cancelFallback = () => {
+            if (document.visibilityState === "hidden") {
+                if (fallbackTimer) {
+                    clearTimeout(fallbackTimer);
+                    fallbackTimer = null;
+                }
+                document.removeEventListener("visibilitychange", cancelFallback);
+            }
+        };
+        document.addEventListener("visibilitychange", cancelFallback);
+
+        fallbackTimer = setTimeout(() => {
+            fallbackTimer = null;
+            document.removeEventListener("visibilitychange", cancelFallback);
+
+            // Still here after 1.5s — the app either isn't installed or
+            // the browser blocked the deep link attempt. Fall back to
+            // the browser flow.
+            const isLoggedIn = !!localStorage.getItem("accessToken");
+            window.location.hash = isLoggedIn ? "/patient/dashboard" : "/patient/login";
+        }, 1500);
+
+        try {
+            window.location.href = deepLink;
+        } catch {
+            // Some browsers throw on custom scheme navigation — the
+            // fallback timer will still fire and route to the web flow.
+        }
     }
 
     // ---------- Render ----------
@@ -182,11 +224,7 @@ export default class PublicDoctorProfilePage extends Component {
     }
 
     renderFooter() {
-        return h(
-            "footer",
-            { class: "public-doctor-footer" },
-            h("p", null, "Trusted care. Digitally delivered.")
-        );
+        return h("footer", { class: "public-doctor-footer" }, h("p", null, "Trusted care. Digitally delivered."));
     }
 
     renderLoading() {
@@ -249,6 +287,7 @@ export default class PublicDoctorProfilePage extends Component {
     renderDoctor() {
         const doctor = this.doctor;
         const services = Array.isArray(doctor.services) ? doctor.services : [];
+        const singleService = services.length === 1 ? services[0] : null;
 
         return h(
             "div",
@@ -276,21 +315,31 @@ export default class PublicDoctorProfilePage extends Component {
                           h(
                               "div",
                               { class: "public-services" },
-                              ...services.map(s => this.renderService(s))
+                              ...services.map(s => this.renderService(s, services.length > 1))
                           )
                       )
-                    : null,
+                    : h(
+                          "div",
+                          { class: "dp-card" },
+                          h(
+                              "p",
+                              { class: "dp-bio", style: "text-align: center;" },
+                              "This doctor isn't currently accepting online bookings."
+                          )
+                      ),
 
-                h(
-                    "button",
-                    {
-                        class: "dp-continue",
-                        type: "button",
-                        onclick: () => this.handleBookClick(),
-                    },
-                    h("span", null, `Book ${this.getDisplayName()}`),
-                    svgIcon(ARROW_ICON, 18)
-                )
+                singleService
+                    ? h(
+                          "button",
+                          {
+                              class: "dp-continue",
+                              type: "button",
+                              onclick: () => this.handleBookClick(singleService.id),
+                          },
+                          h("span", null, `Book ${this.getDisplayName()}`),
+                          svgIcon(ARROW_ICON, 18)
+                      )
+                    : null
             )
         );
     }
@@ -319,26 +368,16 @@ export default class PublicDoctorProfilePage extends Component {
                 "div",
                 { class: "dp-hero-body" },
                 h("h2", { class: "dp-name" }, displayName),
-                h(
-                    "span",
-                    { class: "dp-chip" },
-                    doctor.specialization || "General Practice"
-                ),
+                h("span", { class: "dp-chip" }, doctor.specialization || "General Practice"),
                 doctor.years_of_experience
-                    ? h(
-                          "p",
-                          { class: "dp-meta" },
-                          `${doctor.years_of_experience} years of experience`
-                      )
+                    ? h("p", { class: "dp-meta" }, `${doctor.years_of_experience} years of experience`)
                     : null,
-                doctor.clinic_name
-                    ? h("p", { class: "dp-meta" }, doctor.clinic_name)
-                    : null
+                doctor.clinic_name ? h("p", { class: "dp-meta" }, doctor.clinic_name) : null
             )
         );
     }
 
-    renderService(service) {
+    renderService(service, showBookButton) {
         const scheduleLines = this.getScheduleLines(service.availability_schedule);
         const isHomeVisit = service.service_type === "home_visit";
         const note = (service.availability_note || "").trim();
@@ -380,9 +419,7 @@ export default class PublicDoctorProfilePage extends Component {
                   )
                 : null,
 
-            service.description
-                ? h("p", { class: "public-service__desc" }, service.description)
-                : null,
+            service.description ? h("p", { class: "public-service__desc" }, service.description) : null,
 
             scheduleLines.length > 0
                 ? h(
@@ -405,6 +442,19 @@ export default class PublicDoctorProfilePage extends Component {
                       { class: "public-service__locations" },
                       svgIcon(LOCATION_ICON, 12),
                       h("span", null, `Locations covered: ${note}`)
+                  )
+                : null,
+
+            showBookButton
+                ? h(
+                      "button",
+                      {
+                          type: "button",
+                          class: "public-service__book",
+                          onclick: () => this.handleBookClick(service.id),
+                      },
+                      h("span", null, "Book"),
+                      svgIcon(ARROW_ICON, 14)
                   )
                 : null
         );
