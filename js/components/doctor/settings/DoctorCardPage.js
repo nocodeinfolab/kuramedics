@@ -5,6 +5,8 @@ import { h } from "../../../utils/dom.js";
 import api from "../../../services/api.js";
 
 const API_BASE_URL = "https://doctors-consultation-backend.onrender.com/api/v1";
+const PUBLIC_APP_URL = "https://app.yeroscare.com";
+
 
 export default class DoctorCardPage extends Component {
     constructor(doctor, onBack) {
@@ -34,11 +36,11 @@ export default class DoctorCardPage extends Component {
     }
 
     get shareUrl() {
-        // Frontend URL served by the Cloudflare Pages Function proxy
-        // (functions/s/doctor/[id].js) which serves per-doctor OG tags
-        // and then redirects humans to /#/doctor/:id.
-        const base = window.location.origin.replace(/\/$/, "");
-        return `${base}/s/doctor/${this.doctorId}`;
+        
+        const base = this.isNativeApp()
+            ? PUBLIC_APP_URL
+            : window.location.origin;
+        return `${base.replace(/\/$/, "")}/s/doctor/${this.doctorId}`;
     }
 
     get cardFileName() {
