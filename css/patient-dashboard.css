@@ -5384,3 +5384,7 @@
     font-weight: 600;
     color: var(--color-primary);
 }
+.patient-home .ph-card--booking-continuation {
+    border-left: 3px solid var(--color-primary);
+    background: color-mix(in srgb, var(--color-primary) 4%, var(--color-white));
+}
