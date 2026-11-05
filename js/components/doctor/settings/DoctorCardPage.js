@@ -34,25 +34,42 @@ export default class DoctorCardPage extends Component {
     }
 
     get shareUrl() {
-      const base = window.location.origin.replace(/\/$/, '');
-      return `${base}/s/doctor/${this.doctorId}`;
+        // Frontend URL served by the Cloudflare Pages Function proxy
+        // (functions/s/doctor/[id].js) which serves per-doctor OG tags
+        // and then redirects humans to /#/doctor/:id.
+        const base = window.location.origin.replace(/\/$/, "");
+        return `${base}/s/doctor/${this.doctorId}`;
     }
 
     get cardFileName() {
         return `dr-${(this.doctor.full_name || "yeroscare").toLowerCase().replace(/\s+/g, "-")}-card.png`;
     }
 
-    // ---------- Actions ----------
+    // ---------- Platform helpers ----------
 
-    // Fetches the card PNG and wraps it in a File so it can be handed to
-    // navigator.share(). Returns null if the fetch fails for any reason —
-    // callers should treat that as "fall back to a link-only share".
+    // True only inside a Capacitor iOS/Android shell, false in a normal browser.
+    isNativeApp() {
+        return Boolean(window.Capacitor?.isNativePlatform?.());
+    }
+
+    blobToBase64(blob) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(String(reader.result).split(",")[1]);
+            reader.onerror = reject;
+            reader.readAsDataURL(blob);
+        });
+    }
+
+    async fetchCardBlob() {
+        const response = await fetch(this.cardImageUrl);
+        if (!response.ok) throw new Error("Failed to fetch card image.");
+        return response.blob();
+    }
+
     async fetchCardImageFile() {
         try {
-            const response = await fetch(this.cardImageUrl);
-            if (!response.ok) return null;
-
-            const blob = await response.blob();
+            const blob = await this.fetchCardBlob();
             return new File([blob], this.cardFileName, { type: blob.type || "image/png" });
         } catch (error) {
             console.error("Failed to fetch card image for sharing:", error);
@@ -60,36 +77,83 @@ export default class DoctorCardPage extends Component {
         }
     }
 
+    // Writes the PNG to the app's cache directory and returns a file:// URI
+    // the Capacitor Share plugin can attach to the OS share sheet.
+    async writeCardToCache(blob) {
+        const { Filesystem, Directory } = await import("@capacitor/filesystem");
+        const base64 = await this.blobToBase64(blob);
+        const result = await Filesystem.writeFile({
+            path: this.cardFileName,
+            data: base64,
+            directory: Directory.Cache,
+        });
+        return result.uri;
+    }
+
+    // Both the Web Share API and Capacitor's Share plugin reject with
+    // AbortError when the user dismisses the sheet — not a real error.
+    isCancellation(error) {
+        return (
+            error?.name === "AbortError" ||
+            /cancel/i.test(error?.message || "")
+        );
+    }
+
+    // ---------- Actions ----------
+
     async shareCard() {
-        if (!navigator.share) {
-            // No native share support (e.g. some desktop browsers) — fall back to copy-link.
-            this.copyLink();
+        if (this.sharing) return;
+
+        const shareTitle = `Dr. ${this.doctor.full_name || ""}`.trim();
+        const shareText = `Book a consultation with me on YerosCare.\n${this.shareUrl}`;
+
+        // Desktop browser without Web Share → just copy the link.
+        if (!this.isNativeApp() && !navigator.share) {
+            await this.copyLink();
             return;
         }
 
         this.sharing = true;
         this.update();
 
-        // The link is folded into the text rather than the separate `url`
-        // field: most share targets (WhatsApp included) drop `url` once
-        // `files` is present, but they always keep `text`.
-        const shareText = `Book a consultation with me on YerosCare.\n${this.shareUrl}`;
-        const shareTitle = `Dr. ${this.doctor.full_name || ""}`.trim();
-
         try {
-            const file = await this.fetchCardImageFile();
+            // ---- Native shell (Capacitor iOS / Android) ----
+            if (this.isNativeApp()) {
+                const { Share } = await import("@capacitor/share");
 
+                try {
+                    const blob = await this.fetchCardBlob();
+                    const fileUri = await this.writeCardToCache(blob);
+                    await Share.share({
+                        title: shareTitle,
+                        text: shareText,
+                        files: [fileUri],
+                        dialogTitle: "Share your card",
+                    });
+                    return;
+                } catch (imageError) {
+                    if (this.isCancellation(imageError)) throw imageError;
+                    console.warn("Native image share failed, falling back to text only:", imageError);
+                }
+
+                await Share.share({
+                    title: shareTitle,
+                    text: shareText,
+                    url: this.shareUrl,
+                    dialogTitle: "Share your card",
+                });
+                return;
+            }
+
+            // ---- Web Share API (mobile browsers) ----
+            const file = await this.fetchCardImageFile();
             if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
-                // Image + link together — the app attaches the card itself
-                // instead of just unfurling the URL.
                 await navigator.share({ title: shareTitle, text: shareText, files: [file] });
             } else {
-                // Image sharing unsupported on this device/browser — share the link instead.
                 await navigator.share({ title: shareTitle, text: shareText, url: this.shareUrl });
             }
         } catch (error) {
-            // AbortError just means the user cancelled the share sheet — not a real error.
-            if (error.name !== "AbortError") {
+            if (!this.isCancellation(error)) {
                 console.error("Share failed:", error);
             }
         } finally {
@@ -104,7 +168,22 @@ export default class DoctorCardPage extends Component {
         this.update();
 
         try {
-            await navigator.clipboard.writeText(this.shareUrl);
+            if (this.isNativeApp()) {
+                const { Clipboard } = await import("@capacitor/clipboard");
+                await Clipboard.write({ string: this.shareUrl });
+            } else if (navigator.clipboard?.writeText) {
+                await navigator.clipboard.writeText(this.shareUrl);
+            } else {
+                // Legacy fallback for non-secure contexts / old browsers.
+                const ta = document.createElement("textarea");
+                ta.value = this.shareUrl;
+                ta.style.position = "fixed";
+                ta.style.opacity = "0";
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand("copy");
+                ta.remove();
+            }
             this.copySuccess = true;
         } catch (error) {
             console.error("Failed to copy link:", error);
@@ -127,10 +206,23 @@ export default class DoctorCardPage extends Component {
         this.update();
 
         try {
-            const response = await fetch(this.cardImageUrl);
-            if (!response.ok) throw new Error("Failed to download card image.");
+            // ---- Native shell ----
+            // A WebView can't trigger a browser download. Write the PNG to
+            // the cache dir and hand it to the OS share sheet — iOS offers
+            // "Save to Files", Android offers "Save to Downloads"/Gallery.
+            if (this.isNativeApp()) {
+                const { Share } = await import("@capacitor/share");
+                const blob = await this.fetchCardBlob();
+                const fileUri = await this.writeCardToCache(blob);
+                await Share.share({
+                    files: [fileUri],
+                    dialogTitle: "Save your card",
+                });
+                return;
+            }
 
-            const blob = await response.blob();
+            // ---- Browser ----
+            const blob = await this.fetchCardBlob();
             const url = URL.createObjectURL(blob);
 
             const link = document.createElement("a");
@@ -142,8 +234,10 @@ export default class DoctorCardPage extends Component {
 
             URL.revokeObjectURL(url);
         } catch (error) {
-            console.error("Failed to download card:", error);
-            this.downloadError = error.message || "Failed to download card.";
+            if (!this.isCancellation(error)) {
+                console.error("Failed to download card:", error);
+                this.downloadError = error.message || "Failed to download card.";
+            }
         } finally {
             this.downloading = false;
             this.update();
@@ -171,24 +265,17 @@ export default class DoctorCardPage extends Component {
         return h(
             "section",
             { class: "dashboard-header page-hero" },
-    
             h(
                 "button",
                 {
                     type: "button",
                     class: "page-hero__back",
-                    onclick: () => this.onBack?.()
+                    onclick: () => this.onBack?.(),
                 },
                 this.renderChevronIcon(),
                 h("span", {}, "Settings")
             ),
-    
-            h(
-                "h1",
-                { class: "page-hero__title" },
-                "My Doctor Card"
-            ),
-    
+            h("h1", { class: "page-hero__title" }, "My Doctor Card"),
             h(
                 "p",
                 { class: "page-hero__subtitle" },
@@ -196,7 +283,7 @@ export default class DoctorCardPage extends Component {
             )
         );
     }
-    
+
     renderChevronIcon() {
         const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
         svg.setAttribute("width", "14");
@@ -207,13 +294,13 @@ export default class DoctorCardPage extends Component {
         svg.setAttribute("stroke-width", "2.5");
         svg.setAttribute("stroke-linecap", "round");
         svg.setAttribute("stroke-linejoin", "round");
-    
+
         const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
         path.setAttribute("d", "M15 18l-6-6 6-6");
         svg.appendChild(path);
         return svg;
     }
-    
+
     renderContent() {
         return h(
             "div",
