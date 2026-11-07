@@ -780,3 +780,63 @@
     margin-left: 10px;     
   }
 }
+
+.auth-hero-points {
+  display: none;
+}
+
+@media (min-width: 900px) {
+
+  .auth-hero {
+    --auth-left-inset: 8px;
+  }
+
+  .auth-hero-illustration {
+    grid-row: 3 / span 4;            /* row 7 now belongs to the strip */
+    justify-self: start;
+    width: auto;
+    min-width: 240px;                /* keeps the icon fallback visible */
+    height: clamp(340px, 50vh, 460px);
+    margin-left: var(--auth-left-inset);
+  }
+  .auth-hero-illustration__photo {
+    width: auto;
+    max-width: 100%;
+    height: 100%;
+    object-position: left center;
+  }
+
+  /* The strip: sits in the same row as "Are you a patient?" */
+  .auth-hero-points {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 20px;
+    grid-column: 1;
+    grid-row: 7;
+    align-self: start;
+    max-width: 480px;
+    margin: var(--space-5) 0 0 var(--auth-left-inset);
+    padding: 0;
+    list-style: none;
+  }
+
+  .auth-hero-point {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--color-ink-soft);
+  }
+
+  .auth-hero-point__icon {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    padding: 6px;
+    box-sizing: border-box;
+    border-radius: 50%;
+    background: var(--color-primary-soft);
+    color: var(--color-primary-dark);
+  }
+}
