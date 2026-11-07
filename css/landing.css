@@ -372,6 +372,7 @@
     padding-left: 16px;
     border-left: 1px solid var(--hairline);
     line-height: 1.4;
+    padding-top: 50px;
   }
 
   /* ----- Headline: left column, vertically centred against the actions ----- */
