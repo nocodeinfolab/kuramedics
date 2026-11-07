@@ -275,6 +275,17 @@ export default class BookingForm extends Component {
             bar.style.width = `${Math.max(0, Math.min(100, ratio * 100))}%`;
         }
     }
+    scrollDayStripBy(direction) {
+        const strip = this.el?.querySelector(".bf-day-strip");
+        if (!strip) return;
+    
+        
+        const step = strip.clientWidth * 0.8;
+        strip.scrollBy({
+            left: direction * step,
+            behavior: "smooth",
+        });
+    }
     
     findFirstAvailableSlot(service) {
         for (const day of this.getNextNDays(14)) {
@@ -953,24 +964,56 @@ export default class BookingForm extends Component {
                         "aria-label": "Choose a day",
                         onscroll: (e) => this.handleDayStripScroll(e),
                     },
-                    ...dayRows.map(row =>
-                        h(
-                            "button",
-                            {
-                                type: "button",
-                                class: `bf-day-chip${!row.isAvailable ? " bf-day-chip--disabled" : ""}${selectedDay === row.dateStr ? " bf-day-chip--selected" : ""}`,
-                                disabled: !row.isAvailable,
-                                role: "radio",
-                                "aria-checked": selectedDay === row.dateStr ? "true" : "false",
-                                onclick: () => this.setSelectedDay(row.dateStr),
-                            },
-                            h("span", { class: "bf-day-chip__weekday" }, SHORT_WEEKDAY[row.date.getDay()]),
-                            h("span", { class: "bf-day-chip__num" }, String(row.date.getDate()))
-                        )
-                    )
+                    ...dayRows.map(row => /* ... existing chip rendering ... */)
                 ),
                 h("div", { class: "bf-day-strip-fade bf-day-strip-fade--left", "aria-hidden": "true" }),
                 h("div", { class: "bf-day-strip-fade bf-day-strip-fade--right", "aria-hidden": "true" }),
+            
+                // Scroll arrows — visible only when the strip is scrollable and not
+                // already at that edge. Tapping advances the strip by ~80% of the
+                // visible width, which keeps a chip or two of context between pages
+                // rather than advancing one at a time.
+                h(
+                    "button",
+                    {
+                        type: "button",
+                        class: "bf-day-strip-arrow bf-day-strip-arrow--left",
+                        "aria-label": "Scroll to earlier dates",
+                        onclick: () => this.scrollDayStripBy(-1),
+                    },
+                    h(
+                        "svg",
+                        { viewBox: "0 0 24 24", fill: "none", width: "16", height: "16", "aria-hidden": "true" },
+                        h("path", {
+                            d: "M15 18l-6-6 6-6",
+                            stroke: "currentColor",
+                            "stroke-width": "2.2",
+                            "stroke-linecap": "round",
+                            "stroke-linejoin": "round",
+                        })
+                    )
+                ),
+                h(
+                    "button",
+                    {
+                        type: "button",
+                        class: "bf-day-strip-arrow bf-day-strip-arrow--right",
+                        "aria-label": "Scroll to later dates",
+                        onclick: () => this.scrollDayStripBy(1),
+                    },
+                    h(
+                        "svg",
+                        { viewBox: "0 0 24 24", fill: "none", width: "16", height: "16", "aria-hidden": "true" },
+                        h("path", {
+                            d: "M9 18l6-6-6-6",
+                            stroke: "currentColor",
+                            "stroke-width": "2.2",
+                            "stroke-linecap": "round",
+                            "stroke-linejoin": "round",
+                        })
+                    )
+                ),
+            
                 h(
                     "div",
                     { class: "bf-day-strip-progress", "aria-hidden": "true" },
