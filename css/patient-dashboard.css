@@ -1539,7 +1539,7 @@
     box-shadow: 0 0 0 3px var(--tf-primary-soft);
 }
 .triage-form .tf-textarea::placeholder {
-    font-weight: 400;
+    font-weight: 200;
     color: var(--color-ink-faint, #94a3b8);
     opacity: 1;                  
 }
