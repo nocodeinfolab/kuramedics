@@ -2628,6 +2628,8 @@
     top: var(--space-6);
     padding: var(--space-5);
     gap: var(--space-3);
+    z-index: 1;      
+    isolation: isolate;  
   }
   .doctor-card-page__actions-card .btn {
     padding: 0.85rem 1.25rem;
