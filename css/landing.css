@@ -311,3 +311,111 @@
     gap: 20px;
   }
 }
+
+@media (min-width: 900px) {
+
+  /* ----- Ambient glows: bigger, for a wider canvas ----- */
+
+  .landing__glow {
+    width: 50vw;
+    height: 50vw;
+    max-width: 760px;
+    max-height: 760px;
+  }
+  .landing__glow--top    { top: -25%;    left: -12%; }
+  .landing__glow--bottom { bottom: -28%; right: -12%; }
+
+  .landing__status-row {
+    position: absolute;
+    top: 28px;
+    /* lines up with the right edge of the centred 1120px column */
+    right: max(40px, calc((100vw - 1120px) / 2 + 40px));
+    padding: 0;
+  }
+
+  /* ----- Main: a real two-column grid ----- */
+
+  .landing__main {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 440px);
+    /* brand | spacer | hero rows (x3) | spacer.
+       The two flexible spacers centre the hero below the logo.
+       0.8fr / 1.2fr nudges it slightly above true centre. */
+    grid-template-rows: auto minmax(32px, 0.8fr) auto auto auto minmax(32px, 1.2fr);
+    column-gap: clamp(48px, 7vw, 112px);
+    align-items: start;
+    max-width: 1120px;
+    padding: 28px 40px 16px; /* 28px is the whole gap above the logo */
+    text-align: left;
+  }
+
+  /* ----- Brand: top-left, like a site header ----- */
+
+  .landing__brand {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+    margin: 0;
+    padding: 0;
+  }
+  .landing__brand-mark {
+    width: 150px;
+    max-width: none;
+    margin: 0;
+    
+    transform: none;
+  }
+  .landing__brand-tagline {
+    margin: 0;
+    padding-left: 16px;
+    border-left: 1px solid var(--hairline);
+    line-height: 1.4;
+  }
+
+  /* ----- Headline: left column, vertically centred against the actions ----- */
+
+  .landing__headline {
+    grid-column: 1;
+    grid-row: 3 / span 3;
+    align-self: center;
+    margin: 0;
+  }
+  .landing__title {
+    font-size: clamp(44px, 4.6vw, 62px);
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+  }
+  .landing__lead {
+    max-width: 36ch;
+    margin: 20px 0 0;
+    font-size: 18px;
+    line-height: 1.55;
+  }
+
+  /* ----- Right column: actions, trust divider, feature strip ----- */
+
+  .landing__actions  { grid-column: 2; grid-row: 3; margin-top: 0; }
+  .landing__trust    { grid-column: 2; grid-row: 4; margin-top: 32px; }
+  .landing__features { grid-column: 2; grid-row: 5; margin-top: 24px; }
+
+  .role-btn {
+    padding: 18px 20px;
+    transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+  }
+  .role-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 30px -18px rgba(61, 43, 122, 0.45);
+  }
+  .role-btn--outline:hover { border-color: var(--violet); }
+  .role-btn:active { transform: scale(0.98); }
+  .role-btn:focus-visible {
+    outline: 2px solid var(--violet);
+    outline-offset: 3px;
+  }
+
+  /* ----- Footer ----- */
+
+  .landing__legal { padding: 16px 40px 28px; }
+}
