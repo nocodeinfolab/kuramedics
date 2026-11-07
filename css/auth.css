@@ -644,3 +644,135 @@
     line-height: 1.5;
     color: var(--color-ink, var(--color-ink-faint));
 }
+
+
+@media (min-width: 900px) {
+
+  /* ----- Page: tighter padding so the logo sits near the top ----- */
+
+  .auth-page {
+    padding: 28px 40px;
+  }
+
+  /* Glows: bigger, for a wider canvas (same as the landing page) */
+  .auth-page::before,
+  .auth-page::after {
+    width: 50vw;
+    height: 50vw;
+    max-width: 760px;
+    max-height: 760px;
+  }
+  .auth-page::before { top: -25%;    left: -12%; }
+  .auth-page::after  { bottom: -28%; right: -12%; }
+
+  /* ----- Hero: a two-column grid that fills the page height ----- */
+
+  .auth-hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 460px);
+    /* brand | spacer | title | lead | providers | divider | switch | spacer
+       The two flexible spacers centre the content below the logo. */
+    grid-template-rows:
+      auto
+      minmax(32px, 0.8fr)
+      auto auto auto auto auto
+      minmax(32px, 1.2fr);
+    column-gap: clamp(48px, 7vw, 112px);
+    align-items: start;
+    align-self: stretch;   /* fill the page so the spacers can work */
+    max-width: 1120px;
+    text-align: left;
+  }
+
+  /* Flatten the plain wrapper div that holds all the hero children */
+  .auth-hero > div {
+    display: contents;
+  }
+
+  /* ----- Brand: top-left, like a site header ----- */
+
+  .auth-brand {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+    margin: 0;
+  }
+  .auth-brand-mark {
+    width: 150px;
+    max-width: none;
+    transform: none;   /* the mobile nudge is only for centring */
+  }
+  .auth-brand-tagline {
+    margin: 0;
+    padding-left: 16px;
+    border-left: 1px solid var(--color-line-strong);
+    line-height: 1.4;
+  }
+
+  /* ----- Left column: illustration, vertically centred ----- */
+
+  .auth-hero-illustration {
+    grid-column: 1;
+    grid-row: 3 / span 5;
+    align-self: center;
+    justify-self: center;
+    width: min(100%, 460px);
+    height: clamp(320px, 44vh, 440px);
+    margin: 0;
+  }
+
+  /* ----- Right column: headline, lead, actions ----- */
+
+  .auth-hero-title {
+    grid-column: 2;
+    grid-row: 3;
+    font-size: clamp(40px, 4vw, 54px);
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+  }
+  .auth-hero-lead {
+    grid-column: 2;
+    grid-row: 4;
+    max-width: 40ch;
+    margin: 20px 0 0;
+    font-size: 1.125rem;
+    line-height: 1.55;
+  }
+  .auth-provider-list {
+    grid-column: 2;
+    grid-row: 5;
+    margin-top: var(--space-7);
+  }
+  .auth-labeled-divider {
+    grid-column: 2;
+    grid-row: 6;
+    margin-top: var(--space-7);
+  }
+  .auth-role-switch {
+    grid-column: 2;
+    grid-row: 7;
+    margin-top: var(--space-5);
+  }
+
+  /* Provider buttons: subtle lift on hover, press feedback kept */
+  .auth-provider-btn:not(:disabled):hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 26px -16px rgba(61, 43, 122, 0.45);
+  }
+  .auth-provider-btn:not(:disabled):active {
+    transform: translateY(1px);
+  }
+  .auth-provider-btn:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 3px;
+  }
+
+  /* ----- Form views (email / OTP code): roomier card ----- */
+
+  .auth-card {
+    max-width: 480px;
+    padding: var(--space-8) var(--space-7);
+  }
+}
