@@ -81,7 +81,30 @@ const Icons = {
       h("path", { d: "M5 2v2", stroke: "currentColor", "stroke-width": "1.6", "stroke-linecap": "round" }),
       h("path", { d: "M8 15a6 6 0 0 0 12 0v-3", stroke: "currentColor", "stroke-width": "1.6", "stroke-linecap": "round", "stroke-linejoin": "round" }),
       h("circle", { cx: "20", cy: "10", r: "2", stroke: "currentColor", "stroke-width": "1.6" })
+    ),
+    calendar: () =>
+    h(
+      "svg",
+      { class: "auth-hero-point__icon", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden": "true" },
+      h("path", { d: "M8 2v4" }),
+      h("path", { d: "M16 2v4" }),
+      h("rect", { width: "18", height: "18", x: "3", y: "4", rx: "2" }),
+      h("path", { d: "M3 10h18" })
+    ),
+  chat: () =>
+    h(
+      "svg",
+      { class: "auth-hero-point__icon", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden": "true" },
+      h("path", { d: "M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" })
+    ),
+  lock: () =>
+    h(
+      "svg",
+      { class: "auth-hero-point__icon", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", "stroke-width": "2", "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden": "true" },
+      h("rect", { width: "18", height: "11", x: "3", y: "11", rx: "2", ry: "2" }),
+      h("path", { d: "M7 11V7a5 5 0 0 1 10 0v4" })
     )
+
 };
 
 export class DoctorLoginPage extends Component {
@@ -123,6 +146,7 @@ export class DoctorLoginPage extends Component {
       {},
       this.renderBrand(),
       this.renderIllustration(),
+      this.renderHeroPoints(),
       h(
         "h1",
         { class: "auth-hero-title" },
@@ -171,6 +195,26 @@ export class DoctorLoginPage extends Component {
             }
           }),
       
+    );
+  }
+  renderHeroPoints() {
+    const points = [
+      { icon: Icons.calendar, label: "Manage bookings" },
+      { icon: Icons.chat, label: "Secure messaging" },
+      { icon: Icons.lock, label: "Private records" }
+    ];
+
+    return h(
+      "ul",
+      { class: "auth-hero-points" },
+      points.map((point) =>
+        h(
+          "li",
+          { class: "auth-hero-point" },
+          point.icon(),
+          h("span", {}, point.label)
+        )
+      )
     );
   }
 
