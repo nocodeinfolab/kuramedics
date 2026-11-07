@@ -5703,18 +5703,12 @@
     text-decoration: underline;
     text-underline-offset: 2px;
 }
-/* ============================================================
-   Day strip — scroll indicators
-   ============================================================ */
-
 .booking-form .bf-day-strip-wrap {
     position: relative;
     margin-bottom: 4px;
 }
 
-/* Fade overlays — hidden by default, revealed via classes set by the
-   scroll handler. `pointer-events: none` ensures they never block taps
-   on chips near the edges. */
+
 .booking-form .bf-day-strip-fade {
     position: absolute;
     top: 0;
@@ -5746,9 +5740,7 @@
     );
 }
 
-/* Show fades only when the strip is scrollable AND the user hasn't
-   reached that edge. At-start hides the left fade; at-end hides the
-   right fade. Both can show if the user is in the middle. */
+
 .booking-form .bf-day-strip-wrap.is-scrollable:not(.is-at-start) .bf-day-strip-fade--left {
     opacity: 1;
 }
@@ -5778,4 +5770,55 @@
     background: var(--color-primary);
     border-radius: 2px;
     transition: width 0.08s linear;
+}
+
+
+.booking-form .bf-day-strip-arrow {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+
+    width: 34px;
+    height: 34px;
+    padding: 0;
+    border-radius: 50%;
+    border: 1px solid rgba(15, 23, 42, 0.1);
+    background: rgba(255, 255, 255, 0.96);
+    color: var(--color-ink);
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+
+    /* Hidden by default — revealed via state classes below */
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s ease, background 0.12s ease, transform 0.12s ease;
+}
+
+.booking-form .bf-day-strip-arrow--left {
+    left: 4px;
+}
+
+.booking-form .bf-day-strip-arrow--right {
+    right: 4px;
+}
+
+/* Reveal arrows based on scroll state — same conditions as the fades */
+.booking-form .bf-day-strip-wrap.is-scrollable:not(.is-at-start) .bf-day-strip-arrow--left {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.booking-form .bf-day-strip-wrap.is-scrollable:not(.is-at-end) .bf-day-strip-arrow--right {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Subtle press feedback */
+.booking-form .bf-day-strip-arrow:active {
+    transform: translateY(-50%) scale(0.92);
+    background: rgba(255, 255, 255, 1);
 }
