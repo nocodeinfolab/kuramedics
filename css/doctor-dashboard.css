@@ -2204,3 +2204,179 @@
   }
   .doctor-messages .mp-thread-head .dashboard-title { font-size: 1.15rem; }
 }
+
+
+@media (min-width: 900px) {
+
+  :root {
+    /* Space either side of the centred content column.
+       Never smaller than --space-6. */
+    --dash-gutter: max(
+      var(--space-6),
+      calc((100vw - var(--dash-rail-w) - var(--dash-content-max)) / 2)
+    );
+    /* How far the Home stat cards overlap the hero's bottom edge */
+    --dash-hero-overlap: 44px;
+  }
+
+  /* ----- 1. Shell: remove the gap above the header ----- */
+
+  .doctor-dashboard__content {
+    max-width: none;
+    margin: 0;
+    padding: 0 0 var(--space-8);
+  }
+
+  .doctor-dashboard__content > [data-static-wrapper],
+  .doctor-dashboard__content > [data-tab-wrapper] {
+    padding: var(--space-8) var(--dash-gutter) 0;
+  }
+
+  /* A page that has a hero starts at the very top of the viewport */
+  .doctor-dashboard__content > :has(.dashboard-header) {
+    padding-top: 0;
+  }
+
+
+  .doctor-dashboard .dashboard-header {
+    position: relative; /* needed so the decorative rings stay inside */
+    margin: 0 calc(-1 * var(--dash-gutter)) var(--space-6);
+    padding: var(--space-8) var(--dash-gutter);
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  }
+
+  .doctor-dashboard .doctor-home > .dashboard-header {
+    margin-bottom: 0;
+  }
+
+
+  .doctor-dashboard .dashboard-header:not(.page-hero):not(.mp-thread-head) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto auto;
+    align-content: center;
+    align-items: center;
+    column-gap: var(--space-6);
+    min-height: 200px;
+    overflow: hidden;
+  }
+
+  .doctor-dashboard .dashboard-header:not(.page-hero):not(.mp-thread-head) > .dashboard-greeting {
+    grid-column: 1;
+    grid-row: 1;
+    padding-top: 0;
+  }
+  .doctor-dashboard .dashboard-header:not(.page-hero):not(.mp-thread-head) > .dashboard-title {
+    grid-column: 1;
+    grid-row: 2;
+    font-size: 1.9rem;
+  }
+  .doctor-dashboard .dashboard-header:not(.page-hero):not(.mp-thread-head) > .dashboard-subtitle {
+    grid-column: 1;
+    grid-row: 3;
+    max-width: 60ch;
+    font-size: 0.95rem;
+    white-space: normal;
+    overflow: visible;
+  }
+  .doctor-dashboard .dashboard-header:not(.page-hero):not(.mp-thread-head) > .dashboard-hero-meta {
+    grid-column: 2;
+    grid-row: 1 / -1;
+    align-self: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    margin-top: 0;
+    gap: var(--space-2);
+  }
+
+
+  .doctor-dashboard .doctor-home .hero-top {
+    grid-column: 1;
+    grid-row: 1 / -1;
+    gap: var(--space-5);
+  }
+
+  .doctor-dashboard .doctor-home .hero-avatar {
+    width: 80px;
+    height: 80px;
+  }
+  .doctor-dashboard .doctor-home .hero-avatar__initial { font-size: 2rem; }
+
+  .doctor-dashboard .doctor-home .dashboard-title { font-size: 1.9rem; }
+  .doctor-dashboard .doctor-home .dashboard-subtitle {
+    font-size: 0.95rem;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+  }
+
+  .doctor-dashboard .doctor-home .dashboard-hero-meta {
+    grid-column: 2;
+    grid-row: 1 / -1;
+  }
+
+
+  .doctor-dashboard .doctor-home .dashboard-header::before {
+    width: 320px; height: 320px;
+    right: -90px; top: -150px; bottom: auto;
+  }
+  .doctor-dashboard .doctor-home .dashboard-header::after {
+    width: 200px; height: 200px;
+    right: -30px; top: -90px; bottom: auto;
+  }
+
+  .doctor-dashboard .doctor-home .dashboard-header:has(+ .stats-grid) {
+    padding-bottom: calc(var(--space-7) + var(--dash-hero-overlap));
+  }
+
+  .doctor-dashboard .doctor-home .dashboard-header + .stats-grid {
+    position: relative;
+    z-index: 2;
+    margin-top: calc(-1 * (var(--dash-hero-overlap) + var(--space-5)));
+  }
+
+  .doctor-dashboard .doctor-home .dashboard-header + .stats-grid .stat-card {
+    padding: var(--space-5);
+    box-shadow: 0 12px 28px -14px rgba(15, 23, 42, 0.28);
+  }
+  .doctor-dashboard .doctor-home .dashboard-header + .stats-grid .stat-value {
+    font-size: 1.9rem;
+  }
+
+  /* ----- 5. Inner pages (Profile / Services / Subscription / Card) ----- */
+
+  .doctor-dashboard .dashboard-header.page-hero {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: var(--space-3);
+    height: auto;
+    min-height: 0;
+    padding: var(--space-7) var(--dash-gutter);
+  }
+  .doctor-dashboard .page-hero__title { font-size: 1.9rem; }
+  .doctor-dashboard .page-hero__subtitle {
+    font-size: 0.95rem;
+    max-width: 60ch;
+  }
+
+
+  .doctor-dashboard .doctor-messages .dashboard-header.mp-thread-head {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: var(--space-3);
+    min-height: 0;
+    margin-bottom: var(--space-4);
+    padding: var(--space-5) var(--dash-gutter);
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  }
+  .doctor-dashboard .doctor-messages .mp-thread-head .dashboard-title { font-size: 1.15rem; }
+
+  /* Header is flush now, so the thread can use the freed height.
+     Tune the 80px if you change the thread header's padding. */
+  .doctor-dashboard .doctor-messages .mp-thread {
+    height: calc(100dvh - 80px - var(--space-4) - var(--space-8));
+    min-height: 480px;
+  }
+}
