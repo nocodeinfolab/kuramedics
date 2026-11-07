@@ -840,3 +840,33 @@
     color: var(--color-primary-dark);
   }
 }
+
+
+@media (min-width: 900px) {
+
+  .auth-hero:has(.auth-booking-banner) {
+    
+    grid-template-rows:
+      auto
+      minmax(32px, 0.8fr)
+      auto auto auto auto auto auto
+      minmax(32px, 1.2fr);
+  }
+
+  .auth-hero:has(.auth-booking-banner) .auth-booking-banner {
+    grid-column: 2;
+    grid-row: 5;
+    margin: var(--space-6) 0 0;
+  }
+
+  .auth-hero:has(.auth-booking-banner) .auth-provider-list {
+    grid-row: 6;
+    margin-top: var(--space-4);
+  }
+  .auth-hero:has(.auth-booking-banner) .auth-labeled-divider { grid-row: 7; }
+  .auth-hero:has(.auth-booking-banner) .auth-role-switch     { grid-row: 8; }
+
+  
+  .auth-hero:has(.auth-booking-banner) .auth-hero-illustration { grid-row: 3 / span 5; }
+  .auth-hero:has(.auth-booking-banner) .auth-hero-points       { grid-row: 8; }
+}
