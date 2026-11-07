@@ -21,6 +21,7 @@ export default class DoctorCardPage extends Component {
         this.downloading = false;
         this.downloadError = "";
         this.sharing = false;
+        this.copyError = "";
 
         // Cache-busting param so a freshly regenerated card (e.g. after a
         // profile edit) doesn't show a stale browser-cached image.
@@ -167,8 +168,9 @@ export default class DoctorCardPage extends Component {
     async copyLink() {
         this.copying = true;
         this.copySuccess = false;
+        this.copyError = "";
         this.update();
-
+    
         try {
             if (this.isNativeApp()) {
                 const { Clipboard } = await import("@capacitor/clipboard");
@@ -176,23 +178,17 @@ export default class DoctorCardPage extends Component {
             } else if (navigator.clipboard?.writeText) {
                 await navigator.clipboard.writeText(this.shareUrl);
             } else {
-                // Legacy fallback for non-secure contexts / old browsers.
-                const ta = document.createElement("textarea");
-                ta.value = this.shareUrl;
-                ta.style.position = "fixed";
-                ta.style.opacity = "0";
-                document.body.appendChild(ta);
-                ta.select();
-                document.execCommand("copy");
-                ta.remove();
+                this.copyViaLegacyFallback();
             }
             this.copySuccess = true;
         } catch (error) {
             console.error("Failed to copy link:", error);
+            this.copyError =
+                "Couldn't copy the link automatically. Copy it manually: " + this.shareUrl;
         } finally {
             this.copying = false;
             this.update();
-
+    
             if (this.copySuccess) {
                 setTimeout(() => {
                     this.copySuccess = false;
@@ -200,6 +196,20 @@ export default class DoctorCardPage extends Component {
                 }, 2500);
             }
         }
+    }
+    
+    copyViaLegacyFallback() {
+        const ta = document.createElement("textarea");
+        ta.value = this.shareUrl;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        ta.setAttribute("readonly", "");
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        const ok = document.execCommand("copy");
+        ta.remove();
+        if (!ok) throw new Error("Copy command rejected");
     }
 
     async downloadCard() {
@@ -224,17 +234,21 @@ export default class DoctorCardPage extends Component {
             }
 
             // ---- Browser ----
-            const blob = await this.fetchCardBlob();
-            const url = URL.createObjectURL(blob);
-
-            const link = document.createElement("a");
-            link.href = url;
-            link.download = this.cardFileName;
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-
-            URL.revokeObjectURL(url);
+            try {
+                const blob = await this.fetchCardBlob();
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = this.cardFileName;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                URL.revokeObjectURL(url);
+            } catch (fetchError) {
+                
+                console.warn("Blob fetch failed, falling back to new-tab open:", fetchError);
+                window.open(this.cardImageUrl, "_blank", "noopener,noreferrer");
+            }
         } catch (error) {
             if (!this.isCancellation(error)) {
                 console.error("Failed to download card:", error);
@@ -278,6 +292,13 @@ export default class DoctorCardPage extends Component {
                                 )
                             )
                           : null,
+                        this.copyError
+                            ? h(
+                                  "div",
+                                  { class: "dashboard-card doctor-card-page__error-card" },
+                                  h("p", { class: "doctor-card-page__error-text" }, this.copyError)
+                              )
+                            : null,
     
                       h(
                           "div",
