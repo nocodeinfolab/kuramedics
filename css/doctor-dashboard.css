@@ -2380,3 +2380,33 @@
     min-height: 480px;
   }
 }
+@media (min-width: 900px) {
+
+  :root { --dash-hero-overlap: 36px; }
+
+  /* Home, Queue, Messages list */
+  .doctor-dashboard .dashboard-header:not(.page-hero):not(.mp-thread-head) {
+    min-height: 0;
+    padding-top: var(--space-5);
+    padding-bottom: var(--space-5);
+  }
+
+  /* Home: keep room for the stat-card overlap, but less of it */
+  .doctor-dashboard .doctor-home .dashboard-header:has(+ .stats-grid) {
+    padding-bottom: calc(var(--space-5) + var(--dash-hero-overlap));
+  }
+
+  /* Slightly smaller identity block to match */
+  .doctor-dashboard .doctor-home .hero-avatar { width: 64px; height: 64px; }
+  .doctor-dashboard .doctor-home .hero-avatar__initial { font-size: 1.6rem; }
+  .doctor-dashboard .dashboard-header:not(.page-hero):not(.mp-thread-head) > .dashboard-title,
+  .doctor-dashboard .doctor-home .dashboard-title { font-size: 1.65rem; }
+
+  /* Inner pages (Profile, Services, Subscription, Card) */
+  .doctor-dashboard .dashboard-header.page-hero {
+    padding-top: var(--space-5);
+    padding-bottom: var(--space-5);
+    gap: var(--space-2);
+  }
+  .doctor-dashboard .page-hero__title { font-size: 1.65rem; }
+}
