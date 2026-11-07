@@ -2666,3 +2666,170 @@
     margin-top: auto;
   }
 }
+/* =====================================================================
+   26. QUEUE PAGE — desktop premium layout
+   Everything is @media (min-width: 900px) only.
+   Mobile (max-width: 899px) rules in section 12 are untouched.
+   ===================================================================== */
+
+@media (min-width: 900px) {
+
+  /* ----- 1. Controls row: search | archive ----- */
+
+  .doctor-dashboard .queue-page .queue-controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-3);
+    align-items: stretch;
+    margin-bottom: var(--space-4);
+  }
+
+  .doctor-dashboard .queue-page .queue-search {
+    min-width: 0;
+  }
+
+  .doctor-dashboard .queue-page .queue-search__input {
+    height: 48px;
+    padding: 0 1rem 0 2.8rem;
+    font-size: 0.95rem;
+  }
+
+  .doctor-dashboard .queue-page .queue-archive-all {
+    height: 48px;
+    padding: 0 1.2rem;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    border-radius: var(--radius-pill);
+  }
+
+  /* ----- 2. Tabs: compact segmented control ----- */
+
+  .doctor-dashboard .queue-page .seg-tabs {
+    max-width: 520px;
+    margin-bottom: var(--space-5);
+    padding: 5px;
+  }
+
+  .doctor-dashboard .queue-page .seg-tab {
+    padding: 0.7rem 1rem;
+    font-size: 0.86rem;
+  }
+
+  .doctor-dashboard .queue-page .seg-tab__count {
+    min-width: 24px;
+    padding: 2px 7px;
+    font-size: 0.7rem;
+  }
+
+  /* ----- 3. Booking cards: wider feel + hover lift ----- */
+
+  .doctor-dashboard .queue-page .booking-card {
+    padding: var(--space-5);
+    transition:
+      transform var(--duration-fast) var(--ease-out),
+      box-shadow var(--duration-fast) var(--ease-out);
+  }
+
+  .doctor-dashboard .queue-page .booking-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px -14px rgba(15, 23, 42, 0.24);
+  }
+
+  .doctor-dashboard .queue-page .booking-card__avatar {
+    width: 52px;
+    height: 52px;
+    font-size: 1.05rem;
+  }
+
+  .doctor-dashboard .queue-page .booking-card__name {
+    font-size: 1.05rem;
+  }
+
+  .doctor-dashboard .queue-page .booking-card__head {
+    align-items: center;
+  }
+
+  /* ----- 4. Details: horizontal grid instead of stacked ----- */
+
+  .doctor-dashboard .queue-page .booking-card__details {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-4);
+    padding: var(--space-4);
+    margin-top: var(--space-4);
+  }
+
+  .doctor-dashboard .queue-page .booking-detail {
+    gap: var(--space-3);
+  }
+
+  .doctor-dashboard .queue-page .booking-detail__value {
+    font-size: 0.92rem;
+  }
+
+  /* ----- 5. Reason: light framed block ----- */
+
+  .doctor-dashboard .queue-page .booking-reason {
+    margin-top: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    background: rgba(15, 23, 42, 0.02);
+    border-radius: var(--radius-sm);
+  }
+
+  /* ----- 6. Action buttons: compact, right-aligned ----- */
+
+  .doctor-dashboard .queue-page .card-actions {
+    justify-content: flex-end;
+    gap: var(--space-2);
+    margin-top: var(--space-4);
+  }
+
+  .doctor-dashboard .queue-page .card-actions .btn {
+    flex: 0 0 auto;
+    min-width: 130px;
+    padding: 0.65rem 1.2rem;
+    font-size: 0.85rem;
+    border-radius: var(--radius-pill);
+  }
+
+  /* ----- 7. Notes / hints: keep them tidy ----- */
+
+  .doctor-dashboard .queue-page .booking-card__note {
+    margin-top: var(--space-4);
+  }
+
+  /* ----- 8. Load more: prominent centred button ----- */
+
+  .doctor-dashboard .queue-page .services-list > .text-center {
+    display: flex;
+    justify-content: center;
+    margin-top: var(--space-5);
+  }
+
+  .doctor-dashboard .queue-page .services-list > .text-center .btn {
+    padding: 0.75rem 1.6rem;
+    font-size: 0.9rem;
+    border-radius: var(--radius-pill);
+  }
+
+  /* ----- 9. Empty state ----- */
+
+  .doctor-dashboard .queue-page .queue-empty {
+    padding: var(--space-8) var(--space-6);
+  }
+
+  .doctor-dashboard .queue-page .queue-empty__title {
+    font-size: 1.1rem;
+  }
+
+  .doctor-dashboard .queue-page .queue-empty__text {
+    font-size: 0.9rem;
+  }
+
+  /* ----- 10. Alerts: same generous rhythm as the rest ----- */
+
+  .doctor-dashboard .queue-page .q-alert {
+    padding: var(--space-4) var(--space-5);
+    font-size: 0.88rem;
+  }
+}
