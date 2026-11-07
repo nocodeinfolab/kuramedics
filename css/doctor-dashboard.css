@@ -2458,3 +2458,28 @@
     transform: scaleX(1);
   }
 }
+@media (min-width: 900px) {
+
+  /* Visual order on the Home grid: hero, stats, banners, everything else */
+  .doctor-dashboard .doctor-home > * { order: 3; }
+  .doctor-dashboard .doctor-home > .dashboard-header { order: 0; }
+  .doctor-dashboard .doctor-home > .stats-grid { order: 1; }
+  .doctor-dashboard .doctor-home > .action-banner { order: 2; }
+
+  /* The overlap no longer depends on the stats being next to the hero in the DOM */
+  .doctor-dashboard .doctor-home .dashboard-header:has(~ .stats-grid) {
+    padding-bottom: calc(var(--space-5) + var(--dash-hero-overlap));
+  }
+  .doctor-dashboard .doctor-home .stats-grid {
+    position: relative;
+    z-index: 2;
+    margin-top: calc(-1 * (var(--dash-hero-overlap) + var(--space-5)));
+  }
+  .doctor-dashboard .doctor-home .stats-grid .stat-card {
+    padding: var(--space-5);
+    box-shadow: 0 12px 28px -14px rgba(15, 23, 42, 0.28);
+  }
+  .doctor-dashboard .doctor-home .stats-grid .stat-value {
+    font-size: 1.9rem;
+  }
+}
