@@ -5703,3 +5703,79 @@
     text-decoration: underline;
     text-underline-offset: 2px;
 }
+/* ============================================================
+   Day strip — scroll indicators
+   ============================================================ */
+
+.booking-form .bf-day-strip-wrap {
+    position: relative;
+    margin-bottom: 4px;
+}
+
+/* Fade overlays — hidden by default, revealed via classes set by the
+   scroll handler. `pointer-events: none` ensures they never block taps
+   on chips near the edges. */
+.booking-form .bf-day-strip-fade {
+    position: absolute;
+    top: 0;
+    bottom: 12px;                     /* leave room for the progress bar */
+    width: 32px;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+    z-index: 1;
+}
+
+.booking-form .bf-day-strip-fade--left {
+    left: 0;
+    background: linear-gradient(
+        to right,
+        #ffffff 0%,
+        #ffffff 30%,
+        rgba(255, 255, 255, 0) 100%
+    );
+}
+
+.booking-form .bf-day-strip-fade--right {
+    right: 0;
+    background: linear-gradient(
+        to left,
+        #ffffff 0%,
+        #ffffff 30%,
+        rgba(255, 255, 255, 0) 100%
+    );
+}
+
+/* Show fades only when the strip is scrollable AND the user hasn't
+   reached that edge. At-start hides the left fade; at-end hides the
+   right fade. Both can show if the user is in the middle. */
+.booking-form .bf-day-strip-wrap.is-scrollable:not(.is-at-start) .bf-day-strip-fade--left {
+    opacity: 1;
+}
+
+.booking-form .bf-day-strip-wrap.is-scrollable:not(.is-at-end) .bf-day-strip-fade--right {
+    opacity: 1;
+}
+
+
+.booking-form .bf-day-strip-progress {
+    height: 3px;
+    margin: 6px 2px 0;
+    background: rgba(15, 23, 42, 0.06);
+    border-radius: 2px;
+    overflow: hidden;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.booking-form .bf-day-strip-wrap.is-scrollable .bf-day-strip-progress {
+    opacity: 1;
+}
+
+.booking-form .bf-day-strip-progress__bar {
+    height: 100%;
+    width: 0%;
+    background: var(--color-primary);
+    border-radius: 2px;
+    transition: width 0.08s linear;
+}
