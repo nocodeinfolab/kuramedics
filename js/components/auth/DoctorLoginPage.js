@@ -227,19 +227,21 @@ export class DoctorLoginPage extends Component {
         { id: "google-login-btn", class: "google-btn-container" }
       ),
       // Inactive for now — kept visible per product decision, just disabled.
-      h(
-        "button",
-        {
-          type: "button",
-          class: "auth-provider-btn",
-          disabled: true,
-          "aria-disabled": "true",
-          title: "Sign in with Apple — coming soon"
-        },
-        Icons.apple(),
-        h("span", { class: "auth-provider-btn__label" }, "Sign in with Apple"),
-        h("span", { class: "auth-provider-btn__arrow" }, Icons.arrow())
-      ),
+      isIOS()
+        ? h(
+            "button",
+            {
+              type: "button",
+              class: "auth-provider-btn",
+              disabled: true,
+              "aria-disabled": "true",
+              title: "Sign in with Apple — coming soon"
+            },
+            Icons.apple(),                       // patient page: AppleIcon()
+            h("span", { class: "auth-provider-btn__label" }, "Sign in with Apple"),
+            h("span", { class: "auth-provider-btn__arrow" }, Icons.arrow())  // patient: ArrowIcon()
+          )
+        : null,
       h(
         "button",
         {
