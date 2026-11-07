@@ -2422,7 +2422,7 @@
 
 @media (min-width: 900px) {
   .doctor-bottom-nav::before {
-    padding-top: 44px; /* logo height (40px) + 4px gap */
+    padding-top: 50px; /* logo height (50px) + 4px gap */
   }
 }
 @media (min-width: 900px) {
