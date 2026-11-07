@@ -173,13 +173,3 @@
 .patient-doctor-profile .public-service__book:active {
     background: color-mix(in srgb, var(--color-primary) 10%, transparent);
 }
-@media (min-width: 900px) {
-  .doctor-bottom-nav::before {
-    content: "Doctor Portal";
-    display: block;
-    /* 40px logo + 12px gap above the text */
-    padding: 52px var(--space-4) var(--space-8);
-    background: url("../assets/yeroscarelogo.png") no-repeat
-      left var(--space-4) top 0 / auto 40px;
-  }
-}
