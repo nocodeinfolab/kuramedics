@@ -427,13 +427,19 @@ export default class DoctorCardPage extends Component {
                           alt: "Your doctor card",
                           class: "doctor-card-page__preview-img",
                           style: `display: ${this.imageLoaded ? "block" : "none"};`,
-                          onload: () => {
+                          onload: (e) => {
+                              if (this.imageLoaded) return;   // ← guard: never re-enter
                               this.imageLoaded = true;
-                              this.update();
+                              e.target.style.display = "block";
+                              this.el
+                                  ?.querySelector(".doctor-card-page__preview-loading")
+                                  ?.remove();
+                              // NO this.update() — DOM already reflects the new state
                           },
                           onerror: () => {
+                              if (this.imageError) return;    // ← guard: never re-enter
                               this.imageError = true;
-                              this.update();
+                              this.update();                  // one-time swap to error UI
                           },
                       })
             )
