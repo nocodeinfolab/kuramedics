@@ -54,6 +54,7 @@ export default class PatientCare extends Component {
         this.refundSubmitting = false;
         this.refundError = "";
         this.openMenuBookingId = null;
+        this.downloadingBookingId = null;
     }
 
     async afterMount() {
@@ -433,21 +434,33 @@ export default class PatientCare extends Component {
     }
     
     async downloadPrescription(booking) {
+        if (this.downloadingBookingId === booking.id) return;
+    
+        this.downloadingBookingId = booking.id;
+        this.errorMessage = "";
+        this.update();
+    
         try {
-            const blob = await api.getBlob(`/consultations/booking/${booking.id}/prescription-pdf`);
+            
+            const blob = await api.getBlob(
+                `/consultations/booking/${booking.id}/prescription-pdf`,
+                { timeoutMs: 60000 }
+            );
             const url = URL.createObjectURL(blob);
-
+    
             const link = document.createElement("a");
             link.href = url;
             link.download = `prescription-${booking.id}.pdf`;
             document.body.appendChild(link);
             link.click();
             link.remove();
-
+    
             URL.revokeObjectURL(url);
         } catch (error) {
             console.error("Failed to download prescription:", error);
             this.errorMessage = error.message || "Failed to download prescription.";
+        } finally {
+            this.downloadingBookingId = null;
             this.update();
         }
     }
@@ -1181,6 +1194,8 @@ export default class PatientCare extends Component {
     }
 
     renderPrescriptionBlock(medications, booking) {
+        const isDownloading = this.downloadingBookingId === booking.id;
+    
         return h(
             "div",
             { class: "pc-notes-block pc-notes-block--prescription" },
@@ -1200,13 +1215,16 @@ export default class PatientCare extends Component {
                     {
                         type: "button",
                         class: "pc-prescription-download",
+                        disabled: isDownloading,
                         onclick: e => {
                             e.stopPropagation();
                             this.downloadPrescription(booking);
                         },
                     },
-                    icon(["M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4", "M7 10l5 5 5-5", "M12 15V3"], 14),
-                    h("span", null, "PDF")
+                    isDownloading
+                        ? h("span", { class: "pc-download-spinner" })
+                        : icon(["M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4", "M7 10l5 5 5-5", "M12 15V3"], 14),
+                    h("span", null, isDownloading ? "Preparing…" : "PDF")
                 )
             ),
             h(
