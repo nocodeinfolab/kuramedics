@@ -106,9 +106,8 @@
   transform: translateX(-30px);
 }
 .landing__brand-tagline {
-  margin: 0;
-  padding-left: 0.22em; 
-  margin-left: 12px;
+  margin: 0; 
+  margin-left: 0;
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.22em;
@@ -419,4 +418,9 @@
   /* ----- Footer ----- */
 
   .landing__legal { padding: 16px 40px 28px; }
+}
+@media (min-width: 900px) {
+  .landing__brand-tagline {
+    transform: translateY(4px);
+  }
 }
