@@ -70,6 +70,8 @@ export default class PatientRecords extends Component {
         // Per-patient notes state: { rows: [], page, hasMore, totalCount, loading, loadingMore }
         this.notesByPatient = {};
         this.notesError = "";
+        this.downloadingBookingId = null;
+        
     }
 
     async afterMount() {
@@ -552,6 +554,8 @@ export default class PatientRecords extends Component {
     }
 
     renderMedicationsList(medications, note) {
+        const isDownloading = this.downloadingBookingId === note.booking_id;
+    
         return h(
             "div",
             { class: "pr-meds" },
@@ -564,13 +568,16 @@ export default class PatientRecords extends Component {
                     {
                         type: "button",
                         class: "pr-meds__download",
+                        disabled: isDownloading,
                         onclick: e => {
                             e.stopPropagation();
                             this.downloadPrescription(note);
                         },
                     },
-                    icon(PI.download, 14),
-                    h("span", {}, "Download")
+                    isDownloading
+                        ? h("span", { class: "pr-download-spinner" })
+                        : icon(PI.download, 14),
+                    h("span", {}, isDownloading ? "Preparing…" : "Download")
                 )
             ),
             medications.map(med => this.renderMedicationCard(med))
@@ -590,25 +597,36 @@ export default class PatientRecords extends Component {
     }
 
     async downloadPrescription(note) {
+        if (this.downloadingBookingId === note.booking_id) return;
+    
+        this.downloadingBookingId = note.booking_id;
+        this.notesError = "";
+        this.update();
+    
         try {
-            const blob = await api.getBlob(`/consultations/booking/${note.booking_id}/prescription-pdf`);
+            
+            const blob = await api.getBlob(
+                `/consultations/booking/${note.booking_id}/prescription-pdf`,
+                { timeoutMs: 60000 }
+            );
             const url = URL.createObjectURL(blob);
-
+    
             const link = document.createElement("a");
             link.href = url;
             link.download = `prescription-${note.booking_id}.pdf`;
             document.body.appendChild(link);
             link.click();
             link.remove();
-
+    
             URL.revokeObjectURL(url);
         } catch (error) {
             console.error("Failed to download prescription:", error);
             this.notesError = error.message || "Failed to download prescription.";
+        } finally {
+            this.downloadingBookingId = null;
             this.update();
         }
     }
-
     update() {
         if (!this.el) return;
         const focus = captureFocus(this.el);
