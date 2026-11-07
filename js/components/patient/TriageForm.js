@@ -28,11 +28,16 @@ const CHIEF_COMPLAINT_STEP = {
 const TYPING_DELAY_MS = 650;
 
 export default class TriageForm extends Component {
-    constructor(patient, onContinue) {
+    constructor(patient, onContinue, options = {}) {
         super();
         this.patient = patient ?? {};
         this.onContinue = onContinue;
-
+        this.options = {
+            continueLabel: null,
+            skipLabel: null,
+            ...options,
+        };
+    
         this.steps = [CHIEF_COMPLAINT_STEP];
         this.stepIndex = 0;
         this.answers = {};
@@ -289,7 +294,7 @@ export default class TriageForm extends Component {
                           onclick: () => this.skipToAllDoctors(),
                       },
                       icon(["M9 18l6-6-6-6"], 16),
-                      h("span", null, "Skip — browse all doctors instead")
+                      h("span", null, this.options.skipLabel || "Skip — browse all doctors instead")
                   )
                 : null
         );
@@ -496,7 +501,11 @@ export default class TriageForm extends Component {
                         onclick: () => this.continueToDoctors(),
                     },
                     icon(["M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16", "M21 21l-4.35-4.35"], 16),
-                    h("span", null, `Find ${result.suggested_specialization || "a"} doctors`)
+                    h(
+                        "span",
+                        null,
+                        this.options.continueLabel || `Find ${result.suggested_specialization || "a"} doctors`
+                    )
                 ),
                 h(
                     "button",
