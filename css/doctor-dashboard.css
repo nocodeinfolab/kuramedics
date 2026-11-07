@@ -2833,3 +2833,87 @@
     font-size: 0.88rem;
   }
 }
+/* =====================================================================
+   27. QUEUE PAGE — booking card: content | stacked actions column
+   Mobile (max-width: 899px) is untouched.
+   ===================================================================== */
+
+@media (min-width: 900px) {
+
+  /* ----- Body: two-column flex ----- */
+  .doctor-dashboard .queue-page .booking-card__body {
+    display: flex;
+    gap: var(--space-5);
+    align-items: flex-start;
+    margin-top: var(--space-4);
+  }
+
+  /* ----- Left column: details + reason + notes ----- */
+  .doctor-dashboard .queue-page .booking-card__content {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+  }
+
+  /* Details stack vertically, aligned left */
+  .doctor-dashboard .queue-page .booking-card__content .booking-card__details {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    margin-top: 0;
+    padding: var(--space-4);
+    background: var(--color-bg-soft);
+    border-radius: var(--radius-md);
+  }
+
+  /* Reason and refund note: no extra top margin — content gap handles it */
+  .doctor-dashboard .queue-page .booking-card__content .booking-reason {
+    margin-top: 0;
+  }
+  .doctor-dashboard .queue-page .booking-card__content .booking-card__note--refund {
+    margin-top: 0;
+  }
+
+  /* ----- Right column: actions stack vertically ----- */
+  .doctor-dashboard .queue-page .booking-card__body > .card-actions {
+    flex: 0 0 auto;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: var(--space-2);
+    margin-top: 0;
+    min-width: 160px;
+  }
+
+  .doctor-dashboard .queue-page .booking-card__body > .card-actions .btn {
+    width: 100%;
+    min-width: 0;
+    padding: 0.7rem 1.2rem;
+    font-size: 0.85rem;
+    border-radius: var(--radius-pill);
+  }
+
+  /* ----- Full-width bits below the body: paid hint + expanded form ----- */
+  .doctor-dashboard .queue-page .booking-card > .booking-card__note {
+    margin-top: var(--space-4);
+  }
+
+  /* Expanded action form gets a cleaner frame now that it's below a two-column body */
+  .doctor-dashboard .queue-page .booking-card > div:last-child:not([class]) {
+    grid-column: unset; /* safety in case some earlier rule applies */
+  }
+
+  /* ----- Head: subtle polish ----- */
+  .doctor-dashboard .queue-page .booking-card__head {
+    align-items: center;
+  }
+  .doctor-dashboard .queue-page .booking-card__avatar {
+    width: 52px;
+    height: 52px;
+    font-size: 1.05rem;
+  }
+  .doctor-dashboard .queue-page .booking-card__name {
+    font-size: 1.05rem;
+  }
+}
