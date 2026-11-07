@@ -261,8 +261,9 @@ export default class DashboardHome extends Component {
             this.renderStatistics(),
             this.renderSubscription(),
             this.renderVerification(),
-            this.renderRecentActivity(),
-            this.renderQuickActions()
+            this.renderQuickActions(),
+            this.renderRecentActivity()
+            
             
         );
     }
