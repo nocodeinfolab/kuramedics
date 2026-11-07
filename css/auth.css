@@ -670,8 +670,7 @@
   .auth-hero {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 460px);
-    /* brand | spacer | title | lead | providers | divider | switch | spacer
-       The two flexible spacers centre the content below the logo. */
+    
     grid-template-rows:
       auto
       minmax(32px, 0.8fr)
@@ -684,12 +683,9 @@
     text-align: left;
   }
 
-  /* Flatten the plain wrapper div that holds all the hero children */
   .auth-hero > div {
     display: contents;
   }
-
-  /* ----- Brand: top-left, like a site header ----- */
 
   .auth-brand {
     grid-column: 1 / -1;
@@ -700,7 +696,7 @@
     margin: 0;
   }
   .auth-brand-mark {
-    width: 150px;
+    width: 220px;
     max-width: none;
     transform: none;   /* the mobile nudge is only for centring */
   }
@@ -709,6 +705,7 @@
     padding-left: 16px;
     border-left: 1px solid var(--color-line-strong);
     line-height: 1.4;
+    padding-top: 20px;
   }
 
   /* ----- Left column: illustration, vertically centred ----- */
