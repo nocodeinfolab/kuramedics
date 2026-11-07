@@ -4,6 +4,7 @@ import GoogleAuth from "./GoogleAuth.js";
 import pushNotifications from "../../services/pushNotifications.js";
 import api from "../../services/api.js";
 import { reconcilePendingPayment } from "../../services/deepLinkHandler.js";
+import { isIOS } from "../../utils/platform.js";
 
 // Backend routes for authService.requestLoginOtp / verifyLoginOtp:
 //   POST /auth/otp/request  { email, role } -> { message, isNewAccount }
@@ -206,19 +207,21 @@ export class PatientLoginPage extends Component {
       "div",
       { class: "auth-provider-list" },
       h("div", { id: "google-login-btn", class: "google-btn-container" }),
-      h(
-        "button",
-        {
-          type: "button",
-          class: "auth-provider-btn",
-          disabled: true,
-          "aria-disabled": "true",
-          title: "Sign in with Apple — coming soon"
-        },
-        AppleIcon(),
-        h("span", { class: "auth-provider-btn__label" }, "Sign in with Apple"),
-        h("span", { class: "auth-provider-btn__arrow" }, ArrowIcon())
-      ),
+      isIOS()
+        ? h(
+            "button",
+            {
+              type: "button",
+              class: "auth-provider-btn",
+              disabled: true,
+              "aria-disabled": "true",
+              title: "Sign in with Apple — coming soon"
+            },
+            Icons.apple(),                       // patient page: AppleIcon()
+            h("span", { class: "auth-provider-btn__label" }, "Sign in with Apple"),
+            h("span", { class: "auth-provider-btn__arrow" }, Icons.arrow())  // patient: ArrowIcon()
+          )
+        : null,
       h(
         "button",
         {
