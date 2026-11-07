@@ -98,16 +98,6 @@ export default class BookingForm extends Component {
             : service.first_time_price_amount;
     }
     // ---------- Schedule helpers ----------
-
-    formatTimeLabel(time24) {
-        if (!time24 || typeof time24 !== "string") return "";
-        const [hh, mm] = time24.split(":");
-        const hour = Number(hh);
-        if (!Number.isInteger(hour)) return time24;
-        const ampm = hour >= 12 ? "PM" : "AM";
-        const h12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-        return mm === "00" ? `${h12} ${ampm}` : `${h12}:${mm} ${ampm}`;
-    }
     
     getScheduleLines(schedule) {
         if (!schedule || typeof schedule !== "object") return [];
@@ -964,7 +954,21 @@ export default class BookingForm extends Component {
                         "aria-label": "Choose a day",
                         onscroll: (e) => this.handleDayStripScroll(e),
                     },
-                    ...dayRows.map(row => /* ... existing chip rendering ... */)
+                    ...dayRows.map(row =>
+                        h(
+                            "button",
+                            {
+                                type: "button",
+                                class: `bf-day-chip${!row.isAvailable ? " bf-day-chip--disabled" : ""}${selectedDay === row.dateStr ? " bf-day-chip--selected" : ""}`,
+                                disabled: !row.isAvailable,
+                                role: "radio",
+                                "aria-checked": selectedDay === row.dateStr ? "true" : "false",
+                                onclick: () => this.setSelectedDay(row.dateStr),
+                            },
+                            h("span", { class: "bf-day-chip__weekday" }, SHORT_WEEKDAY[row.date.getDay()]),
+                            h("span", { class: "bf-day-chip__num" }, String(row.date.getDate()))
+                        )
+                    ),
                 ),
                 h("div", { class: "bf-day-strip-fade bf-day-strip-fade--left", "aria-hidden": "true" }),
                 h("div", { class: "bf-day-strip-fade bf-day-strip-fade--right", "aria-hidden": "true" }),
