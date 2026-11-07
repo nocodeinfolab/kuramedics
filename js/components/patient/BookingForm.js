@@ -39,6 +39,7 @@ export default class BookingForm extends Component {
 
         this.submitting = false;
         this.submitError = "";
+        this.triageActive = false;
     }
 
     async afterMount() {
@@ -425,10 +426,159 @@ export default class BookingForm extends Component {
             this.update();
         }
     }
+    // ---------- Optional triage ----------
+
+    async openTriage() {
+        this.triageActive = true;
+        this.update();
+    
+        // Wait one frame for the DOM to contain #booking-triage-container
+        await new Promise((r) => requestAnimationFrame(r));
+    
+        const container = this.el?.querySelector("#booking-triage-container");
+        if (!container) {
+            console.error("[BookingForm] triage container missing after update");
+            return;
+        }
+    
+        // Dynamic import — TriageForm isn't needed until the patient taps
+        // "Add symptom details", so it doesn't need to be in the initial bundle.
+        const { default: TriageForm } = await import("./TriageForm.js");
+    
+        new TriageForm(
+            this.patient,
+            (result) => this.handleTriageComplete(result),
+            {
+                continueLabel: "Save & continue to booking",
+                skipLabel: "Skip — book without describing symptoms",
+            }
+        ).mount(container);
+    }
+    
+    handleTriageComplete(result) {
+        this.triageResult = result;
+        this.triageActive = false;
+        this.update();
+    }
+    
+    renderTriageSection() {
+        if (this.triageResult) {
+            return this.renderTriageSummary(this.triageResult);
+        }
+        return this.renderTriagePrompt();
+    }
+    
+    renderTriagePrompt() {
+        return h(
+            "div",
+            { class: "bf-triage-prompt" },
+            h(
+                "div",
+                { class: "bf-triage-prompt__icon" },
+                icon(
+                    [
+                        "M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z",
+                    ],
+                    20
+                )
+            ),
+            h(
+                "div",
+                { class: "bf-triage-prompt__body" },
+                h(
+                    "p",
+                    { class: "bf-triage-prompt__title" },
+                    "Tell your doctor what's going on (optional)"
+                ),
+                h(
+                    "p",
+                    { class: "bf-triage-prompt__text" },
+                    "Answer a few quick questions and we'll add a summary to your booking so your doctor is prepared."
+                )
+            ),
+            h(
+                "button",
+                {
+                    type: "button",
+                    class: "bf-triage-prompt__btn",
+                    onclick: () => this.openTriage(),
+                },
+                h("span", null, "Start"),
+                icon(["M5 12h14", "M12 5l7 7-7 7"], 14)
+            )
+        );
+    }
+    
+    renderTriageSummary(triage) {
+        const urgencyTone =
+            triage.urgency_level === "high" ? "danger"
+            : triage.urgency_level === "medium" ? "warning"
+            : "success";
+        const urgencyLabel = {
+            low: "Low urgency",
+            medium: "Medium urgency",
+            high: "High urgency",
+        }[triage.urgency_level] || "Not assessed";
+    
+        return h(
+            "div",
+            { class: "bf-triage-summary" },
+            h(
+                "div",
+                { class: "bf-triage-summary__head" },
+                h("p", { class: "bf-triage-summary__eyebrow" }, "Symptoms noted"),
+                h("span", { class: `tf-chip tf-chip--${urgencyTone}` }, urgencyLabel)
+            ),
+            triage.red_flag
+                ? h(
+                      "p",
+                      { class: "bf-triage-summary__redflag" },
+                      triage.red_flag_message ||
+                          "This may be a medical emergency. Please seek urgent or emergency care."
+                  )
+                : null,
+            triage.symptoms?.length
+                ? h(
+                      "div",
+                      { class: "tf-tags bf-triage-summary__tags" },
+                      triage.symptoms.map((s) => h("span", { class: "tf-tag" }, s))
+                  )
+                : null,
+            triage.patient_summary
+                ? h(
+                      "p",
+                      { class: "bf-triage-summary__text" },
+                      triage.patient_summary
+                  )
+                : null,
+            h(
+                "div",
+                { class: "bf-triage-summary__actions" },
+                h(
+                    "button",
+                    {
+                        type: "button",
+                        class: "bf-triage-summary__edit",
+                        onclick: () => this.openTriage(),
+                    },
+                    "Edit answers"
+                )
+            )
+        );
+    }
 
     // ---------- Render ----------
 
     render() {
+        if (this.triageActive) {
+           
+            return h(
+                "div",
+                { class: "booking-form" },
+                h("div", { id: "booking-triage-container" })
+            );
+        }
+    
         return h(
             "div",
             { class: "booking-form" },
@@ -510,6 +660,7 @@ export default class BookingForm extends Component {
                       h("p", { class: "bf-alert-text" }, this.submitError)
                   )
                 : null,
+            this.renderTriageSection(),
 
             h(
                 "div",
