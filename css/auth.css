@@ -774,3 +774,9 @@
     padding: var(--space-8) var(--space-7);
   }
 }
+@media (min-width: 900px) {
+  .auth-hero-illustration {
+    justify-self: start;  
+    margin-left: 10px;     
+  }
+}
