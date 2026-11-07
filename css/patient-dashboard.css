@@ -5817,8 +5817,28 @@
     pointer-events: auto;
 }
 
-/* Subtle press feedback */
+
 .booking-form .bf-day-strip-arrow:active {
     transform: translateY(-50%) scale(0.92);
     background: rgba(255, 255, 255, 1);
+}
+
+.patient-care .pc-download-spinner {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid rgba(15, 23, 42, 0.15);
+    border-top-color: var(--color-primary);
+    animation: pc-download-spin 0.7s linear infinite;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+@keyframes pc-download-spin {
+    to { transform: rotate(360deg); }
+}
+
+.patient-care .pc-prescription-download:disabled {
+    opacity: 0.7;
+    cursor: progress;
 }
