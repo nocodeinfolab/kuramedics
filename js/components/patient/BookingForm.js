@@ -462,9 +462,8 @@ export default class BookingForm extends Component {
     }
     
     renderTriageSection() {
-        if (this.triageResult) {
-            return this.renderTriageSummary(this.triageResult);
-        }
+    
+        if (this.triageResult) return null;
         return this.renderTriagePrompt();
     }
     
