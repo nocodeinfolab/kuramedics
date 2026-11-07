@@ -5,7 +5,7 @@ import { h } from "../../../utils/dom.js";
 import api from "../../../services/api.js";
 import { captureFocus, restoreFocus } from "../../../utils/focus.js";
 
-const SECTION_ORDER = ["Outcome", "Plan", "Follow-up"];
+const SECTION_ORDER = ["Provisional diagnosis", "Plan", "Follow-up"];
 const PATIENTS_PAGE_LIMIT = 20;
 const NOTES_PAGE_LIMIT = 5;
 const icon = (paths, size = 18) =>
