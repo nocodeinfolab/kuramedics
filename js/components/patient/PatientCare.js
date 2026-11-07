@@ -21,7 +21,7 @@ const STATUS_LABELS = {
     cancelled: "Cancelled",
 };
 
-const SECTION_ORDER = ["Outcome", "Plan", "Follow-up"];
+const SECTION_ORDER = ["Provisional diagnosis", "Plan", "Follow-up"];
 
 export default class PatientCare extends Component {
     constructor(patient, onOpenConversation, initialTab = "upcoming", onNavigate = null) {
@@ -1108,7 +1108,7 @@ export default class PatientCare extends Component {
         
         const getSectionBody = (title) => sections.find(s => s.title === title)?.body;
 
-        const outcomeBody = getSectionBody("Outcome");
+        const outcomeBody = getSectionBody("Provisional diagnosis");
         const planBody = getSectionBody("Plan");
         const followUpBody = getSectionBody("Follow-up");
 
@@ -1119,7 +1119,7 @@ export default class PatientCare extends Component {
             
             outcomeBody ? this.renderNoteBlock(
                 "outcome", 
-                "Outcome", 
+                "Provisional diagnosis", 
                 ["M22 11.08V12a10 10 0 1 1-5.93-9.14", "M22 4L12 14.01l-3-3"], 
                 outcomeBody
             ) : null,
