@@ -253,6 +253,28 @@ export default class BookingForm extends Component {
         this.bookingDate = `${dayStr}T${timeStr}`;
         this.update();
     }
+    handleDayStripScroll(e) {
+        const strip = e?.currentTarget;
+        if (!strip) return;
+    
+        const wrap = strip.closest(".bf-day-strip-wrap");
+        if (!wrap) return;
+    
+        const max = strip.scrollWidth - strip.clientWidth;
+        const atStart = strip.scrollLeft <= 1;
+        const atEnd = max > 0 && strip.scrollLeft >= max - 1;
+        const scrollable = max > 5;   // small threshold — avoids flapping on 1px rounding
+    
+        wrap.classList.toggle("is-scrollable", scrollable);
+        wrap.classList.toggle("is-at-start", atStart);
+        wrap.classList.toggle("is-at-end", atEnd);
+    
+        const bar = wrap.querySelector(".bf-day-strip-progress__bar");
+        if (bar) {
+            const ratio = max > 0 ? strip.scrollLeft / max : 0;
+            bar.style.width = `${Math.max(0, Math.min(100, ratio * 100))}%`;
+        }
+    }
     
     findFirstAvailableSlot(service) {
         for (const day of this.getNextNDays(14)) {
@@ -487,7 +509,7 @@ export default class BookingForm extends Component {
                 h(
                     "p",
                     { class: "bf-triage-prompt__title" },
-                    "Tell your doctor what's going on (optional)"
+                    "Tell your doctor what's going on (Recommended)"
                 ),
                 h(
                     "p",
@@ -919,24 +941,40 @@ export default class BookingForm extends Component {
             ),
             h("p", { class: "bf-pick-hint" }, "Select from available date and time slots below"),
     
-            // Day strip
+            
             h(
                 "div",
-                { class: "bf-day-strip", role: "radiogroup", "aria-label": "Choose a day" },
-                ...dayRows.map(row =>
-                    h(
-                        "button",
-                        {
-                            type: "button",
-                            class: `bf-day-chip${!row.isAvailable ? " bf-day-chip--disabled" : ""}${selectedDay === row.dateStr ? " bf-day-chip--selected" : ""}`,
-                            disabled: !row.isAvailable,
-                            role: "radio",
-                            "aria-checked": selectedDay === row.dateStr ? "true" : "false",
-                            onclick: () => this.setSelectedDay(row.dateStr),
-                        },
-                        h("span", { class: "bf-day-chip__weekday" }, SHORT_WEEKDAY[row.date.getDay()]),
-                        h("span", { class: "bf-day-chip__num" }, String(row.date.getDate()))
+                { class: "bf-day-strip-wrap" },
+                h(
+                    "div",
+                    {
+                        class: "bf-day-strip",
+                        role: "radiogroup",
+                        "aria-label": "Choose a day",
+                        onscroll: (e) => this.handleDayStripScroll(e),
+                    },
+                    ...dayRows.map(row =>
+                        h(
+                            "button",
+                            {
+                                type: "button",
+                                class: `bf-day-chip${!row.isAvailable ? " bf-day-chip--disabled" : ""}${selectedDay === row.dateStr ? " bf-day-chip--selected" : ""}`,
+                                disabled: !row.isAvailable,
+                                role: "radio",
+                                "aria-checked": selectedDay === row.dateStr ? "true" : "false",
+                                onclick: () => this.setSelectedDay(row.dateStr),
+                            },
+                            h("span", { class: "bf-day-chip__weekday" }, SHORT_WEEKDAY[row.date.getDay()]),
+                            h("span", { class: "bf-day-chip__num" }, String(row.date.getDate()))
+                        )
                     )
+                ),
+                h("div", { class: "bf-day-strip-fade bf-day-strip-fade--left", "aria-hidden": "true" }),
+                h("div", { class: "bf-day-strip-fade bf-day-strip-fade--right", "aria-hidden": "true" }),
+                h(
+                    "div",
+                    { class: "bf-day-strip-progress", "aria-hidden": "true" },
+                    h("div", { class: "bf-day-strip-progress__bar" })
                 )
             ),
     
@@ -1038,7 +1076,22 @@ export default class BookingForm extends Component {
 
     update() {
         if (!this.el) return;
+    
+        const previousStrip = this.el.querySelector(".bf-day-strip");
+        const previousScrollLeft = previousStrip?.scrollLeft || 0;
+    
         const newTree = this.render();
         this.el.replaceChildren(...(Array.isArray(newTree) ? newTree : [newTree]).flat());
+    
+        // Restore scroll position on the freshly-rendered strip.
+        if (previousScrollLeft > 0) {
+            const newStrip = this.el.querySelector(".bf-day-strip");
+            if (newStrip) newStrip.scrollLeft = previousScrollLeft;
+        }
+    
+        requestAnimationFrame(() => {
+            const strip = this.el?.querySelector(".bf-day-strip");
+            if (strip) this.handleDayStripScroll({ currentTarget: strip });
+        });
     }
 }
