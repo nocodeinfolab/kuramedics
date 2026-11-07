@@ -3,7 +3,7 @@
 const API_BASE_URL =
     "https://doctors-consultation-backend.onrender.com/api/v1";
 
-const REQUEST_TIMEOUT_MS = 20000; // any single request gives up after 20s
+const REQUEST_TIMEOUT_MS = 60000; 
 
 class ApiService {
 
