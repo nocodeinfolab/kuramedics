@@ -421,230 +421,6 @@
   .doctor-dashboard .dashboard-hero-meta { margin-top: 6px; gap: 6px; }
 }
 
-/* =====================================================================
-   7. DESKTOP HEADER OVERRIDES  (>= 900px)
-   Header becomes an in-flow page hero instead of a fixed banner.
-   ===================================================================== */
-
-/* =====================================================================
-   DESKTOP HEADER OVERRIDES (>= 900px)
-   Converts the mobile gradient banner into a professional light header.
-   ===================================================================== */
-
-@media (min-width: 900px) {
-
-  /* ----- 1. Base: every desktop header becomes a light card ----- */
-  .doctor-dashboard .dashboard-header {
-    background: var(--color-white);
-    background-image: none;
-    color: var(--color-ink);
-    border: 1px solid var(--color-line);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-card);
-    padding: var(--space-6) var(--space-7);
-    margin-bottom: var(--space-6);
-    overflow: visible;
-  }
-
-  /* Kill the home hero's decorative gradient rings */
-  .doctor-home .dashboard-header::before,
-  .doctor-home .dashboard-header::after {
-    display: none;
-  }
-
-  /* ----- 2. Typography: white → ink --------------------------- */
-  .doctor-dashboard .dashboard-header .dashboard-greeting {
-    color: var(--color-ink-faint);
-    font-size: 0.72rem;
-    letter-spacing: 0.1em;
-    padding-top: 0;
-    margin-bottom: 4px;
-  }
-  .doctor-dashboard .dashboard-header .dashboard-title {
-    color: var(--color-ink);
-    font-size: 1.55rem;
-    letter-spacing: -0.015em;
-    line-height: 1.2;
-  }
-  .doctor-dashboard .dashboard-header .dashboard-subtitle {
-    color: var(--color-ink-soft);
-    font-size: 0.9rem;
-    margin-top: 4px;
-    white-space: normal;
-    overflow: visible;
-    text-overflow: unset;
-  }
-
-  /* ----- 3. Chips: glass → solid colored pills ---------------- */
-  .doctor-dashboard .dashboard-header .hero-chip {
-    background: var(--color-bg-soft);
-    border: 1px solid var(--color-line);
-    color: var(--color-ink-soft);
-    -webkit-backdrop-filter: none;
-    backdrop-filter: none;
-    font-size: 0.78rem;
-    padding: 0.42rem 0.85rem 0.42rem 0.7rem;
-  }
-  .doctor-dashboard .dashboard-header .hero-chip--success {
-    background: #e7f7ef;
-    border-color: #b9e6d0;
-    color: #0f6b4b;
-  }
-  .doctor-dashboard .dashboard-header .hero-chip--warning {
-    background: rgba(234, 179, 8, 0.14);
-    border-color: rgba(234, 179, 8, 0.4);
-    color: #92400e;
-  }
-  .doctor-dashboard .dashboard-header .hero-chip--danger {
-    background: #fdecea;
-    border-color: #f5c6c2;
-    color: #b3261e;
-  }
-  .doctor-dashboard .dashboard-header .hero-chip--plan {
-    background: var(--color-primary-soft);
-    border-color: var(--color-primary-line);
-    color: var(--color-primary-dark);
-  }
-  .doctor-dashboard .dashboard-header .hero-chip__dot {
-    background: currentColor;
-    opacity: 0.7;
-    box-shadow: none !important;
-  }
-
-  /* ----- 4. Home hero: avatar + name left, chips right ------- */
-  .doctor-home .dashboard-header {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    align-items: center;
-    gap: var(--space-6);
-    padding: var(--space-6) var(--space-7);
-  }
-  .doctor-home .hero-top {
-    grid-column: 1;
-    align-items: center;
-  }
-  .doctor-home .hero-avatar {
-    width: 56px;
-    height: 56px;
-    background: var(--color-primary-soft);
-    box-shadow: 0 0 0 1px var(--color-primary-line);
-  }
-  .doctor-home .hero-avatar__initial {
-    color: var(--color-primary);
-    font-size: 1.3rem;
-  }
-  .doctor-home .dashboard-hero-meta {
-    grid-column: 2;
-    margin-top: 0;
-    align-self: center;
-    justify-content: flex-end;
-    gap: var(--space-2);
-  }
-
-  /* ----- 5. Queue + messages-list: title left, chips right --- */
-  .doctor-dashboard .queue-page > .dashboard-header:not(.mp-thread-head) {
-    display: grid;
-    grid-template-columns: 1fr auto;
-    align-items: end;
-    column-gap: var(--space-6);
-    row-gap: 2px;
-  }
-  .doctor-dashboard .queue-page > .dashboard-header:not(.mp-thread-head) > .dashboard-greeting {
-    grid-column: 1; grid-row: 1;
-  }
-  .doctor-dashboard .queue-page > .dashboard-header:not(.mp-thread-head) > .dashboard-title {
-    grid-column: 1; grid-row: 2;
-  }
-  .doctor-dashboard .queue-page > .dashboard-header:not(.mp-thread-head) > .dashboard-subtitle {
-    grid-column: 1; grid-row: 3;
-    max-width: 60ch;
-  }
-  .doctor-dashboard .queue-page > .dashboard-header:not(.mp-thread-head) > .dashboard-hero-meta {
-    grid-column: 2;
-    grid-row: 1 / span 3;
-    margin-top: 0;
-    align-self: end;
-    justify-content: flex-end;
-    flex-wrap: wrap;
-  }
-
-  /* ----- 6. Page-hero (profile / services / sub / card) ------ */
-  .doctor-dashboard .dashboard-header.page-hero {
-    padding: var(--space-5) var(--space-6);
-    gap: var(--space-3);
-    height: auto;
-    min-height: 0;
-  }
-  .doctor-dashboard .page-hero__back {
-    background: var(--color-bg-soft);
-    color: var(--color-ink-soft);
-    border: 1px solid var(--color-line);
-    font-size: 0.82rem;
-    padding: 6px 12px 6px 10px;
-  }
-  .doctor-dashboard .page-hero__back:hover,
-  .doctor-dashboard .page-hero__back:active {
-    background: var(--color-line);
-  }
-  .doctor-dashboard .page-hero__title {
-    color: var(--color-ink);
-    font-size: 1.6rem;
-  }
-  .doctor-dashboard .page-hero__subtitle {
-    color: var(--color-ink-soft);
-    font-size: 0.9rem;
-    max-width: 60ch;
-  }
-  .doctor-dashboard .page-hero__status {
-    background: var(--color-bg-soft);
-    color: var(--color-ink-soft);
-    border: 1px solid var(--color-line);
-  }
-  .doctor-dashboard .page-hero__status--verified {
-    background: #e7f7ef; color: #0f6b4b; border-color: #b9e6d0;
-  }
-  .doctor-dashboard .page-hero__status--pending_review {
-    background: rgba(234, 179, 8, 0.14); color: #92400e; border-color: rgba(234, 179, 8, 0.4);
-  }
-  .doctor-dashboard .page-hero__status--suspended {
-    background: #fdecea; color: #b3261e; border-color: #f5c6c2;
-  }
-
-  /* ----- 7. Chat thread header: back + avatar + name + chip --- */
-  .doctor-messages .dashboard-header.mp-thread-head {
-    padding: var(--space-4) var(--space-5);
-    gap: var(--space-3);
-  }
-  .doctor-messages .mp-back {
-    background: var(--color-bg-soft);
-    color: var(--color-ink-soft);
-    border: 1px solid var(--color-line);
-    width: 36px;
-    height: 36px;
-  }
-  .doctor-messages .mp-back:hover,
-  .doctor-messages .mp-back:active {
-    background: var(--color-line);
-  }
-  .doctor-messages .mp-avatar--light {
-    color: var(--color-primary);
-    background: var(--color-primary-soft);
-    border-color: var(--color-primary-line);
-    width: 40px;
-    height: 40px;
-    font-size: 0.85rem;
-  }
-  .doctor-messages .mp-thread-head .dashboard-title {
-    color: var(--color-ink);
-    font-size: 1.1rem;
-  }
-}
-
-/* =====================================================================
-   8. PAGE HERO  (sub-pages like Profile / Services / Subscription / Card)
-   Base rule applies to all viewports; mobile-only calc is scoped out.
-   ===================================================================== */
-
 .doctor-dashboard .dashboard-header.page-hero {
   display: flex;
   flex-direction: column;
@@ -2321,3 +2097,110 @@
 }
 .doctor-messages .mp-bubble-file-size { font-size: 0.7rem; opacity: 0.72; }
 .doctor-messages .mp-bubble-caption { margin: 6px 4px 2px; font-size: 0.85rem; line-height: 1.4; }
+/* =====================================================================
+   DESKTOP HEADERS — keep the purple gradient, restructure the layout
+   Applies to Home, Queue, Messages-list, Page-hero, Thread head.
+   Mobile (max-width: 899px) is completely untouched.
+   ===================================================================== */
+
+@media (min-width: 900px) {
+
+  /* ----- 1. Base desktop header: more generous padding ----- */
+  .doctor-dashboard .dashboard-header {
+    padding: var(--space-7) var(--space-8);
+    margin-bottom: var(--space-6);
+    border-radius: var(--radius-xl);
+  }
+
+  /* ----- 2. Home hero: two-column (identity | chips) ----- */
+  .doctor-home .dashboard-header {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: center;
+    gap: var(--space-6);
+  }
+  .doctor-home .hero-top { grid-column: 1; }
+
+  .doctor-home .hero-avatar {
+    width: 72px;
+    height: 72px;
+  }
+  .doctor-home .hero-avatar__initial { font-size: 1.75rem; }
+
+  .doctor-home .dashboard-title { font-size: 1.75rem; }
+  .doctor-home .dashboard-subtitle {
+    font-size: 0.95rem;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+  }
+
+  .doctor-home .dashboard-hero-meta {
+    grid-column: 2;
+    margin-top: 0;
+    align-self: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  /* Decorative rings — scale them for the wider card */
+  .doctor-home .dashboard-header::before {
+    width: 300px; height: 300px;
+    right: -100px; bottom: -150px;
+  }
+  .doctor-home .dashboard-header::after {
+    width: 190px; height: 190px;
+    right: -30px; bottom: -95px;
+  }
+
+  /* ----- 3. Queue + Messages-list: title block left, chips right ----- */
+  .doctor-dashboard .queue-page > .dashboard-header:not(.mp-thread-head):not(.page-hero) {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    align-items: end;
+    column-gap: var(--space-6);
+    row-gap: 4px;
+  }
+  .doctor-dashboard .queue-page > .dashboard-header:not(.mp-thread-head):not(.page-hero) > .dashboard-greeting {
+    grid-column: 1; grid-row: 1;
+  }
+  .doctor-dashboard .queue-page > .dashboard-header:not(.mp-thread-head):not(.page-hero) > .dashboard-title {
+    grid-column: 1; grid-row: 2;
+  }
+  .doctor-dashboard .queue-page > .dashboard-header:not(.mp-thread-head):not(.page-hero) > .dashboard-subtitle {
+    grid-column: 1; grid-row: 3;
+    max-width: 60ch;
+    white-space: normal;
+    overflow: visible;
+  }
+  .doctor-dashboard .queue-page > .dashboard-header:not(.mp-thread-head):not(.page-hero) > .dashboard-hero-meta {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    margin-top: 0;
+    align-self: end;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+
+  /* ----- 4. Page-hero (Profile / Services / Subscription / Card) ----- */
+  .doctor-dashboard .dashboard-header.page-hero {
+    padding: var(--space-6) var(--space-7);
+    padding-bottom: var(--space-6);
+    height: auto;
+    min-height: 0;
+    gap: var(--space-3);
+  }
+  .doctor-dashboard .page-hero__title { font-size: 1.75rem; }
+  .doctor-dashboard .page-hero__subtitle {
+    font-size: 0.92rem;
+    max-width: 60ch;
+  }
+
+  /* ----- 5. Chat thread header ----- */
+  .doctor-messages .dashboard-header.mp-thread-head {
+    padding: var(--space-4) var(--space-6);
+    gap: var(--space-3);
+  }
+  .doctor-messages .mp-thread-head .dashboard-title { font-size: 1.15rem; }
+}
