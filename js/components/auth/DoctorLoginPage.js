@@ -3,6 +3,7 @@ import { h } from "../../utils/dom.js";
 import GoogleAuth from "./GoogleAuth.js";
 import pushNotifications from "../../services/pushNotifications.js";
 import api from "../../services/api.js";
+import { isIOS } from "../../utils/platform.js";
 
 // Backend routes for authService.requestLoginOtp / verifyLoginOtp:
 //   POST /auth/otp/request  { email, role } -> { message, isNewAccount }
