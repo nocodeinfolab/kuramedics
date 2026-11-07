@@ -2483,3 +2483,16 @@
     font-size: 1.9rem;
   }
 }
+@media (min-width: 900px) {
+  .doctor-records .pr-card__details {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: var(--space-3) var(--space-6);
+  }
+
+  .doctor-records .pr-detail {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+}
