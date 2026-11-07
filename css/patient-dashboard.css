@@ -5499,13 +5499,13 @@
     right: -30px; top: -90px; bottom: auto;
   }
 
-  /* ----- 4. Home content: 2-column card grid ----- */
+    /* ----- 4. Home content: 2-column card grid ----- */
 
   .patient-dashboard .patient-home .services-list {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
     gap: var(--space-4);
-    align-items: start;
+    /* default align-items: stretch — cards in the same row match height */
   }
 
   .patient-dashboard .patient-home .services-list > * {
@@ -5524,6 +5524,18 @@
     padding: var(--space-5);
   }
 
+  /* Equal-height cards: body absorbs extra space, link sticks to bottom */
+  .patient-dashboard .patient-home .services-list > .ph-card {
+    display: flex;
+    flex-direction: column;
+  }
+  .patient-dashboard .patient-home .services-list > .ph-card .ph-card__row {
+    flex: 1 1 auto;
+  }
+  .patient-dashboard .patient-home .services-list > .ph-card .ph-card__link {
+    margin-top: auto;
+    padding-top: var(--space-3);
+  }
   /* ----- 5. Onboarding: no rail shown, so no rail offset ----- */
 
   /* Redefine --dash-gutter without the rail subtraction */
