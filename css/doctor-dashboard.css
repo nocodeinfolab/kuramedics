@@ -2410,3 +2410,18 @@
   }
   .doctor-dashboard .page-hero__title { font-size: 1.65rem; }
 }
+@media (min-width: 900px) {
+  .doctor-bottom-nav::before {
+    content: "Doctor Portal";
+    display: block;
+    padding: 52px var(--space-4) var(--space-8);
+    background: url("../assets/yeroscarelogo.png") no-repeat
+      left var(--space-4) top 0 / auto 40px;
+  }
+}
+
+@media (min-width: 900px) {
+  .doctor-bottom-nav::before {
+    padding-top: 44px; /* logo height (40px) + 4px gap */
+  }
+}
