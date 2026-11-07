@@ -5388,3 +5388,160 @@
     border-left: 3px solid var(--color-primary);
     background: color-mix(in srgb, var(--color-primary) 4%, var(--color-white));
 }
+
+@media (min-width: 900px) {
+
+  /* ----- Variables (same names as doctor side) ----- */
+  :root {
+    --dash-content-max: 1100px;
+    --dash-gutter: max(
+      var(--space-6),
+      calc((100vw - var(--dash-rail-w) - var(--dash-content-max)) / 2)
+    );
+  }
+
+  /* ----- 1. Shell: rail offset + centred content column ----- */
+
+  /* Regular dashboard: shift everything right of the fixed rail */
+  .patient-dashboard:not(.patient-dashboard--onboarding) {
+    padding-left: var(--dash-rail-w);
+  }
+
+  .patient-dashboard__content {
+    max-width: none;
+    margin: 0;
+    padding: 0 0 var(--space-8);
+  }
+
+  /* Give every tab-wrapper the side gutter + top space */
+  .patient-dashboard__content > .dashboard-page,
+  .patient-dashboard__content > [data-tab-wrapper],
+  .patient-dashboard__content > [data-static-tab] {
+    padding: var(--space-8) var(--dash-gutter) 0;
+  }
+
+  /* Pages starting with a purple hero → flush against viewport top */
+  .patient-dashboard__content > :has(.dashboard-header) {
+    padding-top: 0;
+  }
+
+  /* ----- 2. Rail: logo, no active tint, purple bottom accent ----- */
+
+  .patient-bottom-nav::before {
+    content: "Patient Portal";
+    display: block;
+    padding: 40px var(--space-4) var(--space-8);
+    font-family: var(--font-display);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    letter-spacing: -0.01em;
+    background: url("../assets/yeroscarelogo.png") no-repeat
+      left var(--space-4) top 0 / auto 40px;
+  }
+
+  .patient-bottom-nav__item--active { background: transparent; }
+  .patient-bottom-nav__item:hover { background: var(--color-bg-soft); }
+  .patient-bottom-nav__item--active:hover { background: transparent; }
+
+  .patient-bottom-nav__item::after {
+    content: "";
+    position: absolute;
+    left: var(--space-4);
+    right: var(--space-4);
+    bottom: 2px;
+    height: 2px;
+    border-radius: 999px;
+    background: var(--color-primary);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform var(--duration-fast) var(--ease-out);
+  }
+  .patient-bottom-nav__item--active::after {
+    transform: scaleX(1);
+  }
+
+  /* ----- 3. Full-bleed purple headers (home + onboarding) ----- */
+
+  .patient-dashboard .dashboard-header {
+    position: relative;
+    margin: 0 calc(-1 * var(--dash-gutter)) var(--space-6);
+    padding: var(--space-7) var(--dash-gutter);
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+  }
+
+  /* Home hero: keep the ring decorations, scale them up */
+  .patient-dashboard .patient-home .dashboard-header {
+    overflow: hidden;
+    padding: var(--space-7) var(--dash-gutter);
+  }
+
+  .patient-dashboard .patient-home .ph-hero { gap: var(--space-5); }
+  .patient-dashboard .patient-home .ph-hero__avatar {
+    width: 64px;
+    height: 64px;
+    font-size: 1.6rem;
+  }
+  .patient-dashboard .patient-home .dashboard-title { font-size: 1.65rem; }
+  .patient-dashboard .patient-home .dashboard-subtitle {
+    font-size: 0.95rem;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+  }
+
+  .patient-dashboard .patient-home .dashboard-header::before {
+    width: 320px; height: 320px;
+    right: -90px; top: -150px; bottom: auto;
+  }
+  .patient-dashboard .patient-home .dashboard-header::after {
+    width: 200px; height: 200px;
+    right: -30px; top: -90px; bottom: auto;
+  }
+
+  /* ----- 4. Home content: 2-column card grid ----- */
+
+  .patient-dashboard .patient-home .services-list {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: var(--space-4);
+    align-items: start;
+  }
+
+  .patient-dashboard .patient-home .services-list > * {
+    margin-bottom: 0;
+    min-width: 0;
+  }
+
+  /* Feature callout and inline alerts span the full row */
+  .patient-dashboard .patient-home .services-list > .ph-feature,
+  .patient-dashboard .patient-home .services-list > .ph-alert {
+    grid-column: 1 / -1;
+  }
+
+  /* Paired cards get a bit more breathing room */
+  .patient-dashboard .patient-home .services-list > .ph-card {
+    padding: var(--space-5);
+  }
+
+  /* ----- 5. Onboarding: no rail shown, so no rail offset ----- */
+
+  /* Redefine --dash-gutter without the rail subtraction */
+  .patient-dashboard--onboarding {
+    --dash-gutter: max(
+      var(--space-6),
+      calc((100vw - var(--dash-content-max)) / 2)
+    );
+  }
+
+  /* ----- 6. Messaging thread should fill the viewport ----- */
+
+  .patient-messaging .pm-thread-card {
+    height: calc(100dvh - 2 * var(--space-8) - 24px);
+    min-height: 480px;
+  }
+}
+
+@media (min-width: 1200px) {
+  :root { --dash-content-max: 1200px; }
+}
