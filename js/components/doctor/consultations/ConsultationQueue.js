@@ -822,6 +822,8 @@ export default class DoctorQueuePage extends Component {
         return h(
             "div",
             { class: "dashboard-card service-item-card booking-card" },
+        
+            // 1. Head — unchanged, spans full width
             h(
                 "div",
                 { class: "booking-card__head" },
@@ -834,48 +836,62 @@ export default class DoctorQueuePage extends Component {
                 ),
                 h("span", { class: `status-chip status-chip--${tone}` }, statusLabel)
             ),
+        
+            // 2. Body — flex wrapper (content | actions)
             h(
                 "div",
-                { class: "booking-card__details" },
+                { class: "booking-card__body" },
+        
+                // Left column: details + reason + refund note
                 h(
                     "div",
-                    { class: "booking-detail" },
-                    h("span", { class: "booking-detail__icon" }, icon(QI.calendar, 16)),
+                    { class: "booking-card__content" },
                     h(
                         "div",
-                        {},
-                        h("span", { class: "booking-detail__label" }, "Requested"),
-                        h("span", { class: "booking-detail__value" }, this.formatDateTime(booking.booking_date))
-                    )
-                ),
-                h(
-                    "div",
-                    { class: "booking-detail" },
-                    h("span", { class: "booking-detail__icon" }, icon(QI.service, 16)),
-                    h(
-                        "div",
-                        {},
-                        h("span", { class: "booking-detail__label" }, "Consultation"),
+                        { class: "booking-card__details" },
                         h(
-                            "span",
-                            { class: "booking-detail__value" },
-                            `${booking.consultation_service_name || "General"} · ${this.formatCurrency(booking.consultation_fee_amount)}`
+                            "div",
+                            { class: "booking-detail" },
+                            h("span", { class: "booking-detail__icon" }, icon(QI.calendar, 16)),
+                            h(
+                                "div",
+                                {},
+                                h("span", { class: "booking-detail__label" }, "Requested"),
+                                h("span", { class: "booking-detail__value" }, this.formatDateTime(booking.booking_date))
+                            )
+                        ),
+                        h(
+                            "div",
+                            { class: "booking-detail" },
+                            h("span", { class: "booking-detail__icon" }, icon(QI.service, 16)),
+                            h(
+                                "div",
+                                {},
+                                h("span", { class: "booking-detail__label" }, "Consultation"),
+                                h(
+                                    "span",
+                                    { class: "booking-detail__value" },
+                                    `${booking.consultation_service_name || "General"} · ${this.formatCurrency(booking.consultation_fee_amount)}`
+                                )
+                            )
                         )
-                    )
-                )
+                    ),
+                    this.renderReasonSection(booking),
+                    booking.status === "cancelled" && booking.payment_status === "refunded"
+                        ? h(
+                              "p",
+                              { class: "booking-card__note booking-card__note--refund" },
+                              icon(QI.check, 14),
+                              h("span", {}, "Refund processed to the patient. No action needed.")
+                          )
+                        : null
+                ),
+        
+                // Right column: actions
+                this.renderCardActions(booking, isProcessing)
             ),
-            this.renderReasonSection(booking),
-
-            booking.status === "cancelled" && booking.payment_status === "refunded"
-                ? h(
-                      "p",
-                      { class: "booking-card__note booking-card__note--refund" },
-                      icon(QI.check, 14),
-                      h("span", {}, "Refund processed to the patient. No action needed.")
-                  )
-                : null,
-            
-            this.renderCardActions(booking, isProcessing),
+        
+            // 3. Below the body — full width
             CONFIRMED_STATUSES.includes(booking.status) && booking.payment_status !== "paid"
                 ? h(
                       "p",
@@ -884,6 +900,7 @@ export default class DoctorQueuePage extends Component {
                       h("span", {}, "Messaging, clinical notes and call unlock once the patient completes payment.")
                   )
                 : null,
+        
             isExpanded ? this.renderActionForm(booking, isProcessing) : null
         );
     }
