@@ -1060,7 +1060,7 @@ export default class DoctorQueuePage extends Component {
                 h("p", {
                     class: "dashboard-muted",
                     style: "font-size: 0.72rem; margin-bottom: 10px; font-style: italic;"
-                }, "Outcome, Plan, and Follow-up notes are automatically visible to the patient."),
+                }, "Provisional diagnosis, Plan, and Follow-up notes are automatically visible to the patient."),
             
                 h("label", { style: fieldLabelStyle }, "Raw Notes"),
                 h("p", {
@@ -1077,7 +1077,7 @@ export default class DoctorQueuePage extends Component {
                     }
                 }),
             
-                h("label", { style: fieldLabelStyle }, "Outcome"),
+                h("label", { style: fieldLabelStyle }, "Provisional diagnosis"),
                 h("textarea", {
                     class: "autogrow-textarea",
                     rows: 2,
