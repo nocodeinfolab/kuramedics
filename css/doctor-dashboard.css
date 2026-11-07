@@ -2496,3 +2496,151 @@
     min-width: 0;
   }
 }
+/* =====================================================================
+   24. DOCTOR CARD PAGE
+   Mobile = stacked cards. Desktop (≥1100px) = preview | sticky actions.
+   ===================================================================== */
+
+.doctor-card-page__wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.doctor-card-page__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Inside our flex/grid wrappers, don't double the gap with card margins */
+.doctor-card-page__body > .dashboard-card,
+.doctor-card-page__wrapper > .dashboard-card {
+  margin-bottom: 0;
+}
+
+/* ----- Error banner ----- */
+.doctor-card-page__error-card {
+  border-left: 4px solid #ef4444;
+}
+.doctor-card-page__error-text {
+  margin: 0;
+  color: #ef4444;
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
+/* ----- Preview card ----- */
+.doctor-card-page__preview-card {
+  padding: 1.1rem;
+}
+.doctor-card-page__hint {
+  margin: 0 0 12px;
+  font-size: 0.86rem;
+  line-height: 1.5;
+  color: var(--color-ink-soft);
+}
+.doctor-card-page__preview {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1200 / 630;
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--color-bg-muted, #f1f5f9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.doctor-card-page__preview-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.doctor-card-page__preview-loading {
+  font-size: 0.82rem;
+}
+.doctor-card-page__preview-error {
+  margin: 0;
+  padding: 0 20px;
+  color: #ef4444;
+  font-size: 0.82rem;
+  text-align: center;
+  line-height: 1.45;
+}
+
+/* ----- Actions card ----- */
+.doctor-card-page__actions-card {
+  padding: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.doctor-card-page__actions-card .btn {
+  width: 100%;
+  padding: 0.65rem 1rem;
+  font-size: 0.9rem;
+  border-radius: 8px;
+}
+
+/* ----- Info card ----- */
+.doctor-card-page__info-card {
+  padding: 0.9rem 1rem;
+}
+.doctor-card-page__info-text {
+  margin: 0;
+  font-size: 0.76rem;
+  line-height: 1.5;
+  color: var(--color-ink-faint);
+}
+
+/* ----- Desktop layout ----- */
+@media (min-width: 1100px) {
+  .doctor-card-page__wrapper {
+    gap: var(--space-5);
+  }
+
+  .doctor-card-page__body {
+    display: grid;
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    gap: var(--space-5);
+    align-items: start;
+  }
+
+  /* Preview: roomy card on the left */
+  .doctor-card-page__preview-card {
+    grid-column: 1;
+    padding: var(--space-5);
+  }
+  .doctor-card-page__hint {
+    margin-bottom: var(--space-4);
+    font-size: 0.9rem;
+  }
+  .doctor-card-page__preview {
+    max-width: 720px;
+    margin-inline: auto;
+    border-radius: var(--radius-md);
+  }
+
+  /* Actions: fixed-width sticky column on the right */
+  .doctor-card-page__actions-card {
+    grid-column: 2;
+    position: sticky;
+    top: var(--space-6);
+    padding: var(--space-5);
+    gap: var(--space-3);
+  }
+  .doctor-card-page__actions-card .btn {
+    padding: 0.85rem 1.25rem;
+    font-size: 0.95rem;
+    border-radius: var(--radius-md);
+  }
+
+  /* Info bar spans the full content width at the bottom */
+  .doctor-card-page__info-card {
+    grid-column: 1 / -1;
+    padding: var(--space-4) var(--space-5);
+  }
+  .doctor-card-page__info-text {
+    font-size: 0.82rem;
+  }
+}
