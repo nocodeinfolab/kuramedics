@@ -454,19 +454,28 @@ export default class PatientCare extends Component {
 
     parseDoctorNotes(rawText) {
         if (!rawText || typeof rawText !== "string") return [];
-
-        const sectionRegex = /(Outcome|Plan|Follow-up)\n-+\n([\s\S]*?)(?=\n\n(?:Outcome|Plan|Follow-up)\n-+|\s*$)/g;
+    
+        const HEADER_NAMES = ["Outcome", "Provisional diagnosis", "Plan", "Follow-up"];
+        const HEADER = `(?:${HEADER_NAMES.join("|")})`;
+    
+        const sectionRegex = new RegExp(
+            `(${HEADER})\\n-+\\n([\\s\\S]*?)(?=\\n\\n${HEADER}\\n-+|\\s*$)`,
+            "g"
+        );
+    
         const sections = [];
         let match;
-
+    
         while ((match = sectionRegex.exec(rawText)) !== null) {
-            sections.push({ title: match[1], body: match[2].trim() });
+            
+            const title = match[1] === "Outcome" ? "Provisional diagnosis" : match[1];
+            sections.push({ title, body: match[2].trim() });
         }
-
+    
         if (sections.length === 0) {
             return [{ title: "Notes", body: rawText.trim() }];
         }
-
+    
         return sections.sort(
             (a, b) => SECTION_ORDER.indexOf(a.title) - SECTION_ORDER.indexOf(b.title)
         );
