@@ -251,17 +251,45 @@ export default class DoctorCardPage extends Component {
     render() {
         return h(
             "div",
-            { class: "dashboard-page" },
+            { class: "dashboard-page doctor-card-page" },
             this.renderHeader(),
             !this.doctorId
                 ? h(
                       "div",
-                      { class: "dashboard-card", style: "border-left: 4px solid #ef4444;" },
-                      h("p", { style: "color: #ef4444; margin: 0;" }, "Your doctor profile isn't fully loaded yet. Please try again from Settings.")
+                      { class: "dashboard-card doctor-card-page__error-card" },
+                      h(
+                          "p",
+                          { class: "doctor-card-page__error-text" },
+                          "Your doctor profile isn't fully loaded yet. Please try again from Settings."
+                      )
                   )
-                : this.renderContent()
+                : h(
+                      "div",
+                      { class: "doctor-card-page__wrapper" },
+    
+                      this.downloadError
+                          ? h(
+                                "div",
+                                { class: "dashboard-card doctor-card-page__error-card" },
+                                h(
+                                    "p",
+                                    { class: "doctor-card-page__error-text" },
+                                    this.downloadError
+                                )
+                            )
+                          : null,
+    
+                      h(
+                          "div",
+                          { class: "doctor-card-page__body" },
+                          this.renderPreviewCard(),
+                          this.renderActionsCard(),
+                          this.renderInfoCard()
+                      )
+                  )
         );
     }
+
 
     renderHeader() {
         return h(
@@ -285,7 +313,6 @@ export default class DoctorCardPage extends Component {
             )
         );
     }
-
     renderChevronIcon() {
         const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
         svg.setAttribute("width", "14");
@@ -303,101 +330,92 @@ export default class DoctorCardPage extends Component {
         return svg;
     }
 
-    renderContent() {
+    renderActionsCard() {
         return h(
             "div",
-            { class: "services-list" },
-
+            { class: "dashboard-card doctor-card-page__actions-card" },
             h(
-                "div",
-                { class: "dashboard-card", style: "padding: 1.1rem;" },
-                h(
-                    "p",
-                    { class: "dashboard-muted", style: "margin: 0 0 12px; font-size: 0.86rem; line-height: 1.5;" },
-                    "Share this card with patients on WhatsApp or anywhere else. Tapping it takes them straight to your booking page — even if they don't have the YerosCare app yet."
-                ),
-                this.renderCardPreview()
+                "button",
+                {
+                    class: "btn btn-primary",
+                    disabled: this.sharing,
+                    onclick: () => this.shareCard(),
+                },
+                this.sharing ? "Preparing..." : "Share Card"
             ),
-
-            this.downloadError
-                ? h(
-                      "div",
-                      { class: "dashboard-card", style: "border-left: 4px solid #ef4444;" },
-                      h("p", { style: "color: #ef4444; margin: 0;" }, this.downloadError)
-                  )
-                : null,
-
             h(
-                "div",
-                { class: "dashboard-card", style: "padding: 1.1rem; display: flex; flex-direction: column; gap: 10px;" },
-                h(
-                    "button",
-                    {
-                        class: "btn btn-primary",
-                        style: "padding: 0.65rem 1rem; font-size: 0.9rem; border-radius: 8px;",
-                        disabled: this.sharing,
-                        onclick: () => this.shareCard(),
-                    },
-                    this.sharing ? "Preparing..." : "Share Card"
-                ),
-                h(
-                    "button",
-                    {
-                        class: "btn btn-outline",
-                        style: "padding: 0.6rem 1rem; font-size: 0.88rem; border-radius: 8px;",
-                        disabled: this.downloading,
-                        onclick: () => this.downloadCard(),
-                    },
-                    this.downloading ? "Downloading..." : "Download as Image"
-                ),
-                h(
-                    "button",
-                    {
-                        class: "btn btn-outline",
-                        style: "padding: 0.6rem 1rem; font-size: 0.88rem; border-radius: 8px;",
-                        disabled: this.copying,
-                        onclick: () => this.copyLink(),
-                    },
-                    this.copySuccess ? "Link copied ✓" : this.copying ? "Copying..." : "Copy Link"
-                )
+                "button",
+                {
+                    class: "btn btn-outline",
+                    disabled: this.downloading,
+                    onclick: () => this.downloadCard(),
+                },
+                this.downloading ? "Downloading..." : "Download as Image"
             ),
-
             h(
-                "div",
-                { class: "dashboard-card", style: "padding: 0.9rem 1rem;" },
-                h(
-                    "p",
-                    { class: "dashboard-muted", style: "margin: 0; font-size: 0.76rem; line-height: 1.5;" },
-                    "Your card updates automatically whenever you change your profile photo, specialization, or bio — no need to re-share a new one unless you want to."
-                )
+                "button",
+                {
+                    class: "btn btn-outline",
+                    disabled: this.copying,
+                    onclick: () => this.copyLink(),
+                },
+                this.copySuccess ? "Link copied ✓" : this.copying ? "Copying..." : "Copy Link"
+            )
+        );
+    }
+    
+    renderInfoCard() {
+        return h(
+            "div",
+            { class: "dashboard-card doctor-card-page__info-card" },
+            h(
+                "p",
+                { class: "doctor-card-page__info-text" },
+                "Your card updates automatically whenever you change your profile photo, specialization, or bio — no need to re-share a new one unless you want to."
             )
         );
     }
 
-    renderCardPreview() {
+    renderPreviewCard() {
         return h(
             "div",
-            {
-                style: "position: relative; width: 100%; aspect-ratio: 1200 / 630; border-radius: 10px; overflow: hidden; background: var(--color-bg-muted, #f1f5f9); display: flex; align-items: center; justify-content: center;",
-            },
-            !this.imageLoaded && !this.imageError
-                ? h("p", { class: "dashboard-muted", style: "font-size: 0.82rem;" }, "Loading your card...")
-                : null,
-            this.imageError
-                ? h("p", { style: "color: #ef4444; font-size: 0.82rem; padding: 0 20px; text-align: center;" }, "Couldn't load your card preview. Make sure your profile is verified and complete, then try again.")
-                : h("img", {
-                      src: this.cardImageUrl,
-                      alt: "Your doctor card",
-                      style: `width: 100%; height: 100%; object-fit: cover; display: ${this.imageLoaded ? "block" : "none"};`,
-                      onload: () => {
-                          this.imageLoaded = true;
-                          this.update();
-                      },
-                      onerror: () => {
-                          this.imageError = true;
-                          this.update();
-                      },
-                  })
+            { class: "dashboard-card doctor-card-page__preview-card" },
+            h(
+                "p",
+                { class: "doctor-card-page__hint" },
+                "Share this card with patients on WhatsApp or anywhere else. Tapping it takes them straight to your booking page — even if they don't have the YerosCare app yet."
+            ),
+            h(
+                "div",
+                { class: "doctor-card-page__preview" },
+                !this.imageLoaded && !this.imageError
+                    ? h(
+                          "p",
+                          { class: "dashboard-muted doctor-card-page__preview-loading" },
+                          "Loading your card..."
+                      )
+                    : null,
+                this.imageError
+                    ? h(
+                          "p",
+                          { class: "doctor-card-page__preview-error" },
+                          "Couldn't load your card preview. Make sure your profile is verified and complete, then try again."
+                      )
+                    : h("img", {
+                          src: this.cardImageUrl,
+                          alt: "Your doctor card",
+                          class: "doctor-card-page__preview-img",
+                          style: `display: ${this.imageLoaded ? "block" : "none"};`,
+                          onload: () => {
+                              this.imageLoaded = true;
+                              this.update();
+                          },
+                          onerror: () => {
+                              this.imageError = true;
+                              this.update();
+                          },
+                      })
+            )
         );
     }
 
