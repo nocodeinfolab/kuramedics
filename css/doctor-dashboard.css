@@ -2646,3 +2646,23 @@
     font-size: 0.82rem;
   }
 }
+
+
+@media (min-width: 900px) {
+
+  /* Grid rows size to the tallest item; cards fill their row */
+  .doctor-dashboard .doctor-home {
+    align-items: stretch;
+  }
+
+  /* Side-by-side cards become flex columns so their link can be pinned */
+  .doctor-dashboard .doctor-home > .dashboard-card.status-card {
+    display: flex;
+    flex-direction: column;
+  }
+
+  
+  .doctor-dashboard .doctor-home > .dashboard-card.status-card .status-card__link {
+    margin-top: auto;
+  }
+}
