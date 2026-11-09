@@ -224,6 +224,23 @@ export default class PatientRecords extends Component {
         }
         return paragraphs.length ? paragraphs : [text.trim()];
     }
+    calculateAge(dateOfBirth) {
+        if (!dateOfBirth) return null;
+        const dob = new Date(dateOfBirth);
+        if (Number.isNaN(dob.getTime())) return null;
+    
+        const now = new Date();
+        let age = now.getFullYear() - dob.getFullYear();
+        const monthDiff = now.getMonth() - dob.getMonth();
+        // If this year's "birthday" hasn't happened yet, subtract one.
+        if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < dob.getDate())) {
+            age -= 1;
+        }
+        // Guard against corrupt data or future-dated entries.
+        if (age < 0 || age > 120) return null;
+        return age;
+    }
+
 
     // ---------- Formatting ----------
 
@@ -398,6 +415,7 @@ export default class PatientRecords extends Component {
         const gender = patient.gender
             ? patient.gender.charAt(0).toUpperCase() + patient.gender.slice(1).toLowerCase()
             : null;
+        const age = this.calculateAge(patient.date_of_birth);
     
         const detail = (iconPaths, label, value) =>
             h(
@@ -443,6 +461,7 @@ export default class PatientRecords extends Component {
                 "div",
                 { class: "pr-card__details" },
                 patient.phone_number ? detail(PI.phone, "Phone", patient.phone_number) : null,
+                age != null ? detail(PI.user, "Age", `${age} yrs`) : null,
                 gender ? detail(PI.user, "Gender", gender) : null,
                 detail(PI.calendar, "Last seen", this.formatShortDate(patient.last_consultation_at))
             ),
