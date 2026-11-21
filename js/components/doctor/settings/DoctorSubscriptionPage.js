@@ -537,7 +537,7 @@ export default class DoctorSubscriptionPage extends Component {
                 h("span", {}, "Settings")),
             h("h1", { class: "page-hero__title" }, "Subscription & Billing"),
             h("p", { class: "page-hero__subtitle" },
-                "Manage your plan and payment history. Purchases are handled by the App Store / Google Play.")
+                "Manage your plan and payment history.")
         );
     }
 
