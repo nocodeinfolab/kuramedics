@@ -290,15 +290,11 @@ export default class DoctorSubscriptionPage extends Component {
     //  USER-TRIGGERED PURCHASE
     // ════════════════════════════════════════════════════════
     async selectPlan(planCode) {
-        if (!this.billingReady || !window.CdvPurchase) {
-            this.setBillingStatus(
-                "In-app purchases are unavailable in this build. Update the app to continue.",
-                "error"
-            );
-            this.update();
-            return;
+        
+        if (!window.CdvPurchase || !this.billingReady) {
+            return this.startWebCheckout(planCode);
         }
-
+    
         const currentCode = this.summary?.plan_code || "starter";
         const status = this.summary?.status || "active";
         const renewalDue = ["past_due", "suspended"].includes(status);
@@ -394,6 +390,29 @@ export default class DoctorSubscriptionPage extends Component {
         } catch (err) {
             console.error("Billing order error:", err);
             this.failBilling("Could not start purchase. Try again.");
+        }
+    }
+    async startWebCheckout(planCode) {
+        this.processingPlanCode = planCode;
+        this.setBillingStatus("Opening secure card checkout…", "info");
+        this.update();
+    
+        try {
+            const res = await api.post("/subscription/initialize-checkout", {
+                plan_code: planCode,
+                plan_interval: this.interval,
+            });
+            const data = res.data || res;
+    
+            if (!data?.checkout_url) {
+                throw new Error("No checkout URL was returned.");
+            }
+    
+            
+            window.location.href = data.checkout_url;
+        } catch (err) {
+            console.error("Web checkout failed:", err);
+            this.failBilling(err.message || "Could not start checkout. Please try again.");
         }
     }
 
@@ -593,12 +612,20 @@ export default class DoctorSubscriptionPage extends Component {
         );
     }
 
-    // Replaces the old "Auto-Renew" toggle. Auto-renew is owned by the
-    // store, so the only legitimate action is a deep-link into it.
+    
     renderManageCard() {
         const isPaid = ["professional", "premium"].includes(this.summary?.plan_code)
             && !this.summary?.trial_active;
-
+        const isWeb = !window.CdvPurchase;
+    
+        const description = isWeb
+            ? (isPaid
+                ? "Your subscription auto-renews via Paystack. To cancel or change your card, contact support@yeroscare.com."
+                : "When you subscribe, your card is securely charged monthly via Paystack.")
+            : (isPaid
+                ? "Manage auto-renew, payment method, and cancellation in the store."
+                : "Your subscription will auto-renew through the store once you subscribe.");
+    
         return h("div",
             { class: "dashboard-card service-item-card" },
             h("h3", { style: "margin: 0 0 var(--space-3);" }, "Billing Preferences"),
@@ -609,19 +636,18 @@ export default class DoctorSubscriptionPage extends Component {
                     h("p",
                         { class: "dashboard-muted",
                           style: "margin: 0; font-size: var(--step-small);" },
-                        isPaid
-                            ? "Manage auto-renew, payment method, and cancellation in the store."
-                            : "Your subscription will auto-renew through the store once you subscribe.")),
-                h("button",
-                    {
-                        class: "btn btn-outline",
-                        style: "padding: 0.4rem 0.8rem; font-size: var(--step-small);",
-                        onclick: () => this.openStoreSubscriptions()
-                    },
-                    "Manage subscription"))
+                        description)),
+                isWeb
+                    ? null
+                    : h("button",
+                        {
+                            class: "btn btn-outline",
+                            style: "padding: 0.4rem 0.8rem; font-size: var(--step-small);",
+                            onclick: () => this.openStoreSubscriptions()
+                        },
+                        "Manage subscription"))
         );
     }
-
     renderAvailablePlansCard() {
         const plans = this.summary?.available_plans || [];
         const currentPlanCode = this.summary?.plan_code || "starter";
@@ -633,6 +659,14 @@ export default class DoctorSubscriptionPage extends Component {
         return h("div",
             { class: "dashboard-card" },
             h("h3", { style: "margin: 0 0 var(--space-3);" }, "Available Plans & Pricing"),
+        
+            !window.CdvPurchase
+                ? h("p",
+                    { class: "dashboard-muted",
+                      style: "margin: 0 0 var(--space-3); padding: 10px 12px; background: rgba(2, 132, 199, 0.06); border-radius: 8px; border-left: 3px solid var(--color-primary, #0284c7); font-size: var(--step-small); line-height: 1.5;" },
+                    "You'll be redirected to a secure Paystack checkout. Your card details are never stored on YerosCare servers.")
+                : null,
+        
             plans.length === 0
                 ? h("p", { class: "dashboard-muted" }, "No plans available at this time.")
                 : h("div",
@@ -643,7 +677,6 @@ export default class DoctorSubscriptionPage extends Component {
                         const planIndex = PLAN_ORDER.indexOf(plan.code);
                         const isLowerTier = planIndex < currentPlanIndex;
                         const isDisabled = isProcessing
-                            || (!window.CdvPurchase)
                             || (isCurrent && !isRenewalDue && !isTrial);
 
                         let buttonLabel;
@@ -728,9 +761,13 @@ export default class DoctorSubscriptionPage extends Component {
     }
 
     renderRestoreCard() {
+        
+        if (!window.CdvPurchase) return null;
+    
         return h("div",
             { class: "dashboard-card" },
             h("h3", { style: "margin: 0 0 var(--space-3);" }, "Already subscribed?"),
+            
             h("p",
                 { class: "dashboard-muted", style: "margin: 0 0 var(--space-3);" },
                 "If you reinstalled the app or switched devices, tap below to restore an active subscription."),
