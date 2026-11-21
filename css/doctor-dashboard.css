@@ -2936,3 +2936,37 @@
     opacity: 0.7;
     cursor: progress;
 }
+
+.queue-page .queue-view-toggle {
+    display: inline-flex;
+    padding: 4px;
+    margin: 0 0 12px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.05);
+    border: 1px solid var(--color-line, rgba(15, 23, 42, 0.08));
+    align-self: flex-start;
+}
+
+.queue-page .queue-view-toggle__btn {
+    padding: 6px 14px;
+    border: none;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--color-muted, #64748b);
+    font-family: inherit;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.queue-page .queue-view-toggle__btn--active {
+    background: #ffffff;
+    color: var(--color-ink, #0f172a);
+    box-shadow: 0 1px 3px rgba(15, 23, 42, 0.1);
+}
+
+.queue-page .queue-view-toggle__btn:hover:not(.queue-view-toggle__btn--active) {
+    color: var(--color-ink, #0f172a);
+}
