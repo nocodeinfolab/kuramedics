@@ -86,6 +86,8 @@ export default class DoctorQueuePage extends Component {
             confirmed: { bookings: [], page: 0, hasMore: true, totalCount: 0, loading: true, loadingMore: false },
             completed: { bookings: [], page: 0, hasMore: true, totalCount: 0, loading: true, loadingMore: false },
         };
+        
+        this.showArchivedCompleted = false;
         this.searchTerm = "";
         this._searchDebounceTimer = null;
 
@@ -128,10 +130,14 @@ export default class DoctorQueuePage extends Component {
         try {
             const nextPage = state.page + 1;
             const params = new URLSearchParams({
-                page: nextPage,
+                page: String(nextPage),
                 limit: PAGE_LIMIT,
                 status: tab,
             });
+            
+            if (tab === "completed" && this.showArchivedCompleted) {
+                params.set("showArchived", "true");
+            }
             if (this.searchTerm.trim()) params.set("search", this.searchTerm.trim());
     
             const res = await api.get(`/bookings?${params.toString()}`);
@@ -359,6 +365,24 @@ export default class DoctorQueuePage extends Component {
             this.update();
         }
     }
+    async handleUnarchive(booking) {
+        this.actionLoadingId = booking.id;
+        this.errorMessage = "";
+        this.successMessage = "";
+        this.update();
+    
+        try {
+            await api.patch(`/bookings/${booking.id}/unarchive`, {});
+            this.removeBookingFromList(booking.id);
+            this.successMessage = `Restored appointment with ${booking.patient_name}.`;
+        } catch (error) {
+            console.error("Failed to restore booking:", error);
+            this.errorMessage = error.message || "Failed to restore appointment.";
+        } finally {
+            this.actionLoadingId = null;
+            this.update();
+        }
+    }
 
     async handleArchiveAllCompleted() {
         const state = this.tabs.completed;
@@ -522,11 +546,46 @@ export default class DoctorQueuePage extends Component {
         }
     }
 
+    setCompletedView(view) {
+        const wantArchived = view === "archived";
+        if (this.showArchivedCompleted === wantArchived) return;
+    
+        this.showArchivedCompleted = wantArchived;
+    
+        // Reset the completed tab's list so the next fetch starts fresh.
+        const state = this.tabs.completed;
+        state.bookings = [];
+        state.page = 0;
+        state.hasMore = true;
+        state.totalCount = 0;
+        state.loading = true;
+    
+        // Close any open action form (its booking won't be in the new list).
+        this.closeActionForm();
+    
+        this.loadBookings("completed", { reset: true });
+    }
+
     setTab(tab) {
         if (this.activeTab === tab) return;
+    
+        if (this.activeTab === "completed" && this.showArchivedCompleted) {
+            this.showArchivedCompleted = false;
+            const state = this.tabs.completed;
+            state.bookings = [];
+            state.page = 0;
+            state.hasMore = true;
+            state.totalCount = 0;
+            state.loading = true;
+        }
+    
         this.activeTab = tab;
         this.closeActionForm();
         this.update();
+    
+        if (tab === "completed" && this.tabs.completed.loading) {
+            this.loadBookings("completed", { reset: true });
+        }
     }
 
     setSearchTerm(term) {
@@ -708,11 +767,39 @@ export default class DoctorQueuePage extends Component {
             { class: "services-list" },
             this.renderControls(),
             this.renderTabs(),
+            this.renderCompletedViewToggle(),
             this.renderList(),
             this.renderLoadMore()
         );
     }
-
+    
+    renderCompletedViewToggle() {
+        if (this.activeTab !== "completed") return null;
+    
+        const tabs = [
+            { key: "active", label: "Active" },
+            { key: "archived", label: "Archived" },
+        ];
+    
+        return h(
+            "div",
+            { class: "queue-view-toggle", role: "tablist" },
+            tabs.map(t => {
+                const active = (t.key === "archived") === this.showArchivedCompleted;
+                return h(
+                    "button",
+                    {
+                        type: "button",
+                        role: "tab",
+                        "aria-selected": String(active),
+                        class: `queue-view-toggle__btn${active ? " queue-view-toggle__btn--active" : ""}`,
+                        onclick: () => this.setCompletedView(t.key),
+                    },
+                    h("span", {}, t.label)
+                );
+            })
+        );
+    }
     renderControls() {
         return h(
             "div",
@@ -731,7 +818,7 @@ export default class DoctorQueuePage extends Component {
                     oninput: e => this.setSearchTerm(e.target.value),
                 })
             ),
-            this.activeTab === "completed" && this.getTabCount("completed") > 0
+            this.activeTab === "completed" && !this.showArchivedCompleted && this.getTabCount("completed") > 0
                 ? h(
                       "button",
                       {
@@ -778,22 +865,24 @@ export default class DoctorQueuePage extends Component {
         const filtered = this.getActiveTabBookings();
 
         if (filtered.length === 0) {
+            const isArchivedView = this.activeTab === "completed" && this.showArchivedCompleted;
+            const emptyTitle = this.searchTerm
+                ? "No matches"
+                : isArchivedView
+                    ? "No archived consultations"
+                    : `No ${this.activeTab} appointments`;
+            const emptyText = this.searchTerm
+                ? `Nothing matches "${this.searchTerm}".`
+                : isArchivedView
+                    ? "Consultations you archive from the Completed tab will appear here."
+                    : "New appointments will appear here.";
+            
             return h(
                 "div",
                 { class: "dashboard-card queue-empty" },
                 h("span", { class: "queue-empty__icon" }, icon(QI.calendar, 22)),
-                h(
-                    "p",
-                    { class: "queue-empty__title" },
-                    this.searchTerm ? "No matches" : `No ${this.activeTab} appointments`
-                ),
-                h(
-                    "p",
-                    { class: "queue-empty__text" },
-                    this.searchTerm
-                        ? `Nothing matches "${this.searchTerm}".`
-                        : "New appointments will appear here."
-                )
+                h("p", { class: "queue-empty__title" }, emptyTitle),
+                h("p", { class: "queue-empty__text" }, emptyText)
             );
         }
 
@@ -1014,18 +1103,33 @@ export default class DoctorQueuePage extends Component {
         }
 
         if (COMPLETED_STATUSES.includes(booking.status)) {
-            buttons.push(
-                h(
-                    "button",
-                    {
-                        class: "btn btn-outline",
-                        style: btnStyle,
-                        disabled: isProcessing,
-                        onclick: () => this.handleArchive(booking),
-                    },
-                    isProcessing ? "Archiving..." : "Archive"
-                )
-            );
+            if (booking.is_archived) {
+                buttons.push(
+                    h(
+                        "button",
+                        {
+                            class: "btn btn-outline",
+                            style: btnStyle,
+                            disabled: isProcessing,
+                            onclick: () => this.handleUnarchive(booking),
+                        },
+                        isProcessing ? "Restoring..." : "Restore"
+                    )
+                );
+            } else {
+                buttons.push(
+                    h(
+                        "button",
+                        {
+                            class: "btn btn-outline",
+                            style: btnStyle,
+                            disabled: isProcessing,
+                            onclick: () => this.handleArchive(booking),
+                        },
+                        isProcessing ? "Archiving..." : "Archive"
+                    )
+                );
+            }
         }
 
         if (buttons.length === 0) return null;
