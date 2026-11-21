@@ -485,6 +485,30 @@ export default class DoctorSubscriptionPage extends Component {
             year: "numeric", month: "short", day: "numeric"
         });
     }
+    getStatusDisplay(status, isTrial = false) {
+        if (isTrial) {
+            return { label: "Free Trial", color: "#f59e0b" };
+        }
+    
+        const map = {
+            active:    { label: "Active",        color: "#10b981" },
+            past_due:  { label: "Payment Due",   color: "#f59e0b" },
+            suspended: { label: "Suspended",     color: "#ef4444" },
+            cancelled: { label: "Cancelled",     color: "#64748b" },
+            inactive:  { label: "Inactive",      color: "#64748b" },
+            expiring:  { label: "Expiring Soon", color: "#f59e0b" },
+            expired:   { label: "Expired",       color: "#ef4444" },
+        };
+    
+        const key = String(status || "active").trim().toLowerCase();
+        if (map[key]) return map[key];
+    
+        
+        return {
+            label: key.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase()),
+            color: "#64748b",
+        };
+    }
 
     // ════════════════════════════════════════════════════════
     //  RENDER
@@ -573,7 +597,7 @@ export default class DoctorSubscriptionPage extends Component {
     renderCurrentPlanCard() {
         const sub = this.summary || {};
         const isTrial = sub.trial_active;
-        const statusLabel = (sub.status || "active").toUpperCase();
+        const statusDisplay = this.getStatusDisplay(sub.status, isTrial);
 
         return h("div",
             { class: "dashboard-card service-item-card",
@@ -596,8 +620,8 @@ export default class DoctorSubscriptionPage extends Component {
                     h("p", { style: "margin: 6px 0 0;" },
                         h("span",
                             { class: "dashboard-badge",
-                              style: isTrial ? "background: #f59e0b;" : "background: #10b981;" },
-                            isTrial ? "Free Trial" : statusLabel))),
+                              style: `background: ${statusDisplay.color};` },
+                            statusDisplay.label)
                 h("div", {},
                     h("span", { class: "dashboard-muted" },
                         sub.trial_active ? "Trial Ends On" : "Next Billing Date"),
@@ -605,8 +629,7 @@ export default class DoctorSubscriptionPage extends Component {
                         this.formatDate(sub.trial_active ? sub.trial_ends_at : sub.next_billing_date)))),
             sub.restriction_message
                 ? h("p",
-                    { class: "dashboard-muted",
-                      style: "margin-top: var(--space-3); font-size: var(--step-small); color: #d97706;" },
+                    { style: `margin-top: var(--space-3); font-size: var(--step-small); line-height: 1.5; color: ${statusDisplay.color};` },
                     sub.restriction_message)
                 : null
         );
@@ -754,7 +777,7 @@ export default class DoctorSubscriptionPage extends Component {
                 h("span",
                     { class: "dashboard-badge",
                       style: `background: ${statusColor}; font-size: 0.68rem; padding: 3px 8px; border-radius: 5px; white-space: nowrap; color: #fff; flex-shrink: 0;` },
-                    item.status)),
+                    String(item.status || "").replace(/\b\w/g, c => c.toUpperCase()))),
             h("p",
                 { class: "dashboard-muted", style: "margin: 0; font-size: 0.78rem;" },
                 this.formatDate(item.created_at)));
