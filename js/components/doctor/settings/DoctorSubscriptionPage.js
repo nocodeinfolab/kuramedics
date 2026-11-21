@@ -621,7 +621,7 @@ export default class DoctorSubscriptionPage extends Component {
                         h("span",
                             { class: "dashboard-badge",
                               style: `background: ${statusDisplay.color};` },
-                            statusDisplay.label)
+                            statusDisplay.label))),
                 h("div", {},
                     h("span", { class: "dashboard-muted" },
                         sub.trial_active ? "Trial Ends On" : "Next Billing Date"),
